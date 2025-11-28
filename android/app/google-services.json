@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "28024749368",
+    "project_id": "book-my-spa-5012f",
+    "storage_bucket": "book-my-spa-5012f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28024749368:android:f7b527eb982aed8123d5cd",
+        "android_client_info": {
+          "package_name": "com.bookmyspa.avr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1IcON0oFP0A7oAw8_0f70SuoxgOzA8UU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28024749368:android:d87279fb0cfa16b923d5cd",
+        "android_client_info": {
+          "package_name": "com.example.bookmyspa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1IcON0oFP0A7oAw8_0f70SuoxgOzA8UU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
