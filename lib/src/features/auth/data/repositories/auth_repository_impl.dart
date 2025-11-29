@@ -13,4 +13,15 @@ class AuthRepositoryImpl implements AuthRepository {
     final dto = await google.signIn();
     return UserMapper.toDomain(dto);
   }
+
+  @override
+  Future<User> signInWithGoogle() async {
+    final dto = await google.signIn();
+    return UserMapper.toDomain(dto);
+  }
+
+  @override
+  Future<void> signOut() async {
+    await google.signOut();
+  }
 }

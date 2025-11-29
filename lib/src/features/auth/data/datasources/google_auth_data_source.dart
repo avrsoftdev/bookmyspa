@@ -14,4 +14,8 @@ class GoogleAuthDataSource {
     }
     return UserDto(id: account.id, name: account.displayName ?? '', email: account.email);
   }
+
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+  }
 }

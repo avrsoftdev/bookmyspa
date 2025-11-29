@@ -9,4 +9,12 @@ class LoginUseCase {
   Future<User> call({required String email, required String password}) {
     return repository.login(email: email, password: password);
   }
+
+  Future<User> signInWithGoogle() {
+    return repository.signInWithGoogle();
+  }
+
+  Future<void> signOut() {
+    return repository.signOut();
+  }
 }
