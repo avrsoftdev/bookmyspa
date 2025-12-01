@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login.dart';
 import '../../data/datasources/google_auth_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -59,9 +58,10 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: controller.loading
                       ? null
                       : () async {
+                          final navigator = Navigator.of(context);
                           await controller.signInWithGoogle();
                           if (controller.currentUser != null) {
-                            Navigator.of(context).pushReplacementNamed('/home');
+                            navigator.pushReplacementNamed('/home');
                           }
                         },
                   style: ElevatedButton.styleFrom(
@@ -81,7 +81,11 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(width: 16),
                             const Text(
                               'Sign in with Google',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color.fromARGB(255, 0, 0, 0)),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color.fromARGB(255, 0, 0, 0),
+                              ),
                             ),
                           ],
                         ),

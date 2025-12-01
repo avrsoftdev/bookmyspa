@@ -12,7 +12,12 @@
           "package_name": "com.bookmyspa.avr"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "28024749368-i5l4rhs5bg4rri5bqd5295871joansqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA1IcON0oFP0A7oAw8_0f70SuoxgOzA8UU"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "28024749368-i5l4rhs5bg4rri5bqd5295871joansqo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "28024749368-89iu4pde91rtvcrln1sdfkpgqutpogu7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.bookmyspa"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +48,20 @@
           "package_name": "com.example.bookmyspa"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "28024749368-s8hnpq3tkpttm98b4fd6vk4jcdi4ggtl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bookmyspa",
+            "certificate_hash": "952d20f83ed7ed5af161c2901c93fdf063de1ab0"
+          }
+        },
+        {
+          "client_id": "28024749368-i5l4rhs5bg4rri5bqd5295871joansqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA1IcON0oFP0A7oAw8_0f70SuoxgOzA8UU"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "28024749368-i5l4rhs5bg4rri5bqd5295871joansqo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "28024749368-89iu4pde91rtvcrln1sdfkpgqutpogu7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.bookmyspa"
+              }
+            }
+          ]
         }
       }
     }

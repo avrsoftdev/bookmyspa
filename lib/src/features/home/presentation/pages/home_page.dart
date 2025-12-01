@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,20 +12,29 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   // Your pages (expand with real content later)
-  final List<Widget> _pages = const [
-    Center(child: Text('Home Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-    Center(child: Text('Bookings Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-    Center(child: Text('Profile Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final email = fb.FirebaseAuth.instance.currentUser?.email ?? '';
+    final pages = <Widget>[
+      Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Home Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          if (email.isNotEmpty)
+            Text('Signed in as $email', style: const TextStyle(fontSize: 16)),
+        ],
+      ),
+      const Center(child: Text('Bookings Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+      const Center(child: Text('Profile Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+    ];
     return Scaffold(
       extendBody: true, // Lets content flow behind the floating bar for immersion
       appBar: AppBar(title: const Text('BookMySpa')),
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: pages,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked, // Centers the "floating" bar
       floatingActionButton: _buildFloatingNavBar(), // Our custom floating bar
@@ -40,7 +50,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(30), // Rounded for floating look
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10), // Soft shadow below for elevation
           ),
@@ -72,7 +82,7 @@ class _HomePageState extends State<HomePage> {
             label: 'Profile',
           ),
         ],
-        indicatorColor: Colors.deepPurple.withOpacity(0.1), // Subtle active indicator
+        indicatorColor: Colors.deepPurple.withValues(alpha: 0.1), // Subtle active indicator
       ),
     );
   }
