@@ -1,7 +1,9 @@
+import 'package:bookmyspa/src/core/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profile_screen.dart';
+// import '../tokens.dart'; // Make sure this path is correct
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -25,106 +27,198 @@ class ProfileScreen extends StatelessWidget {
         }
 
         String displayName = user.displayName ?? 'User';
-        String email = user.email ?? '';
         String phone = '';
-        String address = ''; // Still needed to pass to Edit screen
+        String address = '';
 
         if (snapshot.hasData && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>?;
           if (data != null) {
             displayName = data['displayName'] ?? displayName;
-            email = data['email'] ?? email;
             phone = data['phone'] ?? '';
-            address = data['address'] ?? ''; // Still fetch it (for editing)
+            address = data['address'] ?? '';
           }
         }
 
-        return Column(
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // === Profile Header ===
+              Container(
+                width: double.infinity,
+                color: Theme.of(context).colorScheme.surface,
+                padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi, $displayName!',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Phone number shown here
+                          if (phone.isNotEmpty)
+                            Text(
+                              phone,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProfileScreen(
+                                    currentName: displayName,
+                                    currentEmail: user.email ?? '',
+                                    currentPhone: phone,
+                                    currentAddress: address,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Edit Profile >',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: 42,
+                      backgroundColor: AppColors.primary.withOpacity(0.15),
+                      backgroundImage: user.photoURL != null
+                          ? NetworkImage(user.photoURL!)
+                          : null,
+                      child: user.photoURL == null
+                          ? Text(
+                              displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                              style: TextStyle(
+                                fontSize: 38,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // === Full-Width Menu Items ===
+              _buildMenuItem(
+                context,
+                icon: Icons.receipt_long_rounded,
+                title: 'My Bookings',
+                subtitle: 'View and manage your spa appointments',
+                onTap: () {},
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.local_offer_rounded,
+                title: 'Offers',
+                subtitle: 'Exclusive deals and discounts',
+                onTap: () {},
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.add_business_rounded,
+                title: 'List Your Spa',
+                subtitle: 'Register your spa on BookMySpa',
+                onTap: () {},
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.trending_up_rounded,
+                title: 'Promote Your Spa',
+                subtitle: 'Run ads and reach more customers',
+                onTap: () {},
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.help_outline_rounded,
+                title: 'Help Centre',
+                subtitle: 'Get support and answers',
+                onTap: () {},
+              ),
+
+              const SizedBox(height: 40),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
           children: [
-            // Compact header section
             Container(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left side - User info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (phone.isNotEmpty)
-                          Text(
-                            phone,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditProfileScreen(
-                                  currentName: displayName,
-                                  currentEmail: email,
-                                  currentPhone: phone,
-                                  currentAddress: address, // Still passed for editing
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            'Edit Profile',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                        ),
-                      ],
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  // Right side - Profile picture
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.deepPurple.shade100,
-                    backgroundImage: user.photoURL != null
-                        ? NetworkImage(user.photoURL!)
-                        : null,
-                    child: user.photoURL == null
-                        ? Text(
-                            displayName.isNotEmpty
-                                ? displayName[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple,
-                              ),
-                          )
-                        : null,
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(),
-
-            // Address section REMOVED completely - nothing displayed here
-            // You can add other info rows later if needed (email, etc.)
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
+              size: 28,
+            ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
