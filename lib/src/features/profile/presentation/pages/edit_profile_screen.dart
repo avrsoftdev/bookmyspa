@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String currentName;
   final String currentEmail;
   final String currentPhone;
-  final String currentBio;
+  final String currentAddress; // ← Changed from currentBio
 
   const EditProfileScreen({
     super.key,
     required this.currentName,
     required this.currentEmail,
     required this.currentPhone,
-    required this.currentBio,
+    required this.currentAddress,
   });
 
   @override
@@ -25,10 +24,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
-  late TextEditingController _bioController;
+  late TextEditingController _addressController; // ← New controller
 
-  bool _isSaving = false;
-  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -36,7 +34,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.currentName);
     _emailController = TextEditingController(text: widget.currentEmail);
     _phoneController = TextEditingController(text: widget.currentPhone);
-    _bioController = TextEditingController(text: widget.currentBio);
+    _addressController = TextEditingController(text: widget.currentAddress);
   }
 
   @override
@@ -44,47 +42,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _bioController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name cannot be empty')),
+      );
+      return;
+    }
 
-    setState(() => _isSaving = true);
+    setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('User not logged in');
+      final user = FirebaseAuth.instance.currentUser!;
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      await userDoc.set({
         'displayName': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'bio': _bioController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'address': _addressController.text.trim(), // ← Save address
       }, SetOptions(merge: true));
+
+      // Optionally update display name in Firebase Auth
+      await user.updateDisplayName(_nameController.text.trim());
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Profile updated successfully!')),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating profile: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to update profile: $e')),
         );
       }
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -94,110 +93,81 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: const Text('Edit Profile'),
         actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _saveProfile,
-            ),
+          TextButton(
+            onPressed: _isLoading ? null : _saveProfile,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+          ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            // NAME FIELD
-            TextFormField(
+            // Name Field
+            TextField(
               controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                prefixIcon: const Icon(Icons.person),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your name';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 20),
 
-            // EMAIL FIELD
-            TextFormField(
+            // Email Field
+            TextField(
               controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                prefixIcon: const Icon(Icons.email),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!value.contains('@')) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email),
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
 
-            // PHONE FIELD
-            TextFormField(
+            // Phone Field
+            TextField(
               controller: _phoneController,
-              decoration: InputDecoration(
-                labelText: 'Phone',
-                prefixIcon: const Icon(Icons.phone),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                counterText: '',
-              ),
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.phone,
               maxLength: 10,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                prefixIcon: Icon(Icons.phone),
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
 
-            // BIO FIELD
-            TextFormField(
-              controller: _bioController,
-              decoration: InputDecoration(
-                labelText: 'Bio',
-                prefixIcon: const Icon(Icons.info_outline),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            // Address Field (replaces Bio)
+            TextField(
+              controller: _addressController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Address',
+                hintText: 'e.g. 123 Main St, City, State 12345',
+                prefixIcon: Icon(Icons.location_on),
                 alignLabelWithHint: true,
+                border: OutlineInputBorder(),
               ),
-              maxLines: 4,
-              maxLength: 200,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
 
-            // SAVE BUTTON
+            // Save Button (extra large button at bottom)
             SizedBox(
-              height: 56,
+              width: double.infinity,
+              height: 50,
               child: ElevatedButton(
-                onPressed: _isSaving ? null : _saveProfile,
+                onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
@@ -205,13 +175,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: _isSaving
+                child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Save Changes',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
+                    : const Text('Save Changes', style: TextStyle(fontSize: 16)),
               ),
             ),
           ],

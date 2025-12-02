@@ -9,7 +9,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    
+
     if (user == null) {
       return const Center(child: Text('Not logged in'));
     }
@@ -27,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
         String displayName = user.displayName ?? 'User';
         String email = user.email ?? '';
         String phone = '';
-        String bio = '';
+        String address = ''; // Still needed to pass to Edit screen
 
         if (snapshot.hasData && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>?;
@@ -35,7 +35,7 @@ class ProfileScreen extends StatelessWidget {
             displayName = data['displayName'] ?? displayName;
             email = data['email'] ?? email;
             phone = data['phone'] ?? '';
-            bio = data['bio'] ?? '';
+            address = data['address'] ?? ''; // Still fetch it (for editing)
           }
         }
 
@@ -78,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
                                   currentName: displayName,
                                   currentEmail: email,
                                   currentPhone: phone,
-                                  currentBio: bio,
+                                  currentAddress: address, // Still passed for editing
                                 ),
                               ),
                             );
@@ -99,13 +99,19 @@ class ProfileScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.deepPurple.shade100,
-                    backgroundImage: user.photoURL != null 
-                        ? NetworkImage(user.photoURL!) 
+                    backgroundImage: user.photoURL != null
+                        ? NetworkImage(user.photoURL!)
                         : null,
                     child: user.photoURL == null
                         ? Text(
-                            displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                            displayName.isNotEmpty
+                                ? displayName[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
                           )
                         : null,
                   ),
@@ -113,42 +119,12 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const Divider(),
+
+            // Address section REMOVED completely - nothing displayed here
+            // You can add other info rows later if needed (email, etc.)
           ],
         );
       },
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: Colors.deepPurple, size: 24),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
