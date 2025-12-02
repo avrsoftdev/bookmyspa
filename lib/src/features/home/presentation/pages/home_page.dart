@@ -15,12 +15,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   late LocationBloc _locationBloc;
+  String? _overriddenAddress;
 
   @override
   void initState() {
     super.initState();
     _locationBloc = sl.get<LocationBloc>();
-    // Automatically get location when app opens
+    // Get location as soon as app opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _locationBloc.getCurrentLocation();
     });
@@ -28,204 +29,101 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final email = fb.FirebaseAuth.instance.currentUser?.email ?? '';
     final pages = <Widget>[
+      // HOME TAB - Only Location Bar
       Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0), // Clean top padding
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Location Section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.deepPurple.withOpacity(0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.deepPurple),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Your Location',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => _locationBloc.getCurrentLocation(),
-                        icon: const Icon(Icons.refresh, color: Colors.deepPurple),
-                        tooltip: 'Refresh location',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LocationWidget(
-                    locationBloc: _locationBloc,
-                    onLocationFound: (address) => Text(
-                      address,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    onLocationError: (error) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Unable to get location',
-                          style: TextStyle(color: Colors.red, fontSize: 14),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          error,
-                          style: const TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    loadingWidget: const Row(
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 8),
-                        Text('Detecting your location...'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            
-            // Welcome Section
-            const Text(
-              'Welcome to BookMySpa',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (email.isNotEmpty)
-              Text(
-                'Signed in as $email',
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            
-            const SizedBox(height: 30),
-            
-            // Quick Actions
-            const Text(
-              'Quick Actions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
+            // Location Row (only thing visible on Home)
             Row(
               children: [
+                const Icon(Icons.location_on, color: Colors.deepPurple),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: _buildQuickActionCard(
-                    icon: Icons.spa,
-                    title: 'Book Spa',
-                    onTap: () {
-                      // Navigate to spa booking
-                    },
+                  child: LocationWidget(
+                    locationBloc: _locationBloc,
+                    onLocationFound: (address) => Text(
+                      _overriddenAddress ?? address,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onLocationError: (error) => const Text(
+                      'Tap to set location',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    loadingWidget: const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildQuickActionCard(
-                    icon: Icons.history,
-                    title: 'My Bookings',
-                    onTap: () {
-                      setState(() => _currentIndex = 1);
-                    },
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => _locationBloc.getCurrentLocation(),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_location_alt_outlined),
+                  onPressed: _showEditAddressDialog,
                 ),
               ],
             ),
+
+            // Everything below this line is REMOVED
+            // No welcome text, no quick actions, no extra content
           ],
         ),
       ),
-      const Center(child: Text('Bookings Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+
+      // Bookings Tab
+      const Center(
+        child: Text(
+          'My Bookings',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      // Profile Tab
       const ProfileScreen(),
     ];
+
     return Scaffold(
-      extendBody: true, // Lets content flow behind the floating bar for immersion
-      appBar: AppBar(title: const Text('BookMySpa')),
+      extendBody: true,
+      appBar: AppBar(
+        title: const Text('BookMySpa'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked, // Centers the "floating" bar
-      floatingActionButton: _buildFloatingNavBar(), // Our custom floating bar
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _buildFloatingNavBar(),
     );
   }
 
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: Colors.deepPurple),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Builds the floating, curved bottom nav bar
   Widget _buildFloatingNavBar() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Side margins for floating feel
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white, // Or your brand color: Colors.deepPurple
-        borderRadius: BorderRadius.circular(30), // Rounded for floating look
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 20,
-            offset: const Offset(0, 10), // Soft shadow below for elevation
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: NavigationBar(
-        backgroundColor: Colors.transparent, // No extra background
-        elevation: 0, // No default shadow (we have custom)
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         selectedIndex: _currentIndex,
-        onDestinationSelected: (int index) {
-          setState(() {
-            _currentIndex = index;
-          });
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
         },
         destinations: const [
           NavigationDestination(
@@ -244,7 +142,40 @@ class _HomePageState extends State<HomePage> {
             label: 'Profile',
           ),
         ],
-        indicatorColor: Colors.deepPurple.withValues(alpha: 0.1), // Subtle active indicator
+        indicatorColor: Colors.deepPurple.withOpacity(0.1),
+      ),
+    );
+  }
+
+  void _showEditAddressDialog() {
+    final controller = TextEditingController(
+      text: _overriddenAddress ?? _locationBloc.state.location?.address ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Location'),
+        content: TextField(
+          controller: controller,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            hintText: 'Enter area, city or pincode',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _overriddenAddress = controller.text.trim().isEmpty ? null : controller.text.trim();
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
