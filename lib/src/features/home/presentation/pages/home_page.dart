@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import '../../../profile/presentation/pages/profile_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,7 +28,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       const Center(child: Text('Bookings Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-      const Center(child: Text('Profile Screen', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+      const ProfileScreen(),
     ];
     return Scaffold(
       extendBody: true, // Lets content flow behind the floating bar for immersion
