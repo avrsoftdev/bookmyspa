@@ -58,30 +58,76 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFloatingNavBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
-        ],
+Widget _buildFloatingNavBar() {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(30),
+      border: Border.all(color: Colors.deepPurple, width: 2.5),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.deepPurple.withOpacity(0.25),
+          blurRadius: 16,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          // This handles selected/unselected label colors & styles
+          labelTextStyle: MaterialStateProperty.resolveWith((Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
+              return const TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.w600,
+              );
+            }
+            return TextStyle(
+              color: Colors.grey[600],
+              fontWeight: FontWeight.normal,
+            );
+          }),
+          // Optional: Match icon colors too (if not already handled)
+          iconTheme: MaterialStateProperty.resolveWith((Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
+              return const IconThemeData(color: Colors.deepPurple);
+            }
+            return IconThemeData(color: Colors.grey[600]);
+          }),
+        ),
+        child: NavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          height: 70,
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) => setState(() => _currentIndex = index),
+          indicatorColor: Colors.deepPurple.withOpacity(0.15),
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_rounded, size: 28),
+              selectedIcon: Icon(Icons.home_rounded, color: Colors.deepPurple, size: 28),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.event_rounded, size: 28),
+              selectedIcon: Icon(Icons.event_rounded, color: Colors.deepPurple, size: 28),
+              label: 'Bookings',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_rounded, size: 28),
+              selectedIcon: Icon(Icons.person_rounded, color: Colors.deepPurple, size: 28),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
-      child: NavigationBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), selectedIcon: Icon(Icons.home_rounded, color: Colors.deepPurple), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.event_rounded), selectedIcon: Icon(Icons.event_rounded, color: Colors.deepPurple), label: 'Bookings'),
-          NavigationDestination(icon: Icon(Icons.person_rounded), selectedIcon: Icon(Icons.person_rounded, color: Colors.deepPurple), label: 'Profile'),
-        ],
-        indicatorColor: Colors.deepPurple.withOpacity(0.1),
-      ),
-    );
-  }
+    ),
+  );
+}
 
   void _showEditAddressDialog() {
     final controller = TextEditingController(

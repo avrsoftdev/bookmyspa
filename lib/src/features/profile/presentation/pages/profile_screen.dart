@@ -1,9 +1,10 @@
-import 'package:bookmyspa/src/core/theme/tokens.dart';
+// profile_screen.dart (now super clean!)
+import 'package:bookmyspa/src/features/auth/presentation/widgets/profile_header.dart';
+import 'package:bookmyspa/src/features/auth/presentation/widgets/profile_menu_tiles.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profile_screen.dart';
-// import '../tokens.dart'; // Make sure this path is correct
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -11,16 +12,10 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      return const Center(child: Text('Not logged in'));
-    }
+    if (user == null) return const Center(child: Text('Not logged in'));
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -41,117 +36,51 @@ class ProfileScreen extends StatelessWidget {
 
         return SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // === Profile Header ===
-              Container(
-                width: double.infinity,
-                color: Theme.of(context).colorScheme.surface,
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hi, $displayName!',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: 6),
-                          // Phone number shown here
-                          if (phone.isNotEmpty)
-                            Text(
-                              phone,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey[700],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          const SizedBox(height: 12),
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditProfileScreen(
-                                    currentName: displayName,
-                                    currentEmail: user.email ?? '',
-                                    currentPhone: phone,
-                                    currentAddress: address,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'Edit Profile >',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+              ProfileHeader(
+                displayName: displayName,
+                phone: phone,
+                photoUrl: user.photoURL,
+                onEditTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditProfileScreen(
+                      currentName: displayName,
+                      currentEmail: user.email ?? '',
+                      currentPhone: phone,
+                      currentAddress: address,
                     ),
-                    CircleAvatar(
-                      radius: 42,
-                      backgroundColor: AppColors.primary.withOpacity(0.15),
-                      backgroundImage: user.photoURL != null
-                          ? NetworkImage(user.photoURL!)
-                          : null,
-                      child: user.photoURL == null
-                          ? Text(
-                              displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-                              style: TextStyle(
-                                fontSize: 38,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            )
-                          : null,
-                    ),
-                  ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // === Full-Width Menu Items ===
-              _buildMenuItem(
-                context,
+              ProfileMenuTile(
                 icon: Icons.receipt_long_rounded,
                 title: 'My Bookings',
                 subtitle: 'View and manage your spa appointments',
                 onTap: () {},
               ),
-              _buildMenuItem(
-                context,
+              ProfileMenuTile(
                 icon: Icons.local_offer_rounded,
                 title: 'Offers',
                 subtitle: 'Exclusive deals and discounts',
                 onTap: () {},
               ),
-              _buildMenuItem(
-                context,
+              ProfileMenuTile(
                 icon: Icons.add_business_rounded,
                 title: 'List Your Spa',
                 subtitle: 'Register your spa on BookMySpa',
                 onTap: () {},
               ),
-              _buildMenuItem(
-                context,
+              ProfileMenuTile(
                 icon: Icons.trending_up_rounded,
                 title: 'Promote Your Spa',
                 subtitle: 'Run ads and reach more customers',
                 onTap: () {},
               ),
-              _buildMenuItem(
-                context,
+              ProfileMenuTile(
                 icon: Icons.help_outline_rounded,
                 title: 'Help Centre',
                 subtitle: 'Get support and answers',
@@ -163,62 +92,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: Colors.grey[400],
-              size: 28,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
