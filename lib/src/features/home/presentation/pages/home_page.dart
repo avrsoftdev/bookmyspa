@@ -46,6 +46,10 @@ class _HomePageState extends State<HomePage> {
         child: Text('My Bookings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
       ),
 
+      const Center(
+        child: Text('Favourites', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+      ),
+
       const ProfileScreen(),
     ];
 
@@ -116,6 +120,11 @@ Widget _buildFloatingNavBar() {
               icon: Icon(Icons.event_rounded, size: 28),
               selectedIcon: Icon(Icons.event_rounded, color: Colors.deepPurple, size: 28),
               label: 'Bookings',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.favorite_border_rounded, size: 28),
+              selectedIcon: Icon(Icons.favorite_rounded, color: Colors.deepPurple, size: 28),
+              label: 'Favourites',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_rounded, size: 28),
