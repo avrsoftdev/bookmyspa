@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.deepPurple,
         elevation: 0,
         title: LocationAppBarTitle(locationBloc: _locationBloc, overriddenAddress: _overriddenAddress),
         actions: [
