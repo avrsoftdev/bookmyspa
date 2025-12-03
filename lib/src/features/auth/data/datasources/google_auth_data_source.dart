@@ -1,7 +1,5 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:firebase_core/firebase_core.dart';
-import 'package:bookmyspa/firebase_options.dart';
 import '../models/user_dto.dart';
 
 class GoogleAuthDataSource {
@@ -11,11 +9,7 @@ class GoogleAuthDataSource {
     : _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email']);
 
   Future<UserDto> signIn() async {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
+    // Sign out any existing session to force fresh login
     if (fb.FirebaseAuth.instance.currentUser != null) {
       await fb.FirebaseAuth.instance.signOut();
     }
@@ -49,11 +43,6 @@ class GoogleAuthDataSource {
   }
 
   Future<void> signOut() async {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
     await fb.FirebaseAuth.instance.signOut();
     await _googleSignIn.signOut();
   }

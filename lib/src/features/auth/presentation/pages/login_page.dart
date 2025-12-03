@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../domain/usecases/login.dart';
-import '../../data/datasources/google_auth_data_source.dart';
-import '../../data/repositories/auth_repository_impl.dart';
 import '../controllers/auth_controller.dart';
-import '../widgets/animated_logo.dart'; // Import the new widget
+import '../widgets/animated_logo.dart';
 import 'package:bookmyspa/utils/constants/image.dart';
+import '../../../../core/di/di.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,8 +17,20 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    final repo = AuthRepositoryImpl(google: GoogleAuthDataSource());
-    controller = AuthController(loginUseCase: LoginUseCase(repo));
+    controller = sl.get<AuthController>();
+    controller.addListener(_onAuthStateChanged);
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(_onAuthStateChanged);
+    super.dispose();
+  }
+
+  void _onAuthStateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override

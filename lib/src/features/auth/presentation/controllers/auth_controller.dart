@@ -1,11 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/login.dart';
+import '../../domain/usecases/logout.dart';
+import '../../domain/usecases/check_auth_status.dart';
 
 class AuthController extends ChangeNotifier {
   final LoginUseCase loginUseCase;
+  final LogoutUseCase logoutUseCase;
+  final CheckAuthStatusUseCase checkAuthStatusUseCase;
 
-  AuthController({required this.loginUseCase});
+  AuthController({
+    required this.loginUseCase,
+    required this.logoutUseCase,
+    required this.checkAuthStatusUseCase,
+  });
 
   User? currentUser;
   bool _loading = false;
@@ -56,12 +64,32 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // Logout (optional but recommended)
+  // Check if user is already logged in
+  Future<void> checkAuthStatus() async {
+    await _setLoading(true);
+    try {
+      currentUser = await checkAuthStatusUseCase();
+      _setError(null);
+    } catch (e) {
+      _setError(null); // Don't show error on startup
+      currentUser = null;
+    } finally {
+      await _setLoading(false);
+    }
+  }
+
+  // Logout
   Future<void> signOut() async {
-    await loginUseCase.signOut();
-    currentUser = null;
-    _setError(null);
-    notifyListeners();
+    await _setLoading(true);
+    try {
+      await logoutUseCase();
+      currentUser = null;
+      _setError(null);
+    } catch (e) {
+      _setError('Failed to sign out. Please try again.');
+    } finally {
+      await _setLoading(false);
+    }
   }
 
   // Private helpers to avoid code duplication

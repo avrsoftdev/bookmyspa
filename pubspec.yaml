@@ -19,6 +19,7 @@ dependencies:
   geolocator: ^12.0.0
   geocoding: ^3.0.0
   permission_handler: ^11.3.1
+  shared_preferences: ^2.5.3
   # floating_navbar: ^3.0.0
 
 dev_dependencies:

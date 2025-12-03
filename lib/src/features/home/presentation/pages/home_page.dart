@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(title: const Text('BookMySpa'), backgroundColor: Colors.transparent, elevation: 0),
+      appBar: AppBar(title: const Text('BookMySpa'), backgroundColor: const Color.fromARGB(255, 0, 0, 0), elevation: 0),
       body: IndexedStack(index: _currentIndex, children: pages),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: _buildFloatingNavBar(),
