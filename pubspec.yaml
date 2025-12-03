@@ -28,6 +28,7 @@ dependencies:
   path: ^1.9.1
   stack_trace: ^1.12.1
   web: ^1.1.1
+  flutter_screenutil: ^5.9.3
   # floating_navbar: ^3.0.0
 
 dev_dependencies:
