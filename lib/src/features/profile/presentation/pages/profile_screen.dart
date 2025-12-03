@@ -109,6 +109,15 @@ class ProfileScreen extends StatelessWidget {
                                     .headlineMedium
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                phone.isNotEmpty ? phone : 'No phone added',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               InkWell(
                                 onTap: () {
