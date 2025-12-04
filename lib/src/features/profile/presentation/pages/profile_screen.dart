@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profile_screen.dart';
+import '../../../spa_registration/presentation/pages/register_your_spa_page.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -190,7 +191,14 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.add_business_rounded,
                     title: 'List Your Spa',
                     subtitle: 'Register your spa on BookMySpa',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterYourSpaPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuItem(
                     context,
