@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/tokens.dart';
+import '../../../../core/di/di.dart';
+import '../../../location/presentation/bloc/location_bloc.dart';
 
 class RegisterYourSpaPage extends StatefulWidget {
   const RegisterYourSpaPage({super.key});
@@ -12,6 +14,7 @@ class RegisterYourSpaPage extends StatefulWidget {
 
 class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   final _formKey = GlobalKey<FormState>();
+  late LocationBloc _locationBloc;
 
   // === All your original controllers & variables (FULLY RESTORED) ===
   final _spaName = TextEditingController();
@@ -60,6 +63,8 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   @override
   void initState() {
     super.initState();
+    _locationBloc = sl.get<LocationBloc>();
+    _locationBloc.addListener(_onLocationChanged);
     _addPricingRow();
   }
 
@@ -76,6 +81,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       row['service']!.dispose();
       row['price']!.dispose();
     }
+    _locationBloc.removeListener(_onLocationChanged);
     super.dispose();
   }
 
@@ -85,6 +91,30 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
         _pricingRows[i]['price']!.dispose();
         _pricingRows.removeAt(i);
       });
+
+  void _onLocationChanged() {
+    final state = _locationBloc.state;
+    if (state.status == LocationStatus.success && state.location != null) {
+      final location = state.location!;
+      setState(() {
+        _latitude = location.latitude;
+        _longitude = location.longitude;
+        _fullAddress.text = location.address;
+        _city.text = location.city;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location picked: ${location.latitude}, ${location.longitude}')),
+      );
+    } else if (state.status == LocationStatus.error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${state.errorMessage}')),
+      );
+    }
+  }
+
+  Future<void> _pickCurrentLocation() async {
+    await _locationBloc.getCurrentLocation();
+  }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) {
@@ -157,18 +187,39 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                 ]),
                 _inputField(_landmark, "Landmark (Optional)"),
                 SizedBox(height: 16.h),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _pickCurrentLocation(),
-                    icon: Icon(Icons.my_location_rounded, color: AppColors.primary),
-                    label: Text(_latitude != null ? "Location Picked" : "Pick Current Location"),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.primary),
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  ),
+                AnimatedBuilder(
+                  animation: _locationBloc,
+                  builder: (context, child) {
+                    final isLoading = _locationBloc.state.status == LocationStatus.loading;
+                    return SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: isLoading ? null : () => _pickCurrentLocation(),
+                        icon: isLoading
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                                ),
+                              )
+                            : Icon(Icons.my_location_rounded, color: AppColors.primary),
+                        label: Text(
+                          isLoading
+                              ? "Getting Location..."
+                              : _latitude != null
+                                  ? "Location Picked (${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)})"
+                                  : "Pick Current Location",
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.primary),
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ]),
 
@@ -371,8 +422,4 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.add_a_photo_rounded, size: 32, color: AppColors.primary), Text(text, style: TextStyle(color: AppColors.primary))])),
         ),
       );
-
-  void _pickCurrentLocation() {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location picker coming soon!')));
-  }
 }
