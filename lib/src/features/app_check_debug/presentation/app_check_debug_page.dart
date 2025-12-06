@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 
 class AppCheckDebugPage extends StatefulWidget {
@@ -64,45 +65,45 @@ class _AppCheckDebugPageState extends State<AppCheckDebugPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('App Check Debug')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (!kDebugMode) ...[
-              const Text('This debug page is intended for debug builds only.', style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
+              Text('This debug page is intended for debug builds only.', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.sp)),
+              SizedBox(height: 12.h),
             ],
             ElevatedButton.icon(
               onPressed: _loading ? null : () => _fetchToken(forceRefresh: true),
               icon: const Icon(Icons.refresh),
-              label: Text(_loading ? 'Refreshing...' : 'Refresh token'),
+              label: Text(_loading ? 'Refreshing...' : 'Refresh token', style: TextStyle(fontSize: 14.sp)),
             ),
-            const SizedBox(height: 12),
-            SelectableText('Token (copy and paste into Firebase Console → App Check → Debug tokens):', style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 8),
+            SizedBox(height: 12.h),
+            SelectableText('Token (copy and paste into Firebase Console → App Check → Debug tokens):', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14.sp)),
+            SizedBox(height: 8.h),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
                 color: Colors.grey.shade50,
               ),
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Text('Error: $_error', style: const TextStyle(color: Colors.red))
-                      : SelectableText(_token ?? 'No token available. Try Refresh.'),
+                      ? Text('Error: $_error', style: TextStyle(color: Colors.red, fontSize: 14.sp))
+                      : SelectableText(_token ?? 'No token available. Try Refresh.', style: TextStyle(fontSize: 14.sp)),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             Row(children: [
               ElevatedButton(
                 onPressed: (_token == null) ? null : _copyToken,
-                child: const Text('Copy token'),
+                child: Text('Copy token', style: TextStyle(fontSize: 14.sp)),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               ElevatedButton(
                 onPressed: () => _fetchToken(forceRefresh: false),
-                child: const Text('Reload (cached)'),
+                child: Text('Reload (cached)', style: TextStyle(fontSize: 14.sp)),
               ),
             ])
           ],

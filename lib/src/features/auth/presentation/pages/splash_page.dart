@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/di/di.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/animated_logo.dart';
@@ -33,14 +34,14 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedLogo(size: 150),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
+            AnimatedLogo(size: 150.w),
+            SizedBox(height: 24.h),
+            const CircularProgressIndicator(),
           ],
         ),
       ),

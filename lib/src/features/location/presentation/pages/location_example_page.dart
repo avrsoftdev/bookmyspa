@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../bloc/location_bloc.dart';
 import '../widgets/location_widget.dart';
 import '../../../../core/di/di.dart';
@@ -27,54 +28,54 @@ class _LocationExamplePageState extends State<LocationExamplePage> {
         title: const Text('Location Example'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(20.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Location Service Example',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
             
             // Location Widget
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Current Location:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   LocationWidget(locationBloc: _locationBloc),
                 ],
               ),
             ),
             
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
             
             // Manual location fetch button
             ElevatedButton(
               onPressed: () => _locationBloc.getCurrentLocation(),
-              child: const Text('Get Current Location'),
+              child: Text('Get Current Location', style: TextStyle(fontSize: 14.sp)),
             ),
             
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             
             // Reset button
             ElevatedButton(
               onPressed: () => _locationBloc.resetState(),
-              child: const Text('Reset Location'),
+              child: Text('Reset Location', style: TextStyle(fontSize: 14.sp)),
             ),
             
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
             
             // Location details
             ListenableBuilder(
@@ -85,20 +86,20 @@ class _LocationExamplePageState extends State<LocationExamplePage> {
                   final location = state.location!;
                   return Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: EdgeInsets.all(16.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Location Details:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
                           ),
-                          const SizedBox(height: 8),
-                          Text('Latitude: ${location.latitude}'),
-                          Text('Longitude: ${location.longitude}'),
-                          Text('Address: ${location.address}'),
-                          Text('City: ${location.city}'),
-                          Text('Country: ${location.country}'),
+                          SizedBox(height: 8.h),
+                          Text('Latitude: ${location.latitude}', style: TextStyle(fontSize: 14.sp)),
+                          Text('Longitude: ${location.longitude}', style: TextStyle(fontSize: 14.sp)),
+                          Text('Address: ${location.address}', style: TextStyle(fontSize: 14.sp)),
+                          Text('City: ${location.city}', style: TextStyle(fontSize: 14.sp)),
+                          Text('Country: ${location.country}', style: TextStyle(fontSize: 14.sp)),
                         ],
                       ),
                     ),

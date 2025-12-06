@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -96,88 +97,92 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextButton(
             onPressed: _isLoading ? null : _saveProfile,
             child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ? SizedBox(
+                    width: 20.w,
+                    height: 20.h,
+                    child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Text(
+                : Text(
                     'Save',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16.sp),
                   ),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20.w),
         child: Column(
           children: [
             // Name Field
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Full Name',
-                prefixIcon: Icon(Icons.person),
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(fontSize: 14.sp),
+                prefixIcon: const Icon(Icons.person),
+                border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             // Email Field
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email',
-                prefixIcon: Icon(Icons.email),
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(fontSize: 14.sp),
+                prefixIcon: const Icon(Icons.email),
+                border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             // Phone Field
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               maxLength: 10,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Phone Number',
-                prefixIcon: Icon(Icons.phone),
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(fontSize: 14.sp),
+                prefixIcon: const Icon(Icons.phone),
+                border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             // Address Field (replaces Bio)
             TextField(
               controller: _addressController,
               maxLines: 3,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Address',
+                labelStyle: TextStyle(fontSize: 14.sp),
                 hintText: 'e.g. 123 Main St, City, State 12345',
-                prefixIcon: Icon(Icons.location_on),
+                prefixIcon: const Icon(Icons.location_on),
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: 40.h),
 
             // Save Button (extra large button at bottom)
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 50.h,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Save Changes', style: TextStyle(fontSize: 16)),
+                    : Text('Save Changes', style: TextStyle(fontSize: 16.sp)),
               ),
             ),
           ],
