@@ -28,12 +28,12 @@ class _HomePageState extends State<HomePage> {
     {'icon': Images.manicure, 'label': 'Manicure'},
     {'icon': Images.skincare, 'label': 'Skin Care'},
     {'icon': Images.makeup, 'label': 'Makeup'},
-    {'icon': Images.hairstyling, 'label': 'Hairstyling'},
+    {'icon': Images.therapy, 'label': 'Therapy'},
     {'icon': Images.wax, 'label': 'Waxing'},
-    {'icon': Images.bodytreatments, 'label': 'Body'},
+    {'icon': Images.bodytreatments, 'label': 'Bodycare'},
     {'icon': Images.bride, 'label': 'Bridal'},
     {'icon': Images.groom, 'label': 'Grooming'},
-    {'icon': Images.haircut, 'label': 'Haircut'},
+    {'icon': Images.haircut, 'label': 'Haircare'},
     {'icon': Images.menu, 'label': 'See More..'},
   ];
 
