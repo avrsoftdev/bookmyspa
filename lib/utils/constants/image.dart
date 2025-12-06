@@ -12,4 +12,6 @@ class Images {
   static const makeup = 'images/makeup.png'; 
   static const hairstyling = 'images/hairstyling.png'; 
   static const bodytreatments ='images/bodytreatments.png';
+  static const haircut = 'images/barber.png';
+  static const menu = 'images/menu.png';
 }

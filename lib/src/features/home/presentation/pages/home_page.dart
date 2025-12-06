@@ -33,6 +33,8 @@ class _HomePageState extends State<HomePage> {
     {'icon': Images.bodytreatments, 'label': 'Body'},
     {'icon': Images.bride, 'label': 'Bridal'},
     {'icon': Images.groom, 'label': 'Grooming'},
+    {'icon': Images.haircut, 'label': 'Haircut'},
+    {'icon': Images.menu, 'label': 'See More..'},
   ];
 
   @override
