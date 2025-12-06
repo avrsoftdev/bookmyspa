@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 
 enum RegisterSpaStatus { initial, loading, success, error }
@@ -41,6 +46,14 @@ class RegisterSpaController extends ChangeNotifier {
   String? pricingPdfName;
 
   final List<ImageProvider?> photos = [];
+  final List<String> uploadedImageUrls = [];
+
+  // Upload state
+  bool isUploading = false;
+  double uploadProgress = 0.0; // 0.0 - 1.0
+  String? uploadError;
+  String? currentUploadKind; // 'photo' | 'aadhar' | 'pan' | 'license'
+
   final Set<String> selectedFacilities = {};
   final List<String> facilityOptions = const [
     'AC', 'Wi-Fi', 'Parking', 'Steam/Sauna', 'Home Service', 'UPI/Card Payment', 'Separate Rooms', 'Certified Staff'
@@ -49,6 +62,9 @@ class RegisterSpaController extends ChangeNotifier {
   String? aadharFile;
   String? panFile;
   String? licenseFile;
+  String? aadharUrl;
+  String? panUrl;
+  String? licenseUrl;
 
   bool acceptedTerms = false;
 
@@ -84,6 +100,143 @@ class RegisterSpaController extends ChangeNotifier {
   /// Get current location from device
   Future<void> pickCurrentLocation() async {
     await _locationBloc.getCurrentLocation();
+  }
+
+  // Image picker & upload
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> pickAndUploadPhoto() async {
+    uploadError = null;
+    currentUploadKind = 'photo';
+    isUploading = true;
+    uploadProgress = 0.0;
+    notifyListeners();
+
+    try {
+      final XFile? xfile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+      if (xfile == null) {
+        // user cancelled
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+
+      final String id = const Uuid().v4();
+      final ref = FirebaseStorage.instance.ref().child('spa_photos/$id.jpg');
+
+      UploadTask task;
+      if (kIsWeb) {
+        final bytes = await xfile.readAsBytes();
+        task = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      } else {
+        final file = File(xfile.path);
+        task = ref.putFile(file);
+      }
+
+      task.snapshotEvents.listen((snapshot) {
+        if (snapshot.totalBytes > 0) {
+          uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+          notifyListeners();
+        }
+      }, onError: (e) {
+        uploadError = e.toString();
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+      });
+
+      await task;
+      final url = await ref.getDownloadURL();
+      uploadedImageUrls.add(url);
+      if (kIsWeb) {
+        photos.add(NetworkImage(url));
+      } else {
+        photos.add(FileImage(File(xfile.path)));
+      }
+
+      // completed
+      uploadProgress = 1.0;
+      isUploading = false;
+      currentUploadKind = null;
+      notifyListeners();
+    } catch (e) {
+      uploadError = e.toString();
+      isUploading = false;
+      currentUploadKind = null;
+      notifyListeners();
+    }
+  }
+
+  Future<void> pickAndUploadDocument(String kind) async {
+    uploadError = null;
+    currentUploadKind = kind;
+    isUploading = true;
+    uploadProgress = 0.0;
+    notifyListeners();
+
+    try {
+      final XFile? xfile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+      if (xfile == null) {
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+
+      final String id = const Uuid().v4();
+      final ref = FirebaseStorage.instance.ref().child('spa_documents/${kind}_$id.jpg');
+
+      UploadTask task;
+      if (kIsWeb) {
+        final bytes = await xfile.readAsBytes();
+        task = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      } else {
+        final file = File(xfile.path);
+        task = ref.putFile(file);
+      }
+
+      task.snapshotEvents.listen((snapshot) {
+        if (snapshot.totalBytes > 0) {
+          uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+          notifyListeners();
+        }
+      }, onError: (e) {
+        uploadError = e.toString();
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+      });
+
+      await task;
+      final url = await ref.getDownloadURL();
+
+      if (kind == 'aadhar') {
+        aadharFile = xfile.name;
+        aadharUrl = url;
+      } else if (kind == 'pan') {
+        panFile = xfile.name;
+        panUrl = url;
+      } else if (kind == 'license') {
+        licenseFile = xfile.name;
+        licenseUrl = url;
+      }
+
+      uploadProgress = 1.0;
+      isUploading = false;
+      currentUploadKind = null;
+      notifyListeners();
+    } catch (e) {
+      uploadError = e.toString();
+      isUploading = false;
+      currentUploadKind = null;
+      notifyListeners();
+    }
+  }
+
+  void clearUploadError() {
+    uploadError = null;
+    notifyListeners();
   }
 
   /// Check if location is being fetched

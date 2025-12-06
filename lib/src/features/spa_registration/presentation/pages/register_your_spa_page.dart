@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
+import '../controllers/register_spa_controller.dart';
 
 class RegisterYourSpaPage extends StatefulWidget {
   const RegisterYourSpaPage({super.key});
@@ -15,6 +16,7 @@ class RegisterYourSpaPage extends StatefulWidget {
 class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   final _formKey = GlobalKey<FormState>();
   late LocationBloc _locationBloc;
+  late RegisterSpaController _controller;
 
   // === All your original controllers & variables (FULLY RESTORED) ===
   final _spaName = TextEditingController();
@@ -48,15 +50,13 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   final List<Map<String, TextEditingController>> _pricingRows = [];
   String? _pricingPdfName;
 
-  final List<ImageProvider?> _photos = [];
+  
   final Set<String> _selectedFacilities = {};
   final List<String> _facilityOptions = const [
     'AC', 'Wi-Fi', 'Parking', 'Steam/Sauna', 'Home Service', 'UPI/Card Payment', 'Separate Rooms', 'Certified Staff'
   ];
 
-  String? _aadharFile;
-  String? _panFile;
-  String? _licenseFile;
+  
 
   bool _acceptedTerms = false;
 
@@ -65,6 +65,8 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
     super.initState();
     _locationBloc = sl.get<LocationBloc>();
     _locationBloc.addListener(_onLocationChanged);
+    _controller = RegisterSpaController(locationBloc: _locationBloc);
+    _controller.addListener(() => setState(() {}));
     _addPricingRow();
   }
 
@@ -82,6 +84,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       row['price']!.dispose();
     }
     _locationBloc.removeListener(_onLocationChanged);
+    _controller.dispose();
     super.dispose();
   }
 
@@ -147,6 +150,14 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Show upload errors as SnackBar (clear after shown)
+    if (_controller.uploadError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload error: ${_controller.uploadError}')));
+        _controller.clearUploadError();
+      });
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -254,19 +265,33 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                 TextButton.icon(onPressed: _addPricingRow, icon: const Icon(Icons.add_rounded), label: const Text("Add Service"), style: TextButton.styleFrom(foregroundColor: AppColors.primary)),
               ]),
 
-              _buildSection(context, icon: Icons.photo_library_rounded, title: "Photos Upload (Max 10)", children: [
-                _photos.isEmpty
-                    ? _uploadPlaceholder("Tap to add photos", () {})
-                    : GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
-                        itemCount: _photos.length + 1,
-                        itemBuilder: (context, i) => i < _photos.length
-                            ? Stack(children: [Image(image: _photos[i]!), const Positioned(top: 4, right: 4, child: Icon(Icons.cancel_rounded, color: Colors.red))])
-                            : _uploadPlaceholder("+ Add", () {}),
-                      ),
-              ]),
+                _buildSection(context, icon: Icons.photo_library_rounded, title: "Photos Upload (Max 10)", children: [
+                // Show upload progress for photos when active
+                if (_controller.isUploading && _controller.currentUploadKind == 'photo') ...[
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12.h),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Uploading photo...', style: theme.textTheme.bodyMedium),
+                      SizedBox(height: 8.h),
+                      LinearProgressIndicator(value: _controller.uploadProgress, color: AppColors.primary, backgroundColor: Colors.grey[300]),
+                      SizedBox(height: 6.h),
+                      Text('${(_controller.uploadProgress * 100).clamp(0,100).toStringAsFixed(0)}%', style: theme.textTheme.bodySmall),
+                    ]),
+                  ),
+                ],
+
+                _controller.photos.isEmpty
+                  ? _uploadPlaceholder("Tap to add photos", () => _controller.pickAndUploadPhoto())
+                  : GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
+                    itemCount: _controller.photos.length + 1,
+                    itemBuilder: (context, i) => i < _controller.photos.length
+                      ? Stack(children: [Image(image: _controller.photos[i]!), const Positioned(top: 4, right: 4, child: Icon(Icons.cancel_rounded, color: Colors.red))])
+                      : _uploadPlaceholder("+ Add", () => _controller.pickAndUploadPhoto()),
+                    ),
+                ]),
 
               _buildSection(context, icon: Icons.check_circle_rounded, title: "Facilities", children: [
                 Wrap(spacing: 12.w, runSpacing: 10.h, children: _facilityOptions.map((f) => FilterChip(
@@ -280,9 +305,27 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
               ]),
 
               _buildSection(context, icon: Icons.verified_rounded, title: "Business Verification", children: [
-                _fileUploadTile("Aadhar Card *", _aadharFile, () {}),
-                _fileUploadTile("PAN Card *", _panFile, () {}),
-                _fileUploadTile("Business License", _licenseFile, () {}),
+                _fileUploadTile(
+                  "Aadhar Card *",
+                  _controller.aadharFile,
+                  () => _controller.pickAndUploadDocument('aadhar'),
+                  isLoading: _controller.isUploading && _controller.currentUploadKind == 'aadhar',
+                  progress: _controller.uploadProgress,
+                ),
+                _fileUploadTile(
+                  "PAN Card *",
+                  _controller.panFile,
+                  () => _controller.pickAndUploadDocument('pan'),
+                  isLoading: _controller.isUploading && _controller.currentUploadKind == 'pan',
+                  progress: _controller.uploadProgress,
+                ),
+                _fileUploadTile(
+                  "Business License",
+                  _controller.licenseFile,
+                  () => _controller.pickAndUploadDocument('license'),
+                  isLoading: _controller.isUploading && _controller.currentUploadKind == 'license',
+                  progress: _controller.uploadProgress,
+                ),
               ]),
 
               const SizedBox(height: 24),
@@ -397,12 +440,25 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
         ),
       );
 
-  Widget _fileUploadTile(String label, String? fileName, VoidCallback onTap) => ListTile(
+  Widget _fileUploadTile(String label, String? fileName, VoidCallback onTap, {bool isLoading = false, double? progress}) => ListTile(
         contentPadding: EdgeInsets.zero,
         leading: Icon(Icons.upload_file_rounded, color: AppColors.primary),
         title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: fileName != null ? Text(fileName, style: TextStyle(color: AppColors.primary)) : null,
-        trailing: ElevatedButton(onPressed: onTap, child: const Text("Upload")),
+        trailing: isLoading
+            ? SizedBox(
+                width: 120,
+                child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, value: progress, valueColor: AlwaysStoppedAnimation(AppColors.primary)),
+                  ),
+                  SizedBox(width: 8),
+                  Text('${((progress ?? 0) * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12)),
+                ]),
+              )
+            : ElevatedButton(onPressed: onTap, child: const Text("Upload")),
       );
 
   Widget _pricingRow(int index, Map<String, TextEditingController> row) => Padding(

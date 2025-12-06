@@ -29,6 +29,10 @@ dependencies:
   stack_trace: ^1.12.1
   web: ^1.1.1
   flutter_screenutil: ^5.9.3
+  firebase_storage: ^13.0.4
+  image_picker: ^0.8.7+5
+  uuid: ^4.2.0
+  firebase_app_check: ^0.4.1+2
   # floating_navbar: ^3.0.0
 
 dev_dependencies:
