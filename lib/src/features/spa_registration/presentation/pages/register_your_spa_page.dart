@@ -129,21 +129,57 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       return;
     }
 
-    showDialog(
+    // Collect form data into a map and delegate persistence to the controller.
+    final Map<String, dynamic> data = {
+      'businessName': _spaName.text.trim(),
+      'ownerName': _ownerName.text.trim(),
+      'businessType': _businessType,
+      'yearOfEst': _yearOfEst.text.trim(),
+      'gstNumber': _gstNumber.text.trim(),
+
+      'primaryMobile': _primaryMobile.text.trim(),
+      'secondaryMobile': _secondaryMobile.text.trim(),
+      'businessEmail': _businessEmail.text.trim(),
+      'whatsappNumber': _whatsappNumber.text.trim(),
+
+      'fullAddress': _fullAddress.text.trim(),
+      'city': _city.text.trim(),
+      'pincode': _pincode.text.trim(),
+      'landmark': _landmark.text.trim(),
+      'latitude': _latitude,
+      'longitude': _longitude,
+
+      'openingTime': _openingTime?.format(context),
+      'closingTime': _closingTime?.format(context),
+      'weeklyOff': _weeklyOff.text.trim(),
+      'numStaff': _numStaff.text.trim(),
+
+      'services': _selectedServices.toList(),
+      'pricing': _pricingRows
+          .map((r) => {'service': r['service']!.text.trim(), 'price': r['price']!.text.trim()})
+          .where((m) => m['service']!.isNotEmpty && m['price']!.isNotEmpty)
+          .toList(),
+      'facilities': _selectedFacilities.toList(),
+      'pricingPdfName': _pricingPdfName,
+      'acceptedTerms': _acceptedTerms,
+    };
+
+    // Show a blocking progress dialog while submission is in progress.
+    showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Submitted!', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-        content: const Text('Your spa registration has been submitted successfully.\nWe will review and notify you soon.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: TextStyle(color: AppColors.primary)),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (_) => Center(child: CircularProgressIndicator()),
     );
+
+    _controller.submitSpa(data).then((docRef) {
+      Navigator.of(context).pop(); // remove progress
+
+      // Navigate to success screen and replace this page so user can't go back.
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const _SubmissionSuccessPage()));
+    }).catchError((e) {
+      Navigator.of(context).pop(); // remove progress
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to submit: ${e.toString()}')));
+    });
   }
 
   @override
@@ -306,14 +342,14 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
 
               _buildSection(context, icon: Icons.verified_rounded, title: "Business Verification", children: [
                 _fileUploadTile(
-                  "Aadhar Card *",
+                  "Aadhar Card",
                   _controller.aadharFile,
                   () => _controller.pickAndUploadDocument('aadhar'),
                   isLoading: _controller.isUploading && _controller.currentUploadKind == 'aadhar',
                   progress: _controller.uploadProgress,
                 ),
                 _fileUploadTile(
-                  "PAN Card *",
+                  "PAN Card",
                   _controller.panFile,
                   () => _controller.pickAndUploadDocument('pan'),
                   isLoading: _controller.isUploading && _controller.currentUploadKind == 'pan',
@@ -478,4 +514,42 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.add_a_photo_rounded, size: 32, color: AppColors.primary), Text(text, style: TextStyle(color: AppColors.primary))])),
         ),
       );
+  }
+
+// Simple full-screen success page shown after submission
+class _SubmissionSuccessPage extends StatelessWidget {
+  const _SubmissionSuccessPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Submitted'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle_outline, size: 88, color: theme.colorScheme.primary),
+              const SizedBox(height: 24),
+              Text('Your spa will be listed shortly once it is reviewed.', textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+

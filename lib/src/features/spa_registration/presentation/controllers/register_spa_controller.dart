@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 
@@ -342,5 +343,37 @@ class RegisterSpaController extends ChangeNotifier {
 
     _locationBloc.removeListener(_onLocationChanged);
     super.dispose();
+  }
+
+  /// Submit spa data to Firestore. This method appends the uploaded
+  /// asset URLs that exist in the controller (photos, aadharUrl, panUrl, licenseUrl)
+  /// and writes a document under `spas` with a server timestamp and pending status.
+  Future<DocumentReference> submitSpa(Map<String, dynamic> spaData) async {
+    status = RegisterSpaStatus.loading;
+    notifyListeners();
+
+    try {
+      final data = Map<String, dynamic>.from(spaData);
+
+      // Include uploaded assets if present
+      if (uploadedImageUrls.isNotEmpty) data['photos'] = uploadedImageUrls;
+      if (aadharUrl != null) data['aadharUrl'] = aadharUrl;
+      if (panUrl != null) data['panUrl'] = panUrl;
+      if (licenseUrl != null) data['licenseUrl'] = licenseUrl;
+
+      data['createdAt'] = FieldValue.serverTimestamp();
+      data['status'] = 'pending_review';
+
+      final docRef = await FirebaseFirestore.instance.collection('spas').add(data);
+
+      status = RegisterSpaStatus.success;
+      notifyListeners();
+      return docRef;
+    } catch (e) {
+      errorMessage = e.toString();
+      status = RegisterSpaStatus.error;
+      notifyListeners();
+      rethrow;
+    }
   }
 }
