@@ -29,6 +29,9 @@ class SpaRepositoryImpl implements SpaRepository {
           description: data['description'] ?? '',
           fullAddress: data['fullAddress'] ?? '',
           services: List<String>.from((data['services'] as List?) ?? const []),
+          pricing: ((data['pricing'] as List?) ?? const [])
+              .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
+              .toList(),
           photos: List<String>.from((data['photos'] as List?) ?? const []),
           status: data['status'] ?? '',
           publishedAt: publishedAt,
@@ -54,6 +57,9 @@ class SpaRepositoryImpl implements SpaRepository {
         description: data['description'] ?? '',
         fullAddress: data['fullAddress'] ?? '',
         services: List<String>.from((data['services'] as List?) ?? const []),
+        pricing: ((data['pricing'] as List?) ?? const [])
+            .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
+            .toList(),
         photos: List<String>.from((data['photos'] as List?) ?? const []),
         status: data['status'] ?? '',
         publishedAt: publishedAt,
