@@ -5,6 +5,7 @@ import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_sp
 import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
+import '../../../spa_browse/presentation/pages/favorites_page.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 import '../../../../core/di/di.dart';
 // TODO: change this import to the actual path of your Images class
@@ -91,12 +92,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
-          const Center(
-            child: Text(
-              'Favourites',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
+          const FavoritesPage(),
           const ProfileScreen(),
         ],
       ),

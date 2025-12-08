@@ -123,6 +123,14 @@ class _AdminWebPageState extends State<AdminWebPage> {
           _buildInfoRow('GST Number', data['gstNumber'] ?? '-'),
           SizedBox(height: 24.h),
 
+          // Description
+          if ((data['description'] as String?)?.isNotEmpty == true) ...[
+            Text('Spa Description', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20.sp)),
+            SizedBox(height: 12.h),
+            Text(data['description'], style: TextStyle(fontSize: 14.sp)),
+            SizedBox(height: 24.h),
+          ],
+
           // Contact info
           Text('Contact Information', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20.sp)),
           SizedBox(height: 12.h),

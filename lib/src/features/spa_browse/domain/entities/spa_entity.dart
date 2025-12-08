@@ -2,6 +2,8 @@ class SpaEntity {
   final String id;
   final String businessName;
   final String city;
+  final String description;
+  final String fullAddress;
   final List<String> services;
   final List<String> photos;
   final String status;
@@ -11,6 +13,8 @@ class SpaEntity {
     required this.id,
     required this.businessName,
     required this.city,
+    required this.description,
+    required this.fullAddress,
     required this.services,
     required this.photos,
     required this.status,
@@ -22,6 +26,8 @@ class SpaEntity {
       id: id,
       businessName: map['businessName'] ?? '',
       city: map['city'] ?? '',
+      description: map['description'] ?? '',
+      fullAddress: map['fullAddress'] ?? '',
       services: List<String>.from((map['services'] as List?) ?? const []),
       photos: List<String>.from((map['photos'] as List?) ?? const []),
       status: map['status'] ?? '',

@@ -4,6 +4,8 @@ import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spas_by_category_usecase.dart';
 import '../../../../core/di/di.dart';
 import 'spa_detail_page.dart';
+import '../controllers/favorites_controller.dart';
+import '../../../../core/di/di.dart';
 
 class CategorySpasArgs {
   final String category;
@@ -64,37 +66,163 @@ class _SpaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = spa.photos.isNotEmpty ? spa.photos.first : null;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 8.r, spreadRadius: 1.r),
-        ],
-      ),
-      child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8.r),
-          child: imageUrl != null
-              ? Image.network(
-                  imageUrl,
-                  width: 56.w,
-                  height: 56.w,
-                  fit: BoxFit.cover,
-                )
-              : Container(width: 56.w, height: 56.w, color: Colors.grey[300]),
+    final favController = sl.get<FavoritesController>();
+    return Stack(
+      children: [
+        InkWell(
+          onTap: () {
+            Navigator.of(
+              context,
+            ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spa.id));
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10.r,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.all(12.w),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: imageUrl != null
+                      ? Image.network(
+                          imageUrl,
+                          width: 72.w,
+                          height: 72.w,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: 72.w,
+                          height: 72.w,
+                          color: Colors.grey[300],
+                          child: Icon(
+                            Icons.spa_rounded,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        spa.businessName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 16.sp,
+                            color: Colors.deepPurple,
+                          ),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              spa.city,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.place_rounded,
+                            size: 16.sp,
+                            color: Colors.deepPurple,
+                          ),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              spa.fullAddress.isNotEmpty
+                                  ? spa.fullAddress
+                                  : 'Address not available',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Colors.black45),
+              ],
+            ),
+          ),
         ),
-        title: Text(
-          spa.businessName,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+        Positioned(
+          right: 10.w,
+          bottom: 10.h,
+          child: StreamBuilder<bool>(
+            stream: favController.isFavoriteStream(spa.id),
+            initialData: false,
+            builder: (context, snapshot) {
+              final isFav = snapshot.data ?? false;
+              return InkWell(
+                onTap: () async {
+                  try {
+                    await favController.toggleFavorite(spa.id, spa);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          e.toString().replaceFirst('Exception: ', ''),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 6),
+                    ],
+                  ),
+                  padding: EdgeInsets.all(8.w),
+                  child: Icon(
+                    isFav
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: isFav ? Colors.redAccent : Colors.black54,
+                    size: 20.sp,
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-        subtitle: Text(spa.city, style: TextStyle(fontSize: 13.sp)),
-        onTap: () {
-          Navigator.of(
-            context,
-          ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spa.id));
-        },
-      ),
+      ],
     );
   }
 }

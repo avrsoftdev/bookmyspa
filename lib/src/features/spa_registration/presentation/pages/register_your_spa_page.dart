@@ -24,6 +24,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   String? _businessType;
   final _yearOfEst = TextEditingController();
   final _gstNumber = TextEditingController();
+  final _description = TextEditingController();
 
   final _primaryMobile = TextEditingController();
   final _secondaryMobile = TextEditingController();
@@ -78,6 +79,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       _primaryMobile, _secondaryMobile, _businessEmail, _whatsappNumber,
       _fullAddress, _city, _pincode, _landmark,
       _weeklyOff, _numStaff,
+      _description,
     ]) c.dispose();
     for (var row in _pricingRows) {
       row['service']!.dispose();
@@ -136,6 +138,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       'businessType': _businessType,
       'yearOfEst': _yearOfEst.text.trim(),
       'gstNumber': _gstNumber.text.trim(),
+      'description': _description.text.trim(),
 
       'primaryMobile': _primaryMobile.text.trim(),
       'secondaryMobile': _secondaryMobile.text.trim(),
@@ -292,6 +295,15 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                   backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
                   onSelected: (v) => setState(() => v ? _selectedServices.add(s) : _selectedServices.remove(s)),
                 )).toList()),
+              ]),
+
+              _buildSection(context, icon: Icons.description_rounded, title: "Spa Description", children: [
+                _inputField(
+                  _description,
+                  "Spa Description *",
+                  hint: "Describe your services, ambiance, certifications, and specialties",
+                  maxLines: 4,
+                ),
               ]),
 
               _buildSection(context, icon: Icons.price_check_rounded, title: "Pricing", children: [
