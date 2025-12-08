@@ -9,6 +9,11 @@ import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/auth/domain/usecases/check_auth_status.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../features/spa_browse/domain/repositories/spa_repository.dart';
+import '../../features/spa_browse/data/repositories/spa_repository_impl.dart';
+import '../../features/spa_browse/domain/usecases/stream_spas_by_category_usecase.dart';
+import '../../features/spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 
 // Simple service locator
 class ServiceLocator {
@@ -40,14 +45,22 @@ Future<void> initDependencies() async {
   sl.register<LoginUseCase>(LoginUseCase(sl.get()));
   sl.register<LogoutUseCase>(LogoutUseCase(sl.get()));
   sl.register<CheckAuthStatusUseCase>(CheckAuthStatusUseCase(sl.get()));
-  sl.register<AuthController>(AuthController(
-    loginUseCase: sl.get(),
-    logoutUseCase: sl.get(),
-    checkAuthStatusUseCase: sl.get(),
-  ));
+  sl.register<AuthController>(
+    AuthController(
+      loginUseCase: sl.get(),
+      logoutUseCase: sl.get(),
+      checkAuthStatusUseCase: sl.get(),
+    ),
+  );
 
   // Location
   sl.register<LocationRepository>(LocationRepositoryImpl());
   sl.register<GetCurrentLocationUseCase>(GetCurrentLocationUseCase(sl.get()));
   sl.register<LocationBloc>(LocationBloc(sl.get()));
+
+  sl.register<SpaRepository>(SpaRepositoryImpl(FirebaseFirestore.instance));
+  sl.register<StreamSpasByCategoryUseCase>(
+    StreamSpasByCategoryUseCase(sl.get()),
+  );
+  sl.register<StreamSpaByIdUseCase>(StreamSpaByIdUseCase(sl.get()));
 }

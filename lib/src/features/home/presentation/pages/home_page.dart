@@ -1,6 +1,7 @@
 import 'package:bookmyspa/src/features/location/presentation/widgets/floating_nav_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/location_app_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/spa_search_field.dart';
+import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_spa_list_page.dart';
 import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
@@ -65,10 +66,7 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.notifications_rounded,
-              color: Colors.white,
-            ),
+            icon: const Icon(Icons.notifications_rounded, color: Colors.white),
             onPressed: () {},
           ),
         ],
@@ -119,36 +117,44 @@ class _HomePageState extends State<HomePage> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _categories.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,        // 4 icons per row like Justdial
+        crossAxisCount: 4, // 4 icons per row like Justdial
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 0.8,    // tweak if you want icons/text taller/shorter
+        childAspectRatio: 0.8, // tweak if you want icons/text taller/shorter
       ),
       itemBuilder: (context, index) {
         final item = _categories[index];
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: 48,
-              width: 48,
-              child: Image.asset(
-                item['icon']!,
-                fit: BoxFit.contain,
+        final label = item['label']!;
+        return InkWell(
+          onTap: label == 'See More..'
+              ? null
+              : () {
+                  Navigator.of(context).pushNamed(
+                    '/category-spas',
+                    arguments: CategorySpasArgs(label),
+                  );
+                },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 48,
+                width: 48,
+                child: Image.asset(item['icon']!, fit: BoxFit.contain),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              item['label']!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
