@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 import '../../../../core/di/di.dart';
+import '../../../../core/theme/tokens.dart';
+// import 'package:intl/intl.dart';
 
 class SpaDetailArgs {
   final String spaId;
@@ -41,8 +43,15 @@ class SpaDetailPage extends StatelessWidget {
               _SectionTitle(title: 'Services'),
               _Chips(items: spa.services),
               SizedBox(height: 16.h),
+              _SectionTitle(title: 'Pricing'),
+              SizedBox(height: 8.h),
+              _PricingList(pricing: spa.pricing),
+              SizedBox(height: 16.h),
               _SectionTitle(title: 'Location'),
-              Text(spa.city, style: TextStyle(fontSize: 14.sp)),
+              SizedBox(height: 8.h),
+              _LocationInfo(spa: spa),
+              // SizedBox(height: 16.h),
+              // _StatusInfo(spa: spa),
             ],
           );
         },
@@ -114,10 +123,127 @@ class _Chips extends StatelessWidget {
   const _Chips({required this.items});
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Text('No services listed', style: TextStyle(fontSize: 14.sp, color: Colors.grey));
+    }
     return Wrap(
       spacing: 8.w,
       runSpacing: 8.h,
       children: items.map((e) => Chip(label: Text(e, style: TextStyle(fontSize: 13.sp)))).toList(),
+    );
+  }
+}
+
+class _PricingList extends StatelessWidget {
+  final List<ServicePricing> pricing;
+  const _PricingList({required this.pricing});
+  @override
+  Widget build(BuildContext context) {
+    if (pricing.isEmpty) {
+      return Text('No pricing information available', style: TextStyle(fontSize: 14.sp, color: Colors.grey));
+    }
+    return Column(
+      children: pricing.map((p) => Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: Text(p.service, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500))),
+            Text('₹${p.price}', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.primary)),
+          ],
+        ),
+      )).toList(),
+    );
+  }
+}
+
+class _LocationInfo extends StatelessWidget {
+  final SpaEntity spa;
+  const _LocationInfo({required this.spa});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (spa.fullAddress.isNotEmpty) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.location_on, size: 18.sp, color: AppColors.primary),
+              SizedBox(width: 8.w),
+              Expanded(child: Text(spa.fullAddress, style: TextStyle(fontSize: 14.sp))),
+            ],
+          ),
+          SizedBox(height: 8.h),
+        ],
+        Row(
+          children: [
+            Icon(Icons.location_city, size: 18.sp, color: AppColors.primary),
+            SizedBox(width: 8.w),
+            Text(spa.city, style: TextStyle(fontSize: 14.sp)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusInfo extends StatelessWidget {
+  final SpaEntity spa;
+  const _StatusInfo({required this.spa});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 16.sp, color: Colors.black54),
+              SizedBox(width: 8.w),
+              // Text('Status:', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+              SizedBox(width: 8.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                // decoration: BoxDecoration(
+                //   color: spa.status == 'published' ? Colors.green : Colors.orange,
+                //   borderRadius: BorderRadius.circular(4.r),
+                // ),
+                child: Text(
+                  spa.status.toUpperCase(),
+                  style: TextStyle(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          if (spa.publishedAt != null) ...[
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 16.sp, color: Colors.black54),
+                SizedBox(width: 8.w),
+                Text('Published:', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+                SizedBox(width: 8.w),
+                // Text(
+                //   DateFormat('MMM dd, yyyy').format(spa.publishedAt!),
+                //   style: TextStyle(fontSize: 13.sp, color: Colors.black87),
+                // ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
