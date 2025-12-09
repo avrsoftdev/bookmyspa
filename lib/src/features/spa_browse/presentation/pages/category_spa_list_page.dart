@@ -1,3 +1,4 @@
+import 'package:bookmyspa/src/core/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
@@ -162,7 +163,7 @@ class CategorySpaListPage extends StatelessWidget {
                   separatorBuilder: (context, index) => SizedBox(height: 16.h),
                   itemBuilder: (context, index) {
                     final spa = spas[index];
-                    return _SpaCard(spa: spa, index: index);
+                    return SpaCard(spa: spa, index: index);
                   },
                 ),
               ),
@@ -174,16 +175,22 @@ class CategorySpaListPage extends StatelessWidget {
   }
 }
 
-class _SpaCard extends StatefulWidget {
+class SpaCard extends StatefulWidget {
   final SpaEntity spa;
   final int index;
-  const _SpaCard({required this.spa, required this.index});
+
+  const SpaCard({
+    super.key,
+    required this.spa,
+    required this.index,
+  });
 
   @override
-  State<_SpaCard> createState() => _SpaCardState();
+  State<SpaCard> createState() => _SpaCardState();
 }
 
-class _SpaCardState extends State<_SpaCard> with SingleTickerProviderStateMixin {
+class _SpaCardState extends State<SpaCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
@@ -191,318 +198,177 @@ class _SpaCardState extends State<_SpaCard> with SingleTickerProviderStateMixin 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
-      duration: Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: Offset(0.3, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    Future.delayed(Duration(milliseconds: widget.index * 50), () {
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(curve: Curves.easeOutBack, parent: _controller),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.25, 0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(curve: Curves.easeOut, parent: _controller),
+    );
+
+    Future.delayed(Duration(milliseconds: widget.index * 60), () {
       if (mounted) _controller.forward();
     });
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final imageUrl = widget.spa.photos.isNotEmpty ? widget.spa.photos.first : null;
+    final spa = widget.spa;
     final favController = sl.get<FavoritesController>();
-    
+    final imageUrl = spa.photos.isNotEmpty ? spa.photos.first : null;
+
     return SlideTransition(
       position: _slideAnimation,
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: Stack(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  Navigator.of(context).pushNamed(
-                    '/spa-services',
-                    arguments: SpaServicesArgs(widget.spa.id),
-                  );
-                },
-                borderRadius: BorderRadius.circular(20.r),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.08),
-                        blurRadius: 20.r,
-                        offset: Offset(0, 8.h),
-                        spreadRadius: 0,
-                      ),
-                    ],
+        child: Container(
+          margin: EdgeInsets.only(bottom: 16.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A), // DARK CARD BACKGROUND
+            borderRadius: BorderRadius.circular(20.r),
+
+            // PRIMARY OUTLINE
+            border: Border.all(
+              color: AppColors.primary,
+              width: 1.8,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20.r),
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/spa-services',
+                arguments: SpaServicesArgs(spa.id),
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                
+                // IMAGE SECTION (UNCHANGED)
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20.r),
+                    topRight: Radius.circular(20.r),
                   ),
+                  child: imageUrl != null
+                      ? Image.network(
+                          imageUrl,
+                          height: 180.h,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          height: 180.h,
+                          color: AppColors.primary.withOpacity(0.15),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.spa_rounded,
+                            size: 60.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                ),
+
+                // CONTENT SECTION
+                Padding(
+                  padding: EdgeInsets.all(16.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Image Section
-                      Stack(
+                      // Spa name row
+                      Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(20.r),
-                              topRight: Radius.circular(20.r),
-                            ),
-                            child: imageUrl != null
-                                ? Image.network(
-                                    imageUrl,
-                                    width: double.infinity,
-                                    height: 180.h,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        width: double.infinity,
-                                        height: 180.h,
-                                        color: Colors.grey[200],
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.deepPurple,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        width: double.infinity,
-                                        height: 180.h,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.deepPurple.shade100,
-                                              Colors.deepPurple.shade50,
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.spa_rounded,
-                                          size: 64.sp,
-                                          color: Colors.deepPurple.shade200,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Container(
-                                    width: double.infinity,
-                                    height: 180.h,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.deepPurple.shade100,
-                                          Colors.deepPurple.shade50,
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.spa_rounded,
-                                      size: 64.sp,
-                                      color: Colors.deepPurple.shade200,
-                                    ),
-                                  ),
-                          ),
-                          // Gradient overlay
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              height: 60.h,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.3),
-                                  ],
-                                ),
+                          Expanded(
+                            child: Text(
+                              spa.businessName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white, // WHITE TEXT
                               ),
                             ),
                           ),
-                          // Favorite button
-                          Positioned(
-                            top: 12.h,
-                            right: 12.w,
-                            child: StreamBuilder<bool>(
-                              stream: favController.isFavoriteStream(widget.spa.id),
-                              initialData: false,
-                              builder: (context, snapshot) {
-                                final isFav = snapshot.data ?? false;
-                                return Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () async {
-                                      try {
-                                        await favController.toggleFavorite(
-                                          widget.spa.id,
-                                          widget.spa,
-                                        );
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                e.toString().replaceFirst('Exception: ', ''),
-                                              ),
-                                              backgroundColor: Colors.red[400],
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10.r),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    borderRadius: BorderRadius.circular(25.r),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.95),
-                                        borderRadius: BorderRadius.circular(25.r),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.1),
-                                            blurRadius: 8,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      padding: EdgeInsets.all(10.w),
-                                      child: Icon(
-                                        isFav
-                                            ? Icons.favorite_rounded
-                                            : Icons.favorite_border_rounded,
-                                        color: isFav ? Colors.red : Colors.grey[700],
-                                        size: 22.sp,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                          Icon(Icons.arrow_forward_ios_rounded,
+                              size: 16.sp, color: AppColors.primary),
                         ],
                       ),
-                      // Content Section
-                      Padding(
-                        padding: EdgeInsets.all(16.w),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                      SizedBox(height: 10.h),
+
+                      // CITY TAG (DARK WITH PRIMARY OUTLINE)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 5.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2A2A2A),
+                          borderRadius: BorderRadius.circular(6.r),
+                          border: Border.all(
+                            color: AppColors.primary,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    widget.spa.businessName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 18.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black87,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 16.sp,
-                                  color: Colors.deepPurple,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12.h),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.deepPurple.shade50,
-                                    borderRadius: BorderRadius.circular(6.r),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.location_on_rounded,
-                                        size: 14.sp,
-                                        color: Colors.deepPurple,
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        widget.spa.city,
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.deepPurple,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10.h),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.place_outlined,
-                                  size: 16.sp,
-                                  color: Colors.grey[600],
-                                ),
-                                SizedBox(width: 6.w),
-                                Expanded(
-                                  child: Text(
-                                    widget.spa.fullAddress.isNotEmpty
-                                        ? widget.spa.fullAddress
-                                        : 'Address not available',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 13.sp,
-                                      color: Colors.grey[600],
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            Icon(Icons.location_on_rounded,
+                                size: 14.sp, color: AppColors.primary),
+                            SizedBox(width: 4.w),
+                            Text(
+                              spa.city,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
                       ),
+
+                      SizedBox(height: 12.h),
+
+                      // ADDRESS
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.place_outlined,
+                              size: 16.sp, color: Colors.grey[400]),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              spa.fullAddress.isNotEmpty
+                                  ? spa.fullAddress
+                                  : "Address not available",
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                height: 1.4,
+                                color: Colors.grey[300], // LIGHT GREY TEXT
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
