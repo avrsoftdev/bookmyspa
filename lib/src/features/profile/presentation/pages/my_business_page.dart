@@ -17,26 +17,34 @@ class MyBusinessPage extends StatelessWidget {
     final useCase = sl.get<StreamSpasByOwnerUseCase>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        title: const Text('My Business'),
-        backgroundColor: Colors.deepPurple,
+        title: const Text('My Business', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
       ),
       body: uid == null
-          ? const Center(child: Text('Please login to view your business'))
+          ? const Center(
+              child: Text(
+                'Please login to view your business',
+                style: TextStyle(color: Colors.white),
+              ),
+            )
           : StreamBuilder<List<SpaEntity>>(
               stream: useCase(uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Colors.deepPurple),
+                    child: CircularProgressIndicator(color: Colors.white),
                   );
                 }
                 if (snapshot.hasError) {
                   return Center(
-                    child: Text('Error: ${snapshot.error}'),
+                    child: Text(
+                      'Error: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   );
                 }
                 final spas = snapshot.data ?? const [];
@@ -45,12 +53,21 @@ class MyBusinessPage extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.store_mall_directory_outlined,
-                            size: 64.sp, color: Colors.grey[300]),
+                        Icon(
+                          Icons.store_mall_directory_outlined,
+                          size: 64.sp,
+                          color: Colors.grey[300],
+                        ),
                         SizedBox(height: 12.h),
-                        const Text('No businesses found'),
+                        const Text(
+                          'No businesses found',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         SizedBox(height: 6.h),
-                        const Text('Register your spa from Profile > List Your Spa'),
+                        const Text(
+                          'Register your spa from Profile > List Your Spa',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ],
                     ),
                   );
@@ -93,15 +110,14 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
-      CurvedAnimation(curve: Curves.easeOutBack, parent: _controller),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.95,
+      end: 1.0,
+    ).animate(CurvedAnimation(curve: Curves.easeOutBack, parent: _controller));
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.15, 0),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(curve: Curves.easeOut, parent: _controller),
-    );
+    ).animate(CurvedAnimation(curve: Curves.easeOut, parent: _controller));
     Future.delayed(Duration(milliseconds: widget.index * 60), () {
       if (mounted) _controller.forward();
     });
@@ -149,8 +165,11 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                           height: 160.h,
                           color: AppColors.primary.withOpacity(0.15),
                           alignment: Alignment.center,
-                          child: Icon(Icons.spa_rounded,
-                              size: 52.sp, color: AppColors.primary),
+                          child: Icon(
+                            Icons.spa_rounded,
+                            size: 52.sp,
+                            color: AppColors.primary,
+                          ),
                         ),
                 ),
                 Padding(
@@ -178,8 +197,11 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                       SizedBox(height: 10.h),
                       Row(
                         children: [
-                          Icon(Icons.location_on_rounded,
-                              size: 16.sp, color: AppColors.primary),
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 16.sp,
+                            color: AppColors.primary,
+                          ),
                           SizedBox(width: 6.w),
                           Text(
                             spa.city,
@@ -195,8 +217,11 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.place_outlined,
-                              size: 16.sp, color: Colors.grey[400]),
+                          Icon(
+                            Icons.place_outlined,
+                            size: 16.sp,
+                            color: Colors.grey[400],
+                          ),
                           SizedBox(width: 6.w),
                           Expanded(
                             child: Text(
@@ -267,7 +292,11 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         status.isNotEmpty ? status.replaceAll('_', ' ') : 'unknown',
-        style: TextStyle(fontSize: 12.sp, color: _fg(), fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 12.sp,
+          color: _fg(),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

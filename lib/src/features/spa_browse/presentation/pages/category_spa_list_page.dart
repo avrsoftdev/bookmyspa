@@ -22,16 +22,17 @@ class CategorySpaListPage extends StatelessWidget {
     final useCase = sl.get<StreamSpasByCategoryUseCase>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
         title: Text(
           category,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 20.sp,
+            color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
       ),
@@ -50,10 +51,7 @@ class CategorySpaListPage extends StatelessWidget {
                   SizedBox(height: 16.h),
                   Text(
                     'Loading spas...',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14.sp,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14.sp),
                   ),
                 ],
               ),
@@ -125,10 +123,7 @@ class CategorySpaListPage extends StatelessWidget {
                   SizedBox(height: 8.h),
                   Text(
                     'No spas available in $category category',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -179,18 +174,13 @@ class SpaCard extends StatefulWidget {
   final SpaEntity spa;
   final int index;
 
-  const SpaCard({
-    super.key,
-    required this.spa,
-    required this.index,
-  });
+  const SpaCard({super.key, required this.spa, required this.index});
 
   @override
   State<SpaCard> createState() => _SpaCardState();
 }
 
-class _SpaCardState extends State<SpaCard>
-    with SingleTickerProviderStateMixin {
+class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
@@ -204,16 +194,15 @@ class _SpaCardState extends State<SpaCard>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(curve: Curves.easeOutBack, parent: _controller),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.0,
+    ).animate(CurvedAnimation(curve: Curves.easeOutBack, parent: _controller));
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.25, 0),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(curve: Curves.easeOut, parent: _controller),
-    );
+    ).animate(CurvedAnimation(curve: Curves.easeOut, parent: _controller));
 
     Future.delayed(Duration(milliseconds: widget.index * 60), () {
       if (mounted) _controller.forward();
@@ -237,10 +226,7 @@ class _SpaCardState extends State<SpaCard>
             borderRadius: BorderRadius.circular(20.r),
 
             // PRIMARY OUTLINE
-            border: Border.all(
-              color: AppColors.primary,
-              width: 1.8,
-            ),
+            border: Border.all(color: AppColors.primary, width: 1.8),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(20.r),
@@ -254,7 +240,6 @@ class _SpaCardState extends State<SpaCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
                 Stack(
                   children: [
                     ClipRRect(
@@ -292,12 +277,17 @@ class _SpaCardState extends State<SpaCard>
                             shape: const CircleBorder(),
                             child: IconButton(
                               icon: Icon(
-                                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                isFav
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
                                 color: isFav ? AppColors.primary : Colors.white,
                               ),
                               onPressed: () async {
                                 try {
-                                  await favController.toggleFavorite(spa.id, spa);
+                                  await favController.toggleFavorite(
+                                    spa.id,
+                                    spa,
+                                  );
                                 } catch (e) {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -335,8 +325,11 @@ class _SpaCardState extends State<SpaCard>
                               ),
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios_rounded,
-                              size: 16.sp, color: AppColors.primary),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 16.sp,
+                            color: AppColors.primary,
+                          ),
                         ],
                       ),
 
@@ -345,7 +338,9 @@ class _SpaCardState extends State<SpaCard>
                       // CITY TAG (DARK WITH PRIMARY OUTLINE)
                       Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 10.w, vertical: 5.h),
+                          horizontal: 10.w,
+                          vertical: 5.h,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF2A2A2A),
                           borderRadius: BorderRadius.circular(6.r),
@@ -357,8 +352,11 @@ class _SpaCardState extends State<SpaCard>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.location_on_rounded,
-                                size: 14.sp, color: AppColors.primary),
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: 14.sp,
+                              color: AppColors.primary,
+                            ),
                             SizedBox(width: 4.w),
                             Text(
                               spa.city,
@@ -378,8 +376,11 @@ class _SpaCardState extends State<SpaCard>
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.place_outlined,
-                              size: 16.sp, color: Colors.grey[400]),
+                          Icon(
+                            Icons.place_outlined,
+                            size: 16.sp,
+                            color: Colors.grey[400],
+                          ),
                           SizedBox(width: 6.w),
                           Expanded(
                             child: Text(
