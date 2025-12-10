@@ -255,29 +255,63 @@ class _SpaCardState extends State<SpaCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 
-                // IMAGE SECTION (UNCHANGED)
-                ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.r),
-                    topRight: Radius.circular(20.r),
-                  ),
-                  child: imageUrl != null
-                      ? Image.network(
-                          imageUrl,
-                          height: 180.h,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          height: 180.h,
-                          color: AppColors.primary.withOpacity(0.15),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.spa_rounded,
-                            size: 60.sp,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20.r),
+                        topRight: Radius.circular(20.r),
+                      ),
+                      child: imageUrl != null
+                          ? Image.network(
+                              imageUrl,
+                              height: 180.h,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              height: 180.h,
+                              color: AppColors.primary.withOpacity(0.15),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.spa_rounded,
+                                size: 60.sp,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: StreamBuilder<bool>(
+                        stream: favController.isFavoriteStream(spa.id),
+                        builder: (context, snap) {
+                          final isFav = snap.data ?? false;
+                          return Material(
+                            color: Colors.black.withOpacity(0.35),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              icon: Icon(
+                                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                color: isFav ? AppColors.primary : Colors.white,
+                              ),
+                              onPressed: () async {
+                                try {
+                                  await favController.toggleFavorite(spa.id, spa);
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
 
                 // CONTENT SECTION
