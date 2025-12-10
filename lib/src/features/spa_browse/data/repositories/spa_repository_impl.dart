@@ -66,4 +66,36 @@ class SpaRepositoryImpl implements SpaRepository {
       );
     });
   }
+
+  @override
+  Stream<List<SpaEntity>> streamByOwnerUid(String ownerUid) {
+    final query = firestore
+        .collection('spas')
+        .where('ownerUid', isEqualTo: ownerUid);
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        final ts = data['publishedAt'];
+        DateTime? publishedAt;
+        if (ts is Timestamp) {
+          publishedAt = ts.toDate();
+        }
+        return SpaEntity(
+          id: doc.id,
+          businessName: data['businessName'] ?? '',
+          city: data['city'] ?? '',
+          description: data['description'] ?? '',
+          fullAddress: data['fullAddress'] ?? '',
+          services: List<String>.from((data['services'] as List?) ?? const []),
+          pricing: ((data['pricing'] as List?) ?? const [])
+              .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
+              .toList(),
+          photos: List<String>.from((data['photos'] as List?) ?? const []),
+          status: data['status'] ?? '',
+          publishedAt: publishedAt,
+        );
+      }).toList();
+    });
+  }
 }

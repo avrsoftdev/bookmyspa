@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profile_screen.dart';
 import '../../../spa_registration/presentation/pages/register_your_spa_page.dart';
+import 'my_business_page.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -196,6 +197,20 @@ class ProfileScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const RegisterYourSpaPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.storefront_rounded,
+                    title: 'My Business',
+                    subtitle: 'Your registered spas & salons',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyBusinessPage(),
                         ),
                       );
                     },

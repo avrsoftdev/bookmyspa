@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 
@@ -40,7 +41,15 @@ class RegisterSpaController extends ChangeNotifier {
 
   final Set<String> selectedServices = {};
   final List<String> serviceOptions = const [
-    'Massage', 'Hair Styling', 'Pedicure', 'Manicure', 'Waxing', 'Makeup', 'Grooming', 'Facial', 'Spa Therapy'
+    'Massage',
+    'Hair Styling',
+    'Pedicure',
+    'Manicure',
+    'Waxing',
+    'Makeup',
+    'Grooming',
+    'Facial',
+    'Spa Therapy',
   ];
 
   final List<Map<String, TextEditingController>> pricingRows = [];
@@ -57,7 +66,14 @@ class RegisterSpaController extends ChangeNotifier {
 
   final Set<String> selectedFacilities = {};
   final List<String> facilityOptions = const [
-    'AC', 'Wi-Fi', 'Parking', 'Steam/Sauna', 'Home Service', 'UPI/Card Payment', 'Separate Rooms', 'Certified Staff'
+    'AC',
+    'Wi-Fi',
+    'Parking',
+    'Steam/Sauna',
+    'Home Service',
+    'UPI/Card Payment',
+    'Separate Rooms',
+    'Certified Staff',
   ];
 
   String? aadharFile;
@@ -73,7 +89,8 @@ class RegisterSpaController extends ChangeNotifier {
   RegisterSpaStatus status = RegisterSpaStatus.initial;
   String? errorMessage;
 
-  RegisterSpaController({required LocationBloc locationBloc}) : _locationBloc = locationBloc {
+  RegisterSpaController({required LocationBloc locationBloc})
+    : _locationBloc = locationBloc {
     _init();
   }
 
@@ -114,7 +131,10 @@ class RegisterSpaController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final XFile? xfile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+      final XFile? xfile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
       if (xfile == null) {
         // user cancelled
         isUploading = false;
@@ -135,17 +155,20 @@ class RegisterSpaController extends ChangeNotifier {
         task = ref.putFile(file);
       }
 
-      task.snapshotEvents.listen((snapshot) {
-        if (snapshot.totalBytes > 0) {
-          uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+      task.snapshotEvents.listen(
+        (snapshot) {
+          if (snapshot.totalBytes > 0) {
+            uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+            notifyListeners();
+          }
+        },
+        onError: (e) {
+          uploadError = e.toString();
+          isUploading = false;
+          currentUploadKind = null;
           notifyListeners();
-        }
-      }, onError: (e) {
-        uploadError = e.toString();
-        isUploading = false;
-        currentUploadKind = null;
-        notifyListeners();
-      });
+        },
+      );
 
       await task;
       final url = await ref.getDownloadURL();
@@ -177,7 +200,10 @@ class RegisterSpaController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final XFile? xfile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+      final XFile? xfile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+      );
       if (xfile == null) {
         isUploading = false;
         currentUploadKind = null;
@@ -186,7 +212,9 @@ class RegisterSpaController extends ChangeNotifier {
       }
 
       final String id = const Uuid().v4();
-      final ref = FirebaseStorage.instance.ref().child('spa_documents/${kind}_$id.jpg');
+      final ref = FirebaseStorage.instance.ref().child(
+        'spa_documents/${kind}_$id.jpg',
+      );
 
       UploadTask task;
       if (kIsWeb) {
@@ -197,17 +225,20 @@ class RegisterSpaController extends ChangeNotifier {
         task = ref.putFile(file);
       }
 
-      task.snapshotEvents.listen((snapshot) {
-        if (snapshot.totalBytes > 0) {
-          uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+      task.snapshotEvents.listen(
+        (snapshot) {
+          if (snapshot.totalBytes > 0) {
+            uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+            notifyListeners();
+          }
+        },
+        onError: (e) {
+          uploadError = e.toString();
+          isUploading = false;
+          currentUploadKind = null;
           notifyListeners();
-        }
-      }, onError: (e) {
-        uploadError = e.toString();
-        isUploading = false;
-        currentUploadKind = null;
-        notifyListeners();
-      });
+        },
+      );
 
       await task;
       final url = await ref.getDownloadURL();
@@ -241,7 +272,8 @@ class RegisterSpaController extends ChangeNotifier {
   }
 
   /// Check if location is being fetched
-  bool get isLoadingLocation => _locationBloc.state.status == LocationStatus.loading;
+  bool get isLoadingLocation =>
+      _locationBloc.state.status == LocationStatus.loading;
 
   /// Get location status display text
   String get locationStatusText {
@@ -361,10 +393,15 @@ class RegisterSpaController extends ChangeNotifier {
       if (panUrl != null) data['panUrl'] = panUrl;
       if (licenseUrl != null) data['licenseUrl'] = licenseUrl;
 
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) data['ownerUid'] = uid;
+
       data['createdAt'] = FieldValue.serverTimestamp();
       data['status'] = 'pending_review';
 
-      final docRef = await FirebaseFirestore.instance.collection('spas').add(data);
+      final docRef = await FirebaseFirestore.instance
+          .collection('spas')
+          .add(data);
 
       status = RegisterSpaStatus.success;
       notifyListeners();
