@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 import '../../../../core/di/di.dart';
 import '../../../../core/theme/tokens.dart';
 import 'spa_detail_page.dart';
+import '../../../cart/presentation/bloc/cart_bloc.dart';
+import '../../../cart/presentation/widgets/cart_summary_bar.dart';
+import '../../../cart/presentation/widgets/quantity_selector.dart';
+import '../../../cart/domain/entities/cart_item.dart';
 
 class SpaServicesArgs {
   final String spaId;
@@ -86,6 +91,9 @@ class SpaServicesPage extends StatelessWidget {
             ],
           );
         },
+      ),
+      bottomNavigationBar: const CartSummaryBar(
+        onBuyNow: null, // TODO: Implement checkout functionality
       ),
     );
   }
@@ -223,40 +231,119 @@ class _ServicePricingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 14.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.primary, width: 1.2),
-      ),
+    final serviceId = '${serviceName}_${price}'; // Create unique ID
+    final priceValue = double.tryParse(price) ?? 0.0;
 
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              serviceName,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w500,
+    return BlocBuilder<CartBloc, CartState>(
+      builder: (context, cartState) {
+        final cartItem = cartState.items.firstWhere(
+          (item) => item.serviceId == serviceId,
+          orElse: () => CartItem(
+            serviceId: serviceId,
+            serviceName: serviceName,
+            price: priceValue,
+            quantity: 0,
+          ),
+        );
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 14.h),
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: AppColors.primary, width: 1.2),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      serviceName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    "₹$price",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-            ),
+              SizedBox(height: 12.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (cartItem.quantity == 0)
+                    _AddServiceButton(
+                      onTap: () {
+                        context.read<CartBloc>().add(
+                          AddToCart(CartItem(
+                            serviceId: serviceId,
+                            serviceName: serviceName,
+                            price: priceValue,
+                            quantity: 1,
+                          )),
+                        );
+                      },
+                    )
+                  else
+                    QuantitySelector(
+                      quantity: cartItem.quantity,
+                      onIncrement: () {
+                        context.read<CartBloc>().add(
+                          UpdateQuantity(serviceId, cartItem.quantity + 1),
+                        );
+                      },
+                      onDecrement: () {
+                        context.read<CartBloc>().add(
+                          UpdateQuantity(serviceId, cartItem.quantity - 1),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ],
           ),
+        );
+      },
+    );
+  }
+}
 
-          SizedBox(width: 10.w),
+class _AddServiceButton extends StatelessWidget {
+  final VoidCallback onTap;
 
-          Text(
-            "₹$price",
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 17.sp,
-              fontWeight: FontWeight.w700,
-            ),
+  const _AddServiceButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Text(
+          'Add Service',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
           ),
-        ],
+        ),
       ),
     );
   }

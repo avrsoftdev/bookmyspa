@@ -16,6 +16,7 @@ import '../../features/spa_browse/domain/usecases/stream_spas_by_category_usecas
 import '../../features/spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 import '../../features/spa_browse/domain/usecases/stream_spas_by_owner_usecase.dart';
 import '../../features/spa_browse/presentation/controllers/favorites_controller.dart';
+import '../../features/cart/presentation/bloc/cart_bloc.dart';
 
 // Simple service locator
 class ServiceLocator {
@@ -72,4 +73,7 @@ Future<void> initDependencies() async {
     firestore: FirebaseFirestore.instance,
     authController: sl.get(),
   ));
+
+  // Cart
+  sl.register<CartBloc>(CartBloc());
 }
