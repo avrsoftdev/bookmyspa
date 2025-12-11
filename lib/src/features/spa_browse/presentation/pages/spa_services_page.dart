@@ -92,8 +92,10 @@ class SpaServicesPage extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const CartSummaryBar(
-        onBuyNow: null, // TODO: Implement checkout functionality
+      bottomNavigationBar: CartSummaryBar(
+        onBuyNow: () {
+          Navigator.pushNamed(context, '/order-summary');
+        },
       ),
     );
   }

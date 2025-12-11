@@ -7,6 +7,7 @@ import '../../features/admin_web/presentation/pages/admin_web_page.dart';
 import '../../features/spa_browse/presentation/pages/category_spa_list_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_services_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_detail_page.dart';
+import '../../features/cart/presentation/pages/order_summary_page.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -35,6 +36,8 @@ class AppRouter {
         final args = settings.arguments as SpaDetailArgs?;
         final spaId = args?.spaId ?? '';
         return MaterialPageRoute(builder: (_) => SpaDetailPage(spaId: spaId));
+      case '/order-summary':
+        return MaterialPageRoute(builder: (_) => const OrderSummaryPage());
       default:
         return MaterialPageRoute(builder: (_) => const Scaffold());
     }
