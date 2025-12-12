@@ -5,13 +5,15 @@ import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_sp
 import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
+import '../../../bookings/presentation/pages/my_bookings_page.dart';
 import '../../../spa_browse/presentation/pages/favorites_page.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 import '../../../../core/di/di.dart';
 // TODO: change this import to the actual path of your Images class
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialIndex;
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -42,6 +44,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _locationBloc = sl.get<LocationBloc>();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _locationBloc.getCurrentLocation(),
@@ -86,12 +89,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          const Center(
-            child: Text(
-              'My Bookings',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
+          const MyBookingsPage(),
           const FavoritesPage(),
           const ProfileScreen(),
         ],

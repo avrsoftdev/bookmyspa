@@ -4,6 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../bloc/cart_bloc.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../../../core/theme/tokens.dart';
+import '../../../../core/di/di.dart';
+import '../../../bookings/presentation/controllers/bookings_controller.dart';
+import '../../../bookings/domain/entities/booking.dart';
 
 class OrderSummaryPage extends StatelessWidget {
   const OrderSummaryPage({super.key});
@@ -45,10 +48,7 @@ class OrderSummaryPage extends StatelessWidget {
                   SizedBox(height: 8.h),
                   Text(
                     'Add some services to see your order summary',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14.sp,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14.sp),
                   ),
                 ],
               ),
@@ -64,10 +64,12 @@ class OrderSummaryPage extends StatelessWidget {
                     // Order Items Section
                     _buildSectionHeader('Order Items'),
                     SizedBox(height: 12.h),
-                    ...cartState.items.map((item) => _OrderItemCard(item: item)),
-                    
+                    ...cartState.items.map(
+                      (item) => _OrderItemCard(item: item),
+                    ),
+
                     SizedBox(height: 24.h),
-                    
+
                     // Order Summary Section
                     _buildSectionHeader('Order Summary'),
                     SizedBox(height: 12.h),
@@ -75,7 +77,7 @@ class OrderSummaryPage extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Proceed to Pay Button
               _ProceedToPayButton(totalAmount: cartState.totalAmount),
             ],
@@ -128,9 +130,9 @@ class _OrderItemCard extends StatelessWidget {
               size: 24.sp,
             ),
           ),
-          
+
           SizedBox(width: 12.w),
-          
+
           // Service Details
           Expanded(
             child: Column(
@@ -147,23 +149,17 @@ class _OrderItemCard extends StatelessWidget {
                 SizedBox(height: 4.h),
                 Text(
                   'Qty: ${item.quantity}',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 13.sp,
-                  ),
+                  style: TextStyle(color: Colors.grey[400], fontSize: 13.sp),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   '₹${item.price.toStringAsFixed(0)} each',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 13.sp,
-                  ),
+                  style: TextStyle(color: Colors.grey[400], fontSize: 13.sp),
                 ),
               ],
             ),
           ),
-          
+
           // Total Price
           Text(
             '₹${item.totalPrice.toStringAsFixed(0)}',
@@ -253,9 +249,7 @@ class _ProceedToPayButton extends StatelessWidget {
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
-        border: Border(
-          top: BorderSide(color: AppColors.primary, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.primary, width: 1)),
       ),
       child: SafeArea(
         child: SizedBox(
@@ -274,10 +268,7 @@ class _ProceedToPayButton extends StatelessWidget {
             ),
             child: Text(
               'Proceed to Pay ₹${totalWithTax.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -323,10 +314,7 @@ class _ProceedToPayButton extends StatelessWidget {
               SizedBox(height: 8.h),
               Text(
                 'Payment integration will be implemented here',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14.sp,
-                ),
+                style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -336,27 +324,40 @@ class _ProceedToPayButton extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 16.sp,
-                ),
+                style: TextStyle(color: Colors.grey[400], fontSize: 16.sp),
               ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // Clear cart after successful payment
+                final items = context.read<CartBloc>().state.items;
+                final bookings = items
+                    .map(
+                      (i) => Booking(
+                        id: '${DateTime.now().millisecondsSinceEpoch}-${i.serviceId}',
+                        serviceId: i.serviceId,
+                        serviceName: i.serviceName,
+                        quantity: i.quantity,
+                        unitPrice: i.price,
+                        totalPrice: i.totalPrice,
+                        createdAt: DateTime.now(),
+                      ),
+                    )
+                    .toList();
+                sl.get<BookingsController>().addAll(bookings);
                 context.read<CartBloc>().add(ClearCart());
-                // Show success message
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Payment successful! Order placed.'),
+                    content: const Text('Payment successful! Booking created.'),
                     backgroundColor: AppColors.primary,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
-                // Navigate back to home or services page
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/home',
+                  (route) => false,
+                  arguments: 1,
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -364,10 +365,7 @@ class _ProceedToPayButton extends StatelessWidget {
               ),
               child: Text(
                 'Pay Now',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
               ),
             ),
           ],

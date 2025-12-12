@@ -17,7 +17,8 @@ class AppRouter {
       case '/login':
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case '/home':
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        final initialIndex = (settings.arguments as int?) ?? 0;
+        return MaterialPageRoute(builder: (_) => HomePage(initialIndex: initialIndex));
       case '/debug-app-check':
         return MaterialPageRoute(builder: (_) => const AppCheckDebugPage());
       case '/admin-web':
