@@ -202,8 +202,8 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Register Your Spa'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: theme.textTheme.titleLarge?.color,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Form(

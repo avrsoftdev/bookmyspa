@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../bloc/location_bloc.dart';
 import '../widgets/location_widget.dart';
 import '../../../../core/di/di.dart';
+import '../../../../core/theme/tokens.dart';
 
 /// Example page showing how to use location functionality
 class LocationExamplePage extends StatefulWidget {
@@ -25,6 +26,8 @@ class _LocationExamplePageState extends State<LocationExamplePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
         title: const Text('Location Example'),
       ),
       body: Padding(

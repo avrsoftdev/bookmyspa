@@ -32,7 +32,7 @@ class CategorySpaListPage extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: true,
       ),

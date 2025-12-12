@@ -21,7 +21,7 @@ class SpaDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.primary,
         elevation: 0,
         title: const Text(
           'Spa Details',

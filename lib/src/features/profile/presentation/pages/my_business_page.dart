@@ -20,7 +20,7 @@ class MyBusinessPage extends StatelessWidget {
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
         title: const Text('My Business', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: true,
       ),

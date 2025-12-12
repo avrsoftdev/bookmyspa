@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/theme/tokens.dart';
 
 class AdminWebPage extends StatefulWidget {
   const AdminWebPage({super.key});
@@ -33,7 +34,7 @@ class _AdminWebPageState extends State<AdminWebPage> {
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: darkPurple,
+        backgroundColor: AppColors.primary,
         foregroundColor: textPrimary,
         title: Row(
           children: const [
