@@ -222,10 +222,10 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
               ]),
 
               _buildSection(context, icon: Icons.phone_rounded, title: "Contact Information", children: [
-                _inputField(_primaryMobile, "Primary Mobile *", keyboard: TextInputType.phone),
-                _inputField(_secondaryMobile, "Secondary Mobile"),
+                _phoneField(_primaryMobile, "Primary Mobile *", isRequired: true),
+                _phoneField(_secondaryMobile, "Secondary Mobile", isRequired: false),
                 _inputField(_businessEmail, "Business Email *", keyboard: TextInputType.emailAddress),
-                _inputField(_whatsappNumber, "WhatsApp Number"),
+                _phoneField(_whatsappNumber, "WhatsApp Number", isRequired: false),
               ]),
 
               _buildSection(context, icon: Icons.location_on_rounded, title: "Address & Location", children: [
@@ -447,6 +447,38 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.primary, width: 2)),
           ),
           validator: (v) => label.contains('*') && (v == null || v.trim().isEmpty) ? 'Required' : null,
+        ),
+      );
+
+  Widget _phoneField(TextEditingController c, String label, {required bool isRequired}) => Padding(
+        padding: EdgeInsets.only(bottom: 16.h),
+        child: TextFormField(
+          controller: c,
+          keyboardType: TextInputType.phone,
+          maxLength: 10,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: "Enter 10-digit phone number",
+            filled: true,
+            fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[50],
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey[600]!)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.primary, width: 2)),
+            counterText: "", // Hide the character counter
+          ),
+          validator: (v) {
+            if (isRequired && (v == null || v.trim().isEmpty)) {
+              return 'Required';
+            }
+            if (v != null && v.trim().isNotEmpty) {
+              // Remove any non-digit characters for validation
+              final digitsOnly = v.replaceAll(RegExp(r'[^0-9]'), '');
+              if (digitsOnly.length != 10) {
+                return 'Phone number must be exactly 10 digits';
+              }
+            }
+            return null;
+          },
         ),
       );
 
