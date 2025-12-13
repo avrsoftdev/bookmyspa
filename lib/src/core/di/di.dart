@@ -18,6 +18,8 @@ import '../../features/spa_browse/domain/usecases/stream_spas_by_owner_usecase.d
 import '../../features/spa_browse/presentation/controllers/favorites_controller.dart';
 import '../../features/cart/presentation/bloc/cart_bloc.dart';
 import '../../features/bookings/presentation/controllers/bookings_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../theme/theme_cubit.dart';
 
 // Simple service locator
 class ServiceLocator {
@@ -81,4 +83,10 @@ Future<void> initDependencies() async {
   sl.register<CartBloc>(CartBloc());
 
   sl.register<BookingsController>(BookingsController());
+
+  final prefs = await SharedPreferences.getInstance();
+  sl.register<SharedPreferences>(prefs);
+  final themeCubit = ThemeCubit(prefs);
+  await themeCubit.load();
+  sl.register<ThemeCubit>(themeCubit);
 }

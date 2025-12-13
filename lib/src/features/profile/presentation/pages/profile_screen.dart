@@ -9,6 +9,8 @@ import '../../../../core/di/di.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../utils/constants/image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/theme_cubit.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -229,6 +231,7 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Get support and answers',
                     onTap: () {},
                   ),
+                  _buildThemeToggle(context),
                   _buildMenuItem(
                     context,
                     icon: Icons.logout_rounded,
@@ -303,6 +306,56 @@ class ProfileScreen extends StatelessWidget {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeToggle(BuildContext context) {
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, mode) {
+        final isDark = mode == ThemeMode.dark;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.dark_mode_rounded, color: AppColors.primary, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Dark Mode',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Toggle app appearance',
+                      style: TextStyle(fontSize: 13.5),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isDark,
+                onChanged: (val) {
+                  context.read<ThemeCubit>().setDark(val);
+                },
+              ),
+            ],
+          ),
         );
       },
     );
