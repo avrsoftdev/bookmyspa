@@ -45,7 +45,17 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
 
   final Set<String> _selectedServices = {};
   final List<String> _serviceOptions = const [
-    'Massage', 'Haircare', 'Pedicure', 'Manicure', 'Waxing', 'Makeup', 'Grooming', 'Bridal', 'Bodycare', 'Therapy', 'Massage'
+    'Massage',
+    'Pedicure',
+    'Manicure',
+    'Skin Care',
+    'Makeup',
+    'Therapy',
+    'Waxing',
+    'Bodycare',
+    'Bridal',
+    'Grooming',
+    'Haircare',
   ];
 
   final List<Map<String, TextEditingController>> _pricingRows = [];

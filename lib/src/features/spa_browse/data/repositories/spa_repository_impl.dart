@@ -9,10 +9,18 @@ class SpaRepositoryImpl implements SpaRepository {
 
   @override
   Stream<List<SpaEntity>> streamApprovedByCategory(String category) {
+    final normalized = category.trim();
+    final synonyms = <String>{
+      normalized,
+      if (normalized == 'Skin Care') 'Facial',
+      if (normalized == 'Therapy') 'Spa Therapy',
+      if (normalized == 'Haircare') 'Hair Styling',
+    }.toList();
+
     final query = firestore
         .collection('spas')
         .where('status', isEqualTo: 'approved')
-        .where('services', arrayContains: category);
+        .where('services', arrayContainsAny: synonyms);
 
     return query.snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
