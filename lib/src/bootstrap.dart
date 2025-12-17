@@ -5,6 +5,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import '../firebase_options.dart';
 import 'app.dart';
 import 'core/di/di.dart';
+import 'core/services/admob_service.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,5 +47,8 @@ Future<void> bootstrap() async {
   }
   
   await initDependencies();
+  try {
+    await sl.get<AdMobService>().initialize();
+  } catch (_) {}
   runApp(const App());
 }

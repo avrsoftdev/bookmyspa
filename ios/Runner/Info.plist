@@ -49,5 +49,7 @@
 	<string>This app needs access to location to show nearby spas and services.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to location to show nearby spas and services.</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-7682628416837305~8511736135</string>
 </dict>
 </plist>

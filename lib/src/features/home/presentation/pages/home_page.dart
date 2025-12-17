@@ -10,6 +10,7 @@ import '../../../spa_browse/presentation/pages/favorites_page.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 import '../../../../core/di/di.dart';
 // TODO: change this import to the actual path of your Images class
+import '../../../../core/widgets/admob_banner_widget.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -81,6 +82,9 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const AdMobBannerWidget(
+                  adUnitId: 'ca-app-pub-7682628416837305/4512781378',
+                ),
                 SpaSearchField(controller: _searchController),
                 const SizedBox(height: 20),
                 _buildCategoryGrid(), // 👈 icons just below search bar
