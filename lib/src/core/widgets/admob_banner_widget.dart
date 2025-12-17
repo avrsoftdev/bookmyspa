@@ -112,7 +112,11 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget>
                   color: Colors.transparent,
                   child: kIsWeb
                       ? const SizedBox()
-                      : AdWidget(ad: controller!.ad!),
+                      : SizedBox(
+                          width: controller!.size.width.toDouble(),
+                          height: controller.size.height.toDouble(),
+                          child: AdWidget(ad: controller.ad!),
+                        ),
                 )
               : const SizedBox.shrink(),
         ),

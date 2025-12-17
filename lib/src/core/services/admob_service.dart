@@ -11,6 +11,8 @@ class BannerAdController extends ChangeNotifier {
   final FirebaseFirestore? firestore;
   BannerAd? _ad;
   AdLoadState _state = AdLoadState.idle;
+  int _retryCount = 0;
+  Timer? _retryTimer;
 
   BannerAdController({
     required this.adUnitId,
@@ -31,6 +33,7 @@ class BannerAdController extends ChangeNotifier {
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           _ad = ad as BannerAd;
+          debugPrint('AdMob: banner_loaded $adUnitId size=$size');
           _logEvent('banner_loaded', {
             'adUnitId': adUnitId,
             'size': size.toString(),
@@ -39,6 +42,9 @@ class BannerAdController extends ChangeNotifier {
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
+          debugPrint(
+            'AdMob: banner_failed $adUnitId code=${error.code} domain=${error.domain} message=${error.message}',
+          );
           _logEvent('banner_failed', {
             'adUnitId': adUnitId,
             'code': error.code,
@@ -46,14 +52,22 @@ class BannerAdController extends ChangeNotifier {
             'message': error.message,
           });
           _setState(AdLoadState.failed);
+          if (error.code == 3) {
+            _scheduleRetry();
+          }
         },
         onAdImpression: (ad) {
+          debugPrint('AdMob: banner_impression $adUnitId');
           _logEvent('banner_impression', {'adUnitId': adUnitId});
         },
         onAdClicked: (ad) {
+          debugPrint('AdMob: banner_clicked $adUnitId');
           _logEvent('banner_clicked', {'adUnitId': adUnitId});
         },
         onPaidEvent: (ad, valueMicros, currencyCode, precision) {
+          debugPrint(
+            'AdMob: banner_paid $adUnitId valueMicros=$valueMicros currency=$currencyCode precision=$precision',
+          );
           _logEvent('banner_paid', {
             'adUnitId': adUnitId,
             'valueMicros': valueMicros,
@@ -75,14 +89,28 @@ class BannerAdController extends ChangeNotifier {
   }
 
   void disposeAd() {
+    _retryTimer?.cancel();
     _ad?.dispose();
     _ad = null;
     _setState(AdLoadState.idle);
+    _retryCount = 0;
   }
 
   void _setState(AdLoadState newState) {
     _state = newState;
     notifyListeners();
+  }
+
+  void _scheduleRetry() {
+    if (_retryTimer != null) return;
+    final delaySeconds = (10 * (1 << (_retryCount.clamp(0, 3)))).clamp(10, 60);
+    _retryTimer = Timer(Duration(seconds: delaySeconds), () {
+      _retryTimer = null;
+      _retryCount = (_retryCount + 1).clamp(0, 4);
+      if (_state == AdLoadState.failed) {
+        load();
+      }
+    });
   }
 
   Future<void> _logEvent(String type, Map<String, Object?> payload) async {

@@ -4,6 +4,7 @@ import 'package:bookmyspa/src/features/location/presentation/widgets/spa_search_
 import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_spa_list_page.dart';
 import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../bookings/presentation/pages/my_bookings_page.dart';
 import '../../../spa_browse/presentation/pages/favorites_page.dart';
@@ -82,8 +83,10 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AdMobBannerWidget(
-                  adUnitId: 'ca-app-pub-7682628416837305/4512781378',
+                AdMobBannerWidget(
+                  adUnitId: kDebugMode
+                      ? 'ca-app-pub-3940256099942544/6300978111'
+                      : 'ca-app-pub-7682628416837305/4512781378',
                 ),
                 SpaSearchField(controller: _searchController),
                 const SizedBox(height: 20),
