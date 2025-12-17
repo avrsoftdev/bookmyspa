@@ -83,14 +83,15 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SpaSearchField(controller: _searchController),
+                const SizedBox(height: 20),
+                _buildCategoryGrid(), // 👈 icons just below search bar
+                const SizedBox(height: 20),
                 AdMobBannerWidget(
                   adUnitId: kDebugMode
                       ? 'ca-app-pub-3940256099942544/6300978111'
                       : 'ca-app-pub-7682628416837305/4512781378',
                 ),
-                SpaSearchField(controller: _searchController),
-                const SizedBox(height: 20),
-                _buildCategoryGrid(), // 👈 icons just below search bar
               ],
             ),
           ),
