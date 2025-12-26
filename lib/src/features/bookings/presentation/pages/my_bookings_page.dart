@@ -46,6 +46,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final b = controller.bookings[index];
+        final dateText =
+            '${b.scheduledAt.day.toString().padLeft(2, '0')}/${b.scheduledAt.month.toString().padLeft(2, '0')}/${b.scheduledAt.year}';
+        final timeText =
+            '${b.scheduledAt.hour.toString().padLeft(2, '0')}:${b.scheduledAt.minute.toString().padLeft(2, '0')}';
         return Container(
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
@@ -75,7 +79,19 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                     const SizedBox(height: 4),
                     Text(
                       '₹${b.totalPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(color: Colors.deepPurple, fontSize: 15, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.deepPurple,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Slot: $dateText at $timeText',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

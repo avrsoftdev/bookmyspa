@@ -5,6 +5,7 @@ class Booking {
   final int quantity;
   final double unitPrice;
   final double totalPrice;
+  final DateTime scheduledAt;
   final DateTime createdAt;
 
   const Booking({
@@ -14,6 +15,7 @@ class Booking {
     required this.quantity,
     required this.unitPrice,
     required this.totalPrice,
+    required this.scheduledAt,
     required this.createdAt,
   });
 }

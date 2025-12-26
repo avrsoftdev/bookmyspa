@@ -8,8 +8,53 @@ import '../../../../core/di/di.dart';
 import '../../../bookings/presentation/controllers/bookings_controller.dart';
 import '../../../bookings/domain/entities/booking.dart';
 
-class OrderSummaryPage extends StatelessWidget {
+class OrderSummaryPage extends StatefulWidget {
   const OrderSummaryPage({super.key});
+
+  @override
+  State<OrderSummaryPage> createState() => _OrderSummaryPageState();
+}
+
+class _OrderSummaryPageState extends State<OrderSummaryPage> {
+  DateTime? selectedDate;
+  String? selectedSlot;
+
+  List<String> get timeSlots => [
+        '10:00 AM',
+        '11:00 AM',
+        '12:00 PM',
+        '1:00 PM',
+        '2:00 PM',
+        '3:00 PM',
+        '4:00 PM',
+        '5:00 PM',
+        '6:00 PM',
+        '7:00 PM',
+        '8:00 PM',
+      ];
+
+  Future<void> pickDate(BuildContext context) async {
+    final now = DateTime.now();
+    final initialDate = selectedDate ?? now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 30)),
+    );
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
+
+  String formatSelectedDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    return '$day/$month/$year';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,25 +106,39 @@ class OrderSummaryPage extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.all(16.w),
                   children: [
-                    // Order Items Section
+                    _buildSectionHeader('Select Date & Time'),
+                    SizedBox(height: 12.h),
+                    _BookingScheduleCard(
+                      selectedDate: selectedDate,
+                      selectedSlot: selectedSlot,
+                      timeSlots: timeSlots,
+                      onSelectDate: () => pickDate(context),
+                      onSelectSlot: (slot) {
+                        setState(() {
+                          selectedSlot = slot;
+                        });
+                      },
+                      formatSelectedDate: formatSelectedDate,
+                    ),
+                    SizedBox(height: 24.h),
                     _buildSectionHeader('Order Items'),
                     SizedBox(height: 12.h),
                     ...cartState.items.map(
                       (item) => _OrderItemCard(item: item),
                     ),
-
                     SizedBox(height: 24.h),
-
-                    // Order Summary Section
                     _buildSectionHeader('Order Summary'),
                     SizedBox(height: 12.h),
                     _OrderSummaryCard(cartState: cartState),
                   ],
                 ),
               ),
-
-              // Proceed to Pay Button
-              _ProceedToPayButton(totalAmount: cartState.totalAmount),
+              _ProceedToPayButton(
+                totalAmount: cartState.totalAmount,
+                selectedDate: selectedDate,
+                selectedSlot: selectedSlot,
+                formatSelectedDate: formatSelectedDate,
+              ),
             ],
           );
         },
@@ -238,8 +297,16 @@ class _OrderSummaryCard extends StatelessWidget {
 
 class _ProceedToPayButton extends StatelessWidget {
   final double totalAmount;
+  final DateTime? selectedDate;
+  final String? selectedSlot;
+  final String Function(DateTime) formatSelectedDate;
 
-  const _ProceedToPayButton({required this.totalAmount});
+  const _ProceedToPayButton({
+    required this.totalAmount,
+    required this.selectedDate,
+    required this.selectedSlot,
+    required this.formatSelectedDate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -256,6 +323,16 @@ class _ProceedToPayButton extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
+              if (selectedDate == null || selectedSlot == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please select a date and time slot'),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
               _showPaymentDialog(context, totalWithTax);
             },
             style: ElevatedButton.styleFrom(
@@ -312,6 +389,17 @@ class _ProceedToPayButton extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 8.h),
+              if (selectedDate != null && selectedSlot != null)
+                Text(
+                  'Appointment: ${formatSelectedDate(selectedDate!)} at $selectedSlot',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              if (selectedDate != null && selectedSlot != null) SizedBox(height: 8.h),
               Text(
                 'Payment integration will be implemented here',
                 style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
@@ -331,6 +419,7 @@ class _ProceedToPayButton extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
                 final items = context.read<CartBloc>().state.items;
+                final scheduledAt = _buildScheduledDateTime();
                 final bookings = items
                     .map(
                       (i) => Booking(
@@ -340,6 +429,7 @@ class _ProceedToPayButton extends StatelessWidget {
                         quantity: i.quantity,
                         unitPrice: i.price,
                         totalPrice: i.totalPrice,
+                        scheduledAt: scheduledAt,
                         createdAt: DateTime.now(),
                       ),
                     )
@@ -371,6 +461,119 @@ class _ProceedToPayButton extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  DateTime _buildScheduledDateTime() {
+    final date = selectedDate!;
+    final slot = selectedSlot!;
+    final parts = slot.split(' ');
+    final timePart = parts.first;
+    final periodPart = parts.length > 1 ? parts[1].toUpperCase() : 'AM';
+    final timePieces = timePart.split(':');
+    final hour12 = int.tryParse(timePieces[0]) ?? 0;
+    final minute = timePieces.length > 1 ? int.tryParse(timePieces[1]) ?? 0 : 0;
+    int hour = hour12 % 12;
+    if (periodPart == 'PM') {
+      hour += 12;
+    }
+    return DateTime(date.year, date.month, date.day, hour, minute);
+  }
+}
+
+class _BookingScheduleCard extends StatelessWidget {
+  final DateTime? selectedDate;
+  final String? selectedSlot;
+  final List<String> timeSlots;
+  final VoidCallback onSelectDate;
+  final void Function(String) onSelectSlot;
+  final String Function(DateTime) formatSelectedDate;
+
+  const _BookingScheduleCard({
+    required this.selectedDate,
+    required this.selectedSlot,
+    required this.timeSlots,
+    required this.onSelectDate,
+    required this.onSelectSlot,
+    required this.formatSelectedDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.primary, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Date',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextButton(
+                onPressed: onSelectDate,
+                child: Text(
+                  selectedDate != null ? formatSelectedDate(selectedDate!) : 'Select Date',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'Time Slot',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: timeSlots.map((slot) {
+              final isSelected = slot == selectedSlot;
+              return ChoiceChip(
+                label: Text(
+                  slot,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : Colors.white,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                selected: isSelected,
+                onSelected: (_) => onSelectSlot(slot),
+                selectedColor: AppColors.primary,
+                backgroundColor: const Color(0xFF2A2A2A),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.r),
+                  side: BorderSide(
+                    color: isSelected ? AppColors.primary : Colors.grey[700]!,
+                    width: 1,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }
