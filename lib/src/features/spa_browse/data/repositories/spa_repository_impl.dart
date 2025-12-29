@@ -37,6 +37,12 @@ class SpaRepositoryImpl implements SpaRepository {
         if (ts is Timestamp) {
           publishedAt = ts.toDate();
         }
+        final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final parsedDetails = <String, ServiceDetail>{};
+        for (final entry in rawDetails.entries) {
+          final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          parsedDetails[entry.key] = ServiceDetail.fromMap(v);
+        }
         return SpaEntity(
           id: doc.id,
           businessName: data['businessName'] ?? '',
@@ -53,6 +59,7 @@ class SpaRepositoryImpl implements SpaRepository {
           rating:
               _parseRating(data['rating']) ??
               _parseRating(data['averageRating']),
+          serviceDetails: parsedDetails,
         );
       }).toList();
     });
@@ -67,6 +74,12 @@ class SpaRepositoryImpl implements SpaRepository {
       DateTime? publishedAt;
       if (ts is Timestamp) {
         publishedAt = ts.toDate();
+      }
+      final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+      final parsedDetails = <String, ServiceDetail>{};
+      for (final entry in rawDetails.entries) {
+        final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        parsedDetails[entry.key] = ServiceDetail.fromMap(v);
       }
       return SpaEntity(
         id: doc.id,
@@ -83,6 +96,7 @@ class SpaRepositoryImpl implements SpaRepository {
         publishedAt: publishedAt,
         rating:
             _parseRating(data['rating']) ?? _parseRating(data['averageRating']),
+        serviceDetails: parsedDetails,
       );
     });
   }
@@ -101,6 +115,12 @@ class SpaRepositoryImpl implements SpaRepository {
         if (ts is Timestamp) {
           publishedAt = ts.toDate();
         }
+        final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final parsedDetails = <String, ServiceDetail>{};
+        for (final entry in rawDetails.entries) {
+          final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          parsedDetails[entry.key] = ServiceDetail.fromMap(v);
+        }
         return SpaEntity(
           id: doc.id,
           businessName: data['businessName'] ?? '',
@@ -117,6 +137,7 @@ class SpaRepositoryImpl implements SpaRepository {
           rating:
               _parseRating(data['rating']) ??
               _parseRating(data['averageRating']),
+          serviceDetails: parsedDetails,
         );
       }).toList();
     });

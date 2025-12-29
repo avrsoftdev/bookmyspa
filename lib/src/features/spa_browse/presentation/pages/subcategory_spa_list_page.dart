@@ -9,7 +9,11 @@ import 'category_spa_list_page.dart';
 class SubcategorySpaListPage extends StatelessWidget {
   final String category;
   final String subcategory;
-  const SubcategorySpaListPage({super.key, required this.category, required this.subcategory});
+  const SubcategorySpaListPage({
+    super.key,
+    required this.category,
+    required this.subcategory,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +25,11 @@ class SubcategorySpaListPage extends StatelessWidget {
         elevation: 0,
         title: Text(
           subcategory,
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 18.sp),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18.sp,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
@@ -30,7 +38,9 @@ class SubcategorySpaListPage extends StatelessWidget {
         stream: useCase(category),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: Colors.white));
+            return Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
           }
           if (snapshot.hasError) {
             return Center(
@@ -44,25 +54,42 @@ class SubcategorySpaListPage extends StatelessWidget {
               ),
             );
           }
-          final spas = (snapshot.data ?? const <SpaEntity>[])
-              .where((s) {
-                final target = subcategory.toLowerCase();
-                final hasInPricing = s.pricing.any((p) => p.service.toLowerCase().contains(target));
-                final hasInServices = s.services.any((srv) => srv.toLowerCase().contains(target));
-                return hasInPricing || hasInServices;
-              })
-              .toList();
+          String normalizeCategory(String c) {
+            final v = c.trim().toLowerCase();
+            if (v == 'haircare') return 'Hair Care';
+            if (v == 'bodycare') return 'Body Care';
+            if (v == 'skin care') return 'Skin Care';
+            return c;
+          }
+
+          final catKey = normalizeCategory(category);
+          final target = subcategory.trim().toLowerCase();
+          final spas = (snapshot.data ?? const <SpaEntity>[]).where((s) {
+            final details = s.serviceDetails[catKey];
+            if (details == null) return false;
+            return details.subcategories.any(
+              (sc) => sc.trim().toLowerCase() == target,
+            );
+          }).toList();
 
           if (spas.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.spa_outlined, size: 80.sp, color: Colors.grey[300]),
+                  Icon(
+                    Icons.spa_outlined,
+                    size: 80.sp,
+                    color: Colors.grey[300],
+                  ),
                   SizedBox(height: 12.h),
                   Text(
                     'No spas found for $subcategory',
-                    style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   SizedBox(height: 6.h),
                   Text(

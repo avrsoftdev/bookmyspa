@@ -2,15 +2,28 @@ class ServicePricing {
   final String service;
   final String price;
 
-  const ServicePricing({
-    required this.service,
-    required this.price,
-  });
+  const ServicePricing({required this.service, required this.price});
 
   factory ServicePricing.fromMap(Map<String, dynamic> map) {
     return ServicePricing(
       service: map['service'] ?? '',
       price: map['price'] ?? '',
+    );
+  }
+}
+
+class ServiceDetail {
+  final List<String> subcategories;
+  final List<String> addons;
+
+  const ServiceDetail({required this.subcategories, required this.addons});
+
+  factory ServiceDetail.fromMap(Map<String, dynamic> map) {
+    return ServiceDetail(
+      subcategories: List<String>.from(
+        (map['subcategories'] as List?) ?? const [],
+      ),
+      addons: List<String>.from((map['addons'] as List?) ?? const []),
     );
   }
 }
@@ -27,6 +40,7 @@ class SpaEntity {
   final String status;
   final DateTime? publishedAt;
   final double? rating;
+  final Map<String, ServiceDetail> serviceDetails;
 
   const SpaEntity({
     required this.id,
@@ -40,9 +54,20 @@ class SpaEntity {
     required this.status,
     this.publishedAt,
     this.rating,
+    this.serviceDetails = const {},
   });
 
   factory SpaEntity.fromMap(String id, Map<String, dynamic> map) {
+    final rawDetails =
+        (map['serviceDetails'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
+    final parsedDetails = <String, ServiceDetail>{};
+    for (final entry in rawDetails.entries) {
+      final v =
+          (entry.value as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      parsedDetails[entry.key] = ServiceDetail.fromMap(v);
+    }
     return SpaEntity(
       id: id,
       businessName: map['businessName'] ?? '',
@@ -62,6 +87,7 @@ class SpaEntity {
           ? DateTime.tryParse(map['publishedAt'].toString())
           : null,
       rating: _parseRating(map['rating']) ?? _parseRating(map['averageRating']),
+      serviceDetails: parsedDetails,
     );
   }
 
