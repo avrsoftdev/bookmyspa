@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/tokens.dart';
 
 class AdminWebPage extends StatefulWidget {
@@ -248,6 +249,58 @@ class _AdminWebPageState extends State<AdminWebPage> {
           ], c),
 
           SizedBox(height: sectionSpacing),
+          _title("Working Hours"),
+          _infoGrid([
+            _tile("Opens At", d['openingTime']),
+            _tile("Closes At", d['closingTime']),
+            _tile("Weekly Off", d['weeklyOff']),
+          ], c),
+
+          SizedBox(height: sectionSpacing),
+          _title("Team"),
+          _infoGrid([
+            _tile("Number of Staff", d['numStaff']),
+            _tile("Secondary Mobile", d['secondaryMobile']),
+          ], c),
+
+          SizedBox(height: sectionSpacing),
+          _title("Services Offered"),
+          _chips((d['services'] as List?)?.cast<String>() ?? const []),
+
+          SizedBox(height: sectionSpacing),
+          _title("Services & Pricing"),
+          _pricingList(((d['pricing'] as List?) ?? const [])
+              .map((e) => (e as Map).cast<String, dynamic>())
+              .toList()),
+
+          SizedBox(height: sectionSpacing),
+          _title("Facilities"),
+          _chips((d['facilities'] as List?)?.cast<String>() ?? const []),
+
+          SizedBox(height: sectionSpacing),
+          _title("Service Details"),
+          _serviceDetails((d['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const {}),
+
+          SizedBox(height: sectionSpacing),
+          _title("Documents"),
+          _documents(aadharUrl: d['aadharUrl'], panUrl: d['panUrl'], licenseUrl: d['licenseUrl']),
+
+          SizedBox(height: sectionSpacing),
+          _title("Location"),
+          _infoGrid([
+            _tile("Latitude", d['latitude']),
+            _tile("Longitude", d['longitude']),
+          ], c),
+
+          SizedBox(height: sectionSpacing),
+          _title("Meta"),
+          _infoGrid([
+            _tile("Owner UID", d['ownerUid']),
+            _tile("Created At", _formatTimestamp(d['createdAt'])),
+            _tile("Status", d['status']),
+          ], c),
+
+          SizedBox(height: sectionSpacing),
           _title("Address"),
           _addressCard(d),
 
@@ -356,6 +409,142 @@ class _AdminWebPageState extends State<AdminWebPage> {
         ),
       ),
     );
+  }
+
+  Widget _chips(List<String> items) {
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: cardDark, borderRadius: BorderRadius.circular(12), border: Border.all(color: dividerColor)),
+        child: Text("No data", style: TextStyle(color: textSecondary)),
+      );
+    }
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: items
+          .map(
+            (e) => Chip(
+              label: Text(e),
+              labelStyle: const TextStyle(color: textPrimary),
+              backgroundColor: primaryPurple.withOpacity(0.2),
+              side: BorderSide(color: primaryPurple.withOpacity(0.4)),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _pricingList(List<Map<String, dynamic>> pricing) {
+    if (pricing.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: cardDark, borderRadius: BorderRadius.circular(12), border: Border.all(color: dividerColor)),
+        child: Text("No pricing available", style: TextStyle(color: textSecondary)),
+      );
+    }
+    return Column(
+      children: pricing
+          .map(
+            (p) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: cardDark, borderRadius: BorderRadius.circular(12), border: Border.all(color: dividerColor)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(p['service']?.toString() ?? "-", style: const TextStyle(color: textPrimary, fontWeight: FontWeight.w600)),
+                  ),
+                  Text(p['price']?.toString() ?? "-", style: const TextStyle(color: textPrimary)),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _serviceDetails(Map<String, dynamic> details) {
+    if (details.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: cardDark, borderRadius: BorderRadius.circular(12), border: Border.all(color: dividerColor)),
+        child: Text("No service details", style: TextStyle(color: textSecondary)),
+      );
+    }
+    final entries = details.entries.toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: entries
+          .map(
+            (e) {
+              final sub = ((e.value as Map)['subcategories'] as List?)?.cast<String>() ?? const <String>[];
+              final add = ((e.value as Map)['addons'] as List?)?.cast<String>() ?? const <String>[];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: cardDark, borderRadius: BorderRadius.circular(12), border: Border.all(color: dividerColor)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(e.key, style: const TextStyle(color: textPrimary, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    Text("Subcategories", style: TextStyle(color: textSecondary)),
+                    const SizedBox(height: 6),
+                    _chips(sub),
+                    const SizedBox(height: 10),
+                    Text("Addons", style: TextStyle(color: textSecondary)),
+                    const SizedBox(height: 6),
+                    _chips(add),
+                  ],
+                ),
+              );
+            },
+          )
+          .toList(),
+    );
+  }
+
+  Widget _documents({String? aadharUrl, String? panUrl, String? licenseUrl}) {
+    return Row(
+      children: [
+        _docButton("Aadhar", aadharUrl),
+        const SizedBox(width: 12),
+        _docButton("PAN", panUrl),
+        const SizedBox(width: 12),
+        _docButton("License", licenseUrl),
+      ],
+    );
+  }
+
+  Widget _docButton(String label, String? url) {
+    final enabled = url != null && url.toString().isNotEmpty;
+    return ElevatedButton(
+      onPressed: enabled ? () => _openUrl(url!) : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: enabled ? accentPurple : dividerColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: Text(enabled ? "View $label" : "$label Not Provided"),
+    );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  String _formatTimestamp(dynamic ts) {
+    if (ts == null) return "-";
+    if (ts is Timestamp) {
+      final d = ts.toDate();
+      return "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}";
+    }
+    return ts.toString();
   }
 
   Widget _noPending() => Center(
