@@ -1,7 +1,7 @@
 import 'package:bookmyspa/src/features/location/presentation/widgets/floating_nav_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/location_app_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/spa_search_field.dart';
-import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_spa_list_page.dart';
+import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_subcategories_page.dart';
 import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -130,8 +130,8 @@ class _HomePageState extends State<HomePage> {
               ? null
               : () {
                   Navigator.of(context).pushNamed(
-                    '/category-spas',
-                    arguments: CategorySpasArgs(label),
+                    '/category-subcategories',
+                    arguments: CategorySubcategoriesArgs(label),
                   );
                 },
           child: Column(

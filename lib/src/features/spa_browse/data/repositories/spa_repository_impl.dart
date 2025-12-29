@@ -7,6 +7,13 @@ class SpaRepositoryImpl implements SpaRepository {
 
   SpaRepositoryImpl(this.firestore);
 
+  double? _parseRating(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    final s = v.toString();
+    return double.tryParse(s);
+  }
+
   @override
   Stream<List<SpaEntity>> streamApprovedByCategory(String category) {
     final normalized = category.trim();
@@ -43,6 +50,9 @@ class SpaRepositoryImpl implements SpaRepository {
           photos: List<String>.from((data['photos'] as List?) ?? const []),
           status: data['status'] ?? '',
           publishedAt: publishedAt,
+          rating:
+              _parseRating(data['rating']) ??
+              _parseRating(data['averageRating']),
         );
       }).toList();
     });
@@ -71,6 +81,8 @@ class SpaRepositoryImpl implements SpaRepository {
         photos: List<String>.from((data['photos'] as List?) ?? const []),
         status: data['status'] ?? '',
         publishedAt: publishedAt,
+        rating:
+            _parseRating(data['rating']) ?? _parseRating(data['averageRating']),
       );
     });
   }
@@ -102,6 +114,9 @@ class SpaRepositoryImpl implements SpaRepository {
           photos: List<String>.from((data['photos'] as List?) ?? const []),
           status: data['status'] ?? '',
           publishedAt: publishedAt,
+          rating:
+              _parseRating(data['rating']) ??
+              _parseRating(data['averageRating']),
         );
       }).toList();
     });

@@ -5,6 +5,7 @@ import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spas_by_category_usecase.dart';
 import '../../../../core/di/di.dart';
 import 'spa_services_page.dart';
+import 'spa_detail_page.dart';
 import '../controllers/favorites_controller.dart';
 
 class CategorySpasArgs {
@@ -371,6 +372,77 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                       ),
 
                       SizedBox(height: 12.h),
+
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(6.r),
+                              border: Border.all(
+                                color: AppColors.primary,
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 14.sp,
+                                  color: Colors.amber,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  spa.rating != null
+                                      ? spa.rating!.toStringAsFixed(1)
+                                      : 'No rating',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/spa-detail',
+                                arguments: SpaDetailArgs(spa.id),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.visibility_rounded,
+                                  size: 16.sp,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  'Quick View',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
 
                       // ADDRESS
                       Row(

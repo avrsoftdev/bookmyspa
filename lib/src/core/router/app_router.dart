@@ -5,6 +5,8 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/app_check_debug/presentation/app_check_debug_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_page.dart';
 import '../../features/spa_browse/presentation/pages/category_spa_list_page.dart';
+import '../../features/spa_browse/presentation/pages/category_subcategories_page.dart';
+import '../../features/spa_browse/presentation/pages/subcategory_spa_list_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_services_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../features/cart/presentation/pages/order_summary_page.dart';
@@ -23,12 +25,31 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const AppCheckDebugPage());
       case '/admin-web':
         return MaterialPageRoute(builder: (_) => const AdminWebPage());
+      case '/category-subcategories':
+        final args = settings.arguments as CategorySubcategoriesArgs?;
+        final category = args?.category ?? '';
+        return MaterialPageRoute(
+          builder: (_) => CategorySubcategoriesPage(category: category),
+        );
       case '/category-spas':
         final args = settings.arguments as CategorySpasArgs?;
         final category = args?.category ?? '';
         return MaterialPageRoute(
           builder: (_) => CategorySpaListPage(category: category),
         );
+      case '/subcategory-spas':
+        if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          final category = (map['category'] as String?) ?? '';
+          final subcategory = (map['subcategory'] as String?) ?? '';
+          return MaterialPageRoute(
+            builder: (_) => SubcategorySpaListPage(
+              category: category,
+              subcategory: subcategory,
+            ),
+          );
+        }
+        return MaterialPageRoute(builder: (_) => const Scaffold());
       case '/spa-services':
         final args = settings.arguments as SpaServicesArgs?;
         final spaId = args?.spaId ?? '';

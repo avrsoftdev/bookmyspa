@@ -26,6 +26,7 @@ class SpaEntity {
   final List<String> photos;
   final String status;
   final DateTime? publishedAt;
+  final double? rating;
 
   const SpaEntity({
     required this.id,
@@ -38,6 +39,7 @@ class SpaEntity {
     required this.photos,
     required this.status,
     this.publishedAt,
+    this.rating,
   });
 
   factory SpaEntity.fromMap(String id, Map<String, dynamic> map) {
@@ -59,6 +61,14 @@ class SpaEntity {
                 map['publishedAt'].toString().isNotEmpty)
           ? DateTime.tryParse(map['publishedAt'].toString())
           : null,
+      rating: _parseRating(map['rating']) ?? _parseRating(map['averageRating']),
     );
+  }
+
+  static double? _parseRating(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    final s = v.toString();
+    return double.tryParse(s);
   }
 }
