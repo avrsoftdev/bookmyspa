@@ -131,7 +131,11 @@ class SubcategorySpaListPage extends StatelessWidget {
                   separatorBuilder: (context, index) => SizedBox(height: 16.h),
                   itemBuilder: (context, index) {
                     final spa = spas[index];
-                    return SpaCard(spa: spa, index: index);
+                    return SpaCard(
+                      spa: spa,
+                      index: index,
+                      selectedSubcategory: subcategory,
+                    );
                   },
                 ),
               ),

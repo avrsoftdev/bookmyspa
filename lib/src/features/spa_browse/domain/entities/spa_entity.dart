@@ -12,18 +12,55 @@ class ServicePricing {
   }
 }
 
+class ServicePlan {
+  final int durationMinutes;
+  final int price;
+
+  const ServicePlan({required this.durationMinutes, required this.price});
+
+  factory ServicePlan.fromMap(Map<String, dynamic> map) {
+    final d = map['durationMinutes'];
+    final p = map['price'];
+    return ServicePlan(
+      durationMinutes: d is int ? d : int.tryParse(d?.toString() ?? '') ?? 0,
+      price: p is int ? p : int.tryParse(p?.toString() ?? '') ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'durationMinutes': durationMinutes,
+    'price': price,
+  };
+}
+
 class ServiceDetail {
   final List<String> subcategories;
   final List<String> addons;
+  final Map<String, List<ServicePlan>> plans;
 
-  const ServiceDetail({required this.subcategories, required this.addons});
+  const ServiceDetail({
+    required this.subcategories,
+    required this.addons,
+    this.plans = const {},
+  });
 
   factory ServiceDetail.fromMap(Map<String, dynamic> map) {
+    final subs = List<String>.from((map['subcategories'] as List?) ?? const []);
+    final addons = List<String>.from((map['addons'] as List?) ?? const []);
+    final rawPlans =
+        (map['plans'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final parsedPlans = <String, List<ServicePlan>>{};
+    for (final e in rawPlans.entries) {
+      final list = (e.value as List?) ?? const [];
+      parsedPlans[e.key] = list
+          .whereType<Map>()
+          .map((m) => ServicePlan.fromMap(m.cast<String, dynamic>()))
+          .toList();
+    }
     return ServiceDetail(
-      subcategories: List<String>.from(
-        (map['subcategories'] as List?) ?? const [],
-      ),
-      addons: List<String>.from((map['addons'] as List?) ?? const []),
+      subcategories: subs,
+      addons: addons,
+      plans: parsedPlans,
     );
   }
 }

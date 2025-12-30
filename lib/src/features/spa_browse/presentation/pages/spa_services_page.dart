@@ -13,12 +13,18 @@ import '../../../cart/domain/entities/cart_item.dart';
 
 class SpaServicesArgs {
   final String spaId;
-  const SpaServicesArgs(this.spaId);
+  final String? selectedSubcategory;
+  const SpaServicesArgs(this.spaId, {this.selectedSubcategory});
 }
 
 class SpaServicesPage extends StatelessWidget {
   final String spaId;
-  const SpaServicesPage({super.key, required this.spaId});
+  final String? selectedSubcategory;
+  const SpaServicesPage({
+    super.key,
+    required this.spaId,
+    this.selectedSubcategory,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +45,6 @@ class SpaServicesPage extends StatelessWidget {
       body: StreamBuilder<SpaEntity?>(
         stream: useCase(spaId),
         builder: (context, snapshot) {
-          
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: Colors.white),
@@ -49,7 +54,10 @@ class SpaServicesPage extends StatelessWidget {
           final spa = snapshot.data;
           if (spa == null) {
             return const Center(
-              child: Text("Spa not found", style: TextStyle(color: Colors.white)),
+              child: Text(
+                "Spa not found",
+                style: TextStyle(color: Colors.white),
+              ),
             );
           }
 
@@ -71,23 +79,46 @@ class SpaServicesPage extends StatelessWidget {
 
               SizedBox(height: 16.h),
 
-              if (spa.pricing.isEmpty)
+              if (spa.serviceDetails.isEmpty ||
+                  spa.serviceDetails.values.every((d) => d.plans.isEmpty))
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 40.h),
                   child: Center(
                     child: Text(
                       "No pricing information available",
-                      style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14.sp,
+                      ),
                     ),
                   ),
                 )
               else
-                ...spa.pricing.map(
-                  (pricing) => _ServicePricingCard(
-                    serviceName: pricing.service,
-                    price: pricing.price,
-                  ),
-                ),
+                ...spa.serviceDetails.entries.expand((serviceEntry) {
+                  final serviceName = serviceEntry.key;
+                  final detail = serviceEntry.value;
+                  final subFilter = selectedSubcategory?.trim().toLowerCase();
+                  final subEntries = detail.plans.entries.where((subEntry) {
+                    if (subFilter == null || subFilter.isEmpty) return true;
+                    return subEntry.key.trim().toLowerCase() == subFilter;
+                  });
+                  return subEntries.expand((subEntry) {
+                    final sub = subEntry.key;
+                    final plans = subEntry.value;
+                    return plans.map((plan) {
+                      final mins = plan.durationMinutes;
+                      final price = plan.price;
+                      final label = mins >= 60
+                          ? "${(mins / 60).toStringAsFixed(mins % 60 == 0 ? 0 : 1)} hr"
+                          : "$mins min";
+                      final cardName = "$sub — $label";
+                      return _ServicePricingCard(
+                        serviceName: "$serviceName • $cardName",
+                        price: price.toString(),
+                      );
+                    });
+                  });
+                }),
             ],
           );
         },
@@ -144,8 +175,11 @@ class _SpaHeaderCard extends StatelessWidget {
                       width: 90.w,
                       height: 90.w,
                       color: AppColors.primary.withOpacity(0.15),
-                      child: Icon(Icons.spa_rounded,
-                          size: 40.sp, color: AppColors.primary),
+                      child: Icon(
+                        Icons.spa_rounded,
+                        size: 40.sp,
+                        color: AppColors.primary,
+                      ),
                     ),
             ),
 
@@ -172,8 +206,11 @@ class _SpaHeaderCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.location_on_rounded,
-                          size: 16.sp, color: AppColors.primary),
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 16.sp,
+                        color: AppColors.primary,
+                      ),
                       SizedBox(width: 6.w),
                       Expanded(
                         child: Text(
@@ -204,8 +241,11 @@ class _SpaHeaderCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 4.w),
-                      Icon(Icons.arrow_forward_rounded,
-                          size: 14.sp, color: AppColors.primary),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 14.sp,
+                        color: AppColors.primary,
+                      ),
                     ],
                   ),
                 ],
@@ -226,10 +266,7 @@ class _ServicePricingCard extends StatelessWidget {
   final String serviceName;
   final String price;
 
-  const _ServicePricingCard({
-    required this.serviceName,
-    required this.price,
-  });
+  const _ServicePricingCard({required this.serviceName, required this.price});
 
   @override
   Widget build(BuildContext context) {
@@ -290,12 +327,14 @@ class _ServicePricingCard extends StatelessWidget {
                     _AddServiceButton(
                       onTap: () {
                         context.read<CartBloc>().add(
-                          AddToCart(CartItem(
-                            serviceId: serviceId,
-                            serviceName: serviceName,
-                            price: priceValue,
-                            quantity: 1,
-                          )),
+                          AddToCart(
+                            CartItem(
+                              serviceId: serviceId,
+                              serviceName: serviceName,
+                              price: priceValue,
+                              quantity: 1,
+                            ),
+                          ),
                         );
                       },
                     )

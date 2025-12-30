@@ -215,6 +215,9 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   final Map<String, Set<String>> _selectedSubcategoriesByService = {};
   final Map<String, Set<String>> _selectedAddonsByService = {};
 
+  final Map<String, Map<String, List<Map<String, TextEditingController>>>>
+  _subcategoryPlansControllers = {};
+
   final List<Map<String, TextEditingController>> _pricingRows = [];
   String? _pricingPdfName;
 
@@ -284,6 +287,33 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
     _pricingRows.removeAt(i);
   });
 
+  void _addPlanRow(String service, String subcategory) {
+    final svcMap = _subcategoryPlansControllers.putIfAbsent(
+      service,
+      () => <String, List<Map<String, TextEditingController>>>{},
+    );
+    final list = svcMap.putIfAbsent(
+      subcategory,
+      () => <Map<String, TextEditingController>>[],
+    );
+    list.add({
+      'duration': TextEditingController(),
+      'price': TextEditingController(),
+    });
+    setState(() {});
+  }
+
+  void _removePlanRow(String service, String subcategory, int index) {
+    final svcMap = _subcategoryPlansControllers[service];
+    final list = svcMap?[subcategory];
+    if (list != null && index >= 0 && index < list.length) {
+      list[index]['duration']!.dispose();
+      list[index]['price']!.dispose();
+      list.removeAt(index);
+      setState(() {});
+    }
+  }
+
   void _onLocationChanged() {
     final state = _locationBloc.state;
     if (state.status == LocationStatus.success && state.location != null) {
@@ -325,6 +355,27 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       );
       return;
     }
+    for (final service in _selectedServices) {
+      final selectedSubs = _selectedSubcategoriesByService[service] ?? {};
+      for (final sub in selectedSubs) {
+        final rows = _subcategoryPlansControllers[service]?[sub] ?? [];
+        if (rows.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Add at least one duration–price for $sub')),
+          );
+          return;
+        }
+        for (final r in rows) {
+          if (r['duration']!.text.trim().isEmpty ||
+              r['price']!.text.trim().isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Fill duration and price for $sub')),
+            );
+            return;
+          }
+        }
+      }
+    }
 
     // Collect form data into a map and delegate persistence to the controller.
     final Map<String, dynamic> data = {
@@ -353,28 +404,31 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       'numStaff': _numStaff.text.trim(),
 
       'services': _selectedServices.toList(),
-      'pricing': _pricingRows
-          .map(
-            (r) => {
-              'service': r['service']!.text.trim(),
-              'price': r['price']!.text.trim(),
-            },
-          )
-          .where((m) => m['service']!.isNotEmpty && m['price']!.isNotEmpty)
-          .toList(),
+      'pricing': const <Map<String, dynamic>>[],
       'facilities': _selectedFacilities.toList(),
       'pricingPdfName': _pricingPdfName,
       'acceptedTerms': _acceptedTerms,
       'serviceDetails': Map.fromEntries(
-        _selectedServices.map(
-          (s) => MapEntry(s, {
-            'subcategories':
-                (_selectedSubcategoriesByService[s] ?? const <String>{})
-                    .toList(),
-            'addons': (_selectedAddonsByService[s] ?? const <String>{})
-                .toList(),
-          }),
-        ),
+        _selectedServices.map((s) {
+          final subs = (_selectedSubcategoriesByService[s] ?? const <String>{})
+              .toList();
+          final addons = (_selectedAddonsByService[s] ?? const <String>{})
+              .toList();
+          final plansForService = <String, List<Map<String, dynamic>>>{};
+          for (final sub in subs) {
+            final rows = _subcategoryPlansControllers[s]?[sub] ?? const [];
+            plansForService[sub] = rows.map((r) {
+              final d = int.tryParse(r['duration']!.text.trim()) ?? 0;
+              final p = int.tryParse(r['price']!.text.trim()) ?? 0;
+              return {'durationMinutes': d, 'price': p};
+            }).toList();
+          }
+          return MapEntry(s, {
+            'subcategories': subs,
+            'addons': addons,
+            'plans': plansForService,
+          });
+        }),
       ),
     };
 
@@ -629,10 +683,28 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                                   s,
                                   () => <String>{},
                                 );
+                                _subcategoryPlansControllers.putIfAbsent(
+                                  s,
+                                  () =>
+                                      <
+                                        String,
+                                        List<Map<String, TextEditingController>>
+                                      >{},
+                                );
                               } else {
                                 _selectedServices.remove(s);
                                 _selectedSubcategoriesByService.remove(s);
                                 _selectedAddonsByService.remove(s);
+                                final svcMap = _subcategoryPlansControllers
+                                    .remove(s);
+                                if (svcMap != null) {
+                                  for (final rows in svcMap.values) {
+                                    for (final r in rows) {
+                                      r['duration']!.dispose();
+                                      r['price']!.dispose();
+                                    }
+                                  }
+                                }
                               }
                             }),
                           ),
@@ -691,8 +763,17 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                                               );
                                       if (v) {
                                         set.add(name);
+                                        _addPlanRow(service, name);
                                       } else {
                                         set.remove(name);
+                                        final svcMap =
+                                            _subcategoryPlansControllers[service];
+                                        final rows = svcMap?[name] ?? [];
+                                        for (final r in rows) {
+                                          r['duration']!.dispose();
+                                          r['price']!.dispose();
+                                        }
+                                        svcMap?.remove(name);
                                       }
                                     }),
                                   ),
@@ -744,6 +825,75 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                                 .toList(),
                           ),
                         ],
+                        SizedBox(height: 10.h),
+                        ...(_selectedSubcategoriesByService[service] ??
+                                const <String>{})
+                            .map((sub) {
+                              final rows =
+                                  _subcategoryPlansControllers[service]?[sub] ??
+                                  const <Map<String, TextEditingController>>[];
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "$sub — Duration & Price",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  ...rows.asMap().entries.map((e) {
+                                    final i = e.key;
+                                    final row = e.value;
+                                    return Padding(
+                                      padding: EdgeInsets.only(bottom: 8.h),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: _inputField(
+                                              row['duration']!,
+                                              "Duration (minutes) *",
+                                              keyboard: TextInputType.number,
+                                            ),
+                                          ),
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            child: _inputField(
+                                              row['price']!,
+                                              "Price (₹) *",
+                                              keyboard: TextInputType.number,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            onPressed: () =>
+                                                _removePlanRow(service, sub, i),
+                                            icon: Icon(
+                                              Icons.delete_rounded,
+                                              color: Colors.red[400],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton.icon(
+                                      onPressed: () =>
+                                          _addPlanRow(service, sub),
+                                      icon: const Icon(Icons.add_rounded),
+                                      label: const Text("Add Duration–Price"),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                ],
+                              );
+                            })
+                            .toList(),
                         SizedBox(height: 12.h),
                       ],
                     );
@@ -777,16 +927,9 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                     () {},
                   ),
                   SizedBox(height: 12.h),
-                  ..._pricingRows.asMap().entries.map(
-                    (e) => _pricingRow(e.key, e.value),
-                  ),
-                  TextButton.icon(
-                    onPressed: _addPricingRow,
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text("Add Service"),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                    ),
+                  Text(
+                    "Pricing is captured per subcategory above",
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -1233,27 +1376,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
         : ElevatedButton(onPressed: onTap, child: const Text("Upload")),
   );
 
-  Widget _pricingRow(int index, Map<String, TextEditingController> row) =>
-      Padding(
-        padding: EdgeInsets.only(bottom: 12.h),
-        child: Row(
-          children: [
-            Expanded(child: _inputField(row['service']!, "Service Name *")),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: _inputField(
-                row['price']!,
-                "Price (₹) *",
-                keyboard: TextInputType.number,
-              ),
-            ),
-            IconButton(
-              onPressed: () => _removePricingRow(index),
-              icon: Icon(Icons.delete_rounded, color: Colors.red[400]),
-            ),
-          ],
-        ),
-      );
+  // Legacy pricing row removed; pricing is now captured per subcategory
 
   Widget _uploadPlaceholder(String text, VoidCallback onTap) => GestureDetector(
     onTap: onTap,

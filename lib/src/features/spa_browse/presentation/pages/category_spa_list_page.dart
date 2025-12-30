@@ -175,7 +175,13 @@ class SpaCard extends StatefulWidget {
   final SpaEntity spa;
   final int index;
 
-  const SpaCard({super.key, required this.spa, required this.index});
+  const SpaCard({
+    super.key,
+    required this.spa,
+    required this.index,
+    this.selectedSubcategory,
+  });
+  final String? selectedSubcategory;
 
   @override
   State<SpaCard> createState() => _SpaCardState();
@@ -235,7 +241,10 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
               Navigator.pushNamed(
                 context,
                 '/spa-services',
-                arguments: SpaServicesArgs(spa.id),
+                arguments: SpaServicesArgs(
+                  spa.id,
+                  selectedSubcategory: widget.selectedSubcategory,
+                ),
               );
             },
             child: Column(

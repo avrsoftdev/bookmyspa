@@ -23,19 +23,17 @@ class SpaDetailPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         elevation: 0,
-        title: const Text(
-          'Spa Details',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Spa Details', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
 
       body: StreamBuilder<SpaEntity?>(
         stream: useCase(spaId),
         builder: (context, snapshot) {
-
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.white));
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
           }
 
           final spa = snapshot.data;
@@ -74,7 +72,7 @@ class SpaDetailPage extends StatelessWidget {
 
               _SectionTitle("Services & Pricing"),
               SizedBox(height: 12.h),
-              _PricingList(pricing: spa.pricing),
+              _PricingBySubcategoryList(details: spa.serviceDetails),
               SizedBox(height: 26.h),
 
               _SectionTitle("Location"),
@@ -255,8 +253,10 @@ class _ServicesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (services.isEmpty) {
-      return Text("No services listed",
-          style: TextStyle(color: Colors.grey[400], fontSize: 14.sp));
+      return Text(
+        "No services listed",
+        style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
+      );
     }
 
     return Wrap(
@@ -273,8 +273,11 @@ class _ServicesList extends StatelessWidget {
               ),
               child: Text(
                 s,
-                style:
-                    TextStyle(color: Colors.white, fontSize: 13.sp, height: 1.2),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  height: 1.2,
+                ),
               ),
             ),
           )
@@ -317,10 +320,7 @@ class _PricingList extends StatelessWidget {
                   Expanded(
                     child: Text(
                       p.service,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15.sp,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 15.sp),
                     ),
                   ),
                   Text(
@@ -337,6 +337,87 @@ class _PricingList extends StatelessWidget {
           )
           .toList(),
     );
+  }
+}
+
+class _PricingBySubcategoryList extends StatelessWidget {
+  final Map<String, ServiceDetail> details;
+  const _PricingBySubcategoryList({required this.details});
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = details.entries
+        .where((e) => e.value.plans.isNotEmpty)
+        .toList();
+    if (entries.isEmpty) {
+      return Text(
+        "No pricing available",
+        style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
+      );
+    }
+
+    List<Widget> children = [];
+    for (final e in entries) {
+      final serviceName = e.key;
+      final detail = e.value;
+      children.addAll(
+        detail.plans.entries.map((subEntry) {
+          final subcategory = subEntry.key;
+          final plans = subEntry.value;
+          return Container(
+            margin: EdgeInsets.only(bottom: 12.h),
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.primary, width: 1.2),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "$serviceName — $subcategory",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                ...plans.map((plan) {
+                  final mins = plan.durationMinutes;
+                  final price = plan.price;
+                  final label = mins >= 60
+                      ? "${(mins / 60).toStringAsFixed(mins % 60 == 0 ? 0 : 1)} hr"
+                      : "$mins min";
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: Colors.grey[300],
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      Text(
+                        "₹$price",
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ],
+            ),
+          );
+        }),
+      );
+    }
+    return Column(children: children);
   }
 }
 

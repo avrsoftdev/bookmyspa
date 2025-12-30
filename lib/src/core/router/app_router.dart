@@ -53,7 +53,12 @@ class AppRouter {
       case '/spa-services':
         final args = settings.arguments as SpaServicesArgs?;
         final spaId = args?.spaId ?? '';
-        return MaterialPageRoute(builder: (_) => SpaServicesPage(spaId: spaId));
+        return MaterialPageRoute(
+          builder: (_) => SpaServicesPage(
+            spaId: spaId,
+            selectedSubcategory: args?.selectedSubcategory,
+          ),
+        );
       case '/spa-detail':
         final args = settings.arguments as SpaDetailArgs?;
         final spaId = args?.spaId ?? '';
