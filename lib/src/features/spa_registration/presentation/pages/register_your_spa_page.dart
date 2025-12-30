@@ -1,5 +1,6 @@
 // register_your_spa_page.dart - FULLY RESTORED + DARK THEME PERFECT MATCH
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
@@ -504,12 +505,8 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                     ['Spa', 'Salon', 'Both'],
                     (v) => setState(() => _businessType = v),
                   ),
-                  _inputField(
-                    _yearOfEst,
-                    "Year of Establishment *",
-                    keyboard: TextInputType.number,
-                  ),
-                  _inputField(_gstNumber, "GST Number (Optional)"),
+                  _yearField(_yearOfEst, "Year of Establishment *"),
+                  _gstField(_gstNumber, "GST Number (Optional)"),
                 ],
               ),
 
@@ -1222,6 +1219,119 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
     ),
   );
 
+  Widget _yearField(TextEditingController c, String label) => Padding(
+    padding: EdgeInsets.only(bottom: 16.h),
+    child: TextFormField(
+      controller: c,
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: "Select year",
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[800]
+            : Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey[600]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        suffixIcon: const Icon(Icons.calendar_today_rounded),
+      ),
+      onTap: () async {
+        final now = DateTime.now();
+        final selectedYear = int.tryParse(c.text) ?? now.year;
+        final firstDate = DateTime(1950);
+        final lastDate = DateTime(now.year);
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) {
+            return Dialog(
+              child: SizedBox(
+                height: 300,
+                child: YearPicker(
+                  firstDate: firstDate,
+                  lastDate: lastDate,
+                  selectedDate: DateTime(selectedYear),
+                  onChanged: (date) {
+                    c.text = date.year.toString();
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+      validator: (v) {
+        if (label.contains('*') && (v == null || v.trim().isEmpty)) {
+          return 'Required';
+        }
+        if (v != null && v.trim().isNotEmpty) {
+          final year = int.tryParse(v.trim());
+          final nowYear = DateTime.now().year;
+          if (year == null || year < 1950 || year > nowYear) {
+            return 'Enter a valid year';
+          }
+        }
+        return null;
+      },
+    ),
+  );
+
+  Widget _gstField(TextEditingController c, String label) => Padding(
+    padding: EdgeInsets.only(bottom: 16.h),
+    child: TextFormField(
+      controller: c,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+        LengthLimitingTextInputFormatter(15),
+        UpperCaseTextFormatter(),
+      ],
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: "15-character GSTIN",
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[800]
+            : Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey[600]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      validator: (v) {
+        final value = (v ?? '').trim();
+        if (value.isEmpty) {
+          return null; // optional
+        }
+        if (value.length != 15) {
+          return 'GSTIN must be 15 characters';
+        }
+        if (!_isValidGstin(value)) {
+          return 'Invalid GSTIN format';
+        }
+        return null;
+      },
+    ),
+  );
+
   Widget _phoneField(
     TextEditingController c,
     String label, {
@@ -1400,6 +1510,28 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       ),
     ),
   );
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  const UpperCaseTextFormatter();
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+      composing: TextRange.empty,
+    );
+  }
+}
+
+bool _isValidGstin(String gstin) {
+  final pattern = RegExp(
+    r'^(0[1-9]|1[0-9]|2[0-9]|3[0-7])[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$',
+  );
+  return pattern.hasMatch(gstin);
 }
 
 // Simple full-screen success page shown after submission
