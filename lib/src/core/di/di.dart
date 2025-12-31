@@ -20,6 +20,7 @@ import '../../features/cart/presentation/bloc/cart_bloc.dart';
 import '../../features/bookings/presentation/controllers/bookings_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/theme_cubit.dart';
+import '../theme/locale_cubit.dart';
 import '../services/admob_service.dart';
 
 // Simple service locator
@@ -90,5 +91,8 @@ Future<void> initDependencies() async {
   final themeCubit = ThemeCubit(prefs);
   await themeCubit.load();
   sl.register<ThemeCubit>(themeCubit);
+  final localeCubit = LocaleCubit(prefs);
+  await localeCubit.load();
+  sl.register<LocaleCubit>(localeCubit);
   sl.register<AdMobService>(AdMobService(FirebaseFirestore.instance));
 }

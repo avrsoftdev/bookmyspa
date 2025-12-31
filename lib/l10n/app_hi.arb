@@ -1,0 +1,18 @@
+{
+  "@@locale": "hi",
+  "appTitle": "बुकमायस्पा",
+  "selectLocation": "स्थान चुनें",
+  "searchSpaServices": "स्पा और सेवाओं की खोज करें",
+  "seeMore": "और देखें..",
+  "categoryMassage": "मसाज",
+  "categoryPedicure": "पेडीक्योर",
+  "categoryManicure": "मैनिक्योर",
+  "categorySkinCare": "त्वचा की देखभाल",
+  "categoryMakeup": "मेकअप",
+  "categoryTherapy": "थेरेपी",
+  "categoryWaxing": "वैक्सिंग",
+  "categoryBodycare": "बॉडी केयर",
+  "categoryBridal": "ब्राइडल",
+  "categoryGrooming": "ग्रूमिंग",
+  "categoryHaircare": "हेयरकेयर"
+}

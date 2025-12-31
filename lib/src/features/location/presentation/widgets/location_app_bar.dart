@@ -1,5 +1,6 @@
 // lib/common/widgets/location_appbar_title.dart
 import 'package:flutter/material.dart';
+import 'package:bookmyspa/l10n/app_localizations.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 
 class LocationAppBarTitle extends StatelessWidget {
@@ -17,13 +18,13 @@ class LocationAppBarTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('BookMySpa', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(AppLocalizations.of(context)?.appTitle ?? 'BookMySpa', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         ListenableBuilder(
           listenable: locationBloc,
           builder: (context, _) {
             final address = overriddenAddress ??
                 locationBloc.state.location?.address ??
-                'Select Location';
+                (AppLocalizations.of(context)?.selectLocation ?? 'Select Location');
             return Text(
               address,
               style: const TextStyle(fontSize: 12, color: Colors.white70),

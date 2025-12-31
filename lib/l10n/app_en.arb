@@ -1,0 +1,18 @@
+{
+  "@@locale": "en",
+  "appTitle": "BookMySpa",
+  "selectLocation": "Select Location",
+  "searchSpaServices": "Search Spa and Services",
+  "seeMore": "See More..",
+  "categoryMassage": "Massage",
+  "categoryPedicure": "Pedicure",
+  "categoryManicure": "Manicure",
+  "categorySkinCare": "Skin Care",
+  "categoryMakeup": "Makeup",
+  "categoryTherapy": "Therapy",
+  "categoryWaxing": "Waxing",
+  "categoryBodycare": "Bodycare",
+  "categoryBridal": "Bridal",
+  "categoryGrooming": "Grooming",
+  "categoryHaircare": "Haircare"
+}

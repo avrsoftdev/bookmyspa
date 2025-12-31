@@ -37,6 +37,8 @@ dependencies:
   equatable: ^2.0.5
   # floating_navbar: ^3.0.0
   google_mobile_ads: ^6.0.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -45,5 +47,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - images/

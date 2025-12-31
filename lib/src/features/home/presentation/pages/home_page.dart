@@ -5,6 +5,8 @@ import 'package:bookmyspa/src/features/spa_browse/presentation/pages/category_su
 import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bookmyspa/l10n/app_localizations.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../bookings/presentation/pages/my_bookings_page.dart';
 import '../../../spa_browse/presentation/pages/favorites_page.dart';
@@ -12,6 +14,7 @@ import '../../../location/presentation/bloc/location_bloc.dart';
 import '../../../../core/di/di.dart';
 // TODO: change this import to the actual path of your Images class
 import '../../../../core/widgets/admob_banner_widget.dart';
+import '../../../../core/theme/locale_cubit.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -27,20 +30,33 @@ class _HomePageState extends State<HomePage> {
   String? _overriddenAddress;
   final TextEditingController _searchController = TextEditingController();
 
-  // Category data using your Images class
-  final List<Map<String, String>> _categories = [
-    {'icon': Images.massage, 'label': 'Massage'},
-    {'icon': Images.pedicure, 'label': 'Pedicure'},
-    {'icon': Images.manicure, 'label': 'Manicure'},
-    {'icon': Images.skincare, 'label': 'Skin Care'},
-    {'icon': Images.makeup, 'label': 'Makeup'},
-    {'icon': Images.therapy, 'label': 'Therapy'},
-    {'icon': Images.wax, 'label': 'Waxing'},
-    {'icon': Images.bodytreatments, 'label': 'Bodycare'},
-    {'icon': Images.bride, 'label': 'Bridal'},
-    {'icon': Images.groom, 'label': 'Grooming'},
-    {'icon': Images.haircut, 'label': 'Haircare'},
-    {'icon': Images.menu, 'label': 'See More..'},
+  final List<String> _icons = [
+    Images.massage,
+    Images.pedicure,
+    Images.manicure,
+    Images.skincare,
+    Images.makeup,
+    Images.therapy,
+    Images.wax,
+    Images.bodytreatments,
+    Images.bride,
+    Images.groom,
+    Images.haircut,
+    Images.menu,
+  ];
+  final List<String> _canonicalLabels = [
+    'Massage',
+    'Pedicure',
+    'Manicure',
+    'Skin Care',
+    'Makeup',
+    'Therapy',
+    'Waxing',
+    'Bodycare',
+    'Bridal',
+    'Grooming',
+    'Haircare',
+    'See More..',
   ];
 
   @override
@@ -73,6 +89,14 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.notifications_rounded, color: Colors.white),
             onPressed: () {},
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.language, color: Colors.white),
+            onSelected: (code) => context.read<LocaleCubit>().setLanguage(code),
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'en', child: Text('English')),
+              const PopupMenuItem(value: 'hi', child: Text('हिंदी')),
+            ],
+          ),
         ],
       ),
       body: IndexedStack(
@@ -85,7 +109,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 SpaSearchField(controller: _searchController),
                 const SizedBox(height: 20),
-                _buildCategoryGrid(), // 👈 icons just below search bar
+                _buildCategoryGrid(),
                 const SizedBox(height: 20),
                 AdMobBannerWidget(
                   adUnitId: kDebugMode
@@ -115,7 +139,7 @@ class _HomePageState extends State<HomePage> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _categories.length,
+      itemCount: _icons.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4, // 4 icons per row like Justdial
         mainAxisSpacing: 16,
@@ -123,15 +147,31 @@ class _HomePageState extends State<HomePage> {
         childAspectRatio: 0.8, // tweak if you want icons/text taller/shorter
       ),
       itemBuilder: (context, index) {
-        final item = _categories[index];
-        final label = item['label']!;
+        final l10n = AppLocalizations.of(context)!;
+        final label = switch (index) {
+          0 => l10n.categoryMassage,
+          1 => l10n.categoryPedicure,
+          2 => l10n.categoryManicure,
+          3 => l10n.categorySkinCare,
+          4 => l10n.categoryMakeup,
+          5 => l10n.categoryTherapy,
+          6 => l10n.categoryWaxing,
+          7 => l10n.categoryBodycare,
+          8 => l10n.categoryBridal,
+          9 => l10n.categoryGrooming,
+          10 => l10n.categoryHaircare,
+          11 => l10n.seeMore,
+          _ => '',
+        };
         return InkWell(
-          onTap: label == 'See More..'
+          onTap: index == 11
               ? null
               : () {
                   Navigator.of(context).pushNamed(
                     '/category-subcategories',
-                    arguments: CategorySubcategoriesArgs(label),
+                    arguments: CategorySubcategoriesArgs(
+                      _canonicalLabels[index],
+                    ),
                   );
                 },
           child: Column(
@@ -140,7 +180,7 @@ class _HomePageState extends State<HomePage> {
               SizedBox(
                 height: 48,
                 width: 48,
-                child: Image.asset(item['icon']!, fit: BoxFit.contain),
+                child: Image.asset(_icons[index], fit: BoxFit.contain),
               ),
               const SizedBox(height: 8),
               Text(
