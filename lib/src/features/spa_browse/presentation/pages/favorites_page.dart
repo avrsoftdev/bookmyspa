@@ -15,7 +15,7 @@ class FavoritesPage extends StatelessWidget {
     final favController = sl.get<FavoritesController>();
     final spaById = sl.get<StreamSpaByIdUseCase>();
     return Container(
-      color: const Color(0xFF0F0F0F),
+      color: Theme.of(context).colorScheme.background,
       child: StreamBuilder<List<String>>(
         stream: favController.favoriteSpaIdsStream(),
         builder: (context, snapshot) {
@@ -26,17 +26,17 @@ class FavoritesPage extends StatelessWidget {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: AppColors.primary),
-                  SizedBox(height: 12.h),
-                  Text(
-                    'Loading favourites...',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            );
-          }
+              children: [
+                CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+                SizedBox(height: 12.h),
+                Text(
+                  'Loading favourites...',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                ),
+              ],
+            ),
+          );
+        }
 
           if (ids.isEmpty) {
             return _EmptyFavourites();
@@ -49,7 +49,7 @@ class FavoritesPage extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 12.h),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(24.r),
                     bottomRight: Radius.circular(24.r),
@@ -60,7 +60,7 @@ class FavoritesPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
               ),
@@ -86,10 +86,10 @@ class FavoritesPage extends StatelessWidget {
                             : null;
                         return Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A1A),
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(20.r),
                             border: Border.all(
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                               width: 1.6,
                             ),
                           ),
@@ -121,13 +121,13 @@ class FavoritesPage extends StatelessWidget {
                                           : Container(
                                               width: 110.w,
                                               height: 110.w,
-                                              color: AppColors.primary
+                                              color: Theme.of(context).colorScheme.primary
                                                   .withOpacity(0.15),
                                               alignment: Alignment.center,
                                               child: Icon(
                                                 Icons.spa_rounded,
                                                 size: 40.sp,
-                                                color: AppColors.primary,
+                                                color: Theme.of(context).colorScheme.primary,
                                               ),
                                             ),
                                       Positioned(
@@ -152,8 +152,8 @@ class FavoritesPage extends StatelessWidget {
                                                       : Icons
                                                             .favorite_border_rounded,
                                                   color: isFav
-                                                      ? AppColors.primary
-                                                      : Colors.white,
+                                                      ? Theme.of(context).colorScheme.primary
+                                                      : Theme.of(context).colorScheme.onSurface,
                                                 ),
                                                 onPressed: () async {
                                                   try {
@@ -199,14 +199,14 @@ class FavoritesPage extends StatelessWidget {
                                                 style: TextStyle(
                                                   fontSize: 18.sp,
                                                   fontWeight: FontWeight.w700,
-                                                  color: Colors.white,
+                                                  color: Theme.of(context).colorScheme.onSurface,
                                                 ),
                                               ),
                                             ),
                                             Icon(
                                               Icons.arrow_forward_ios_rounded,
                                               size: 14.sp,
-                                              color: AppColors.primary,
+                                              color: Theme.of(context).colorScheme.primary,
                                             ),
                                           ],
                                         ),
@@ -216,7 +216,7 @@ class FavoritesPage extends StatelessWidget {
                                             Icon(
                                               Icons.location_on_rounded,
                                               size: 14.sp,
-                                              color: AppColors.primary,
+                                              color: Theme.of(context).colorScheme.primary,
                                             ),
                                             SizedBox(width: 6.w),
                                             Expanded(
@@ -226,7 +226,7 @@ class FavoritesPage extends StatelessWidget {
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
                                                   fontSize: 12.5.sp,
-                                                  color: Colors.white,
+                                                  color: Theme.of(context).colorScheme.onSurface,
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -241,7 +241,7 @@ class FavoritesPage extends StatelessWidget {
                                             Icon(
                                               Icons.place_outlined,
                                               size: 14.sp,
-                                              color: Colors.grey[400],
+                                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                                             ),
                                             SizedBox(width: 6.w),
                                             Expanded(
@@ -253,7 +253,7 @@ class FavoritesPage extends StatelessWidget {
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
                                                   fontSize: 12.sp,
-                                                  color: Colors.grey[300],
+                                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                                   height: 1.4,
                                                 ),
                                               ),
@@ -287,9 +287,9 @@ class _LoadingCard extends StatelessWidget {
     return Container(
       height: 110.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColors.primary, width: 1.2),
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.2),
       ),
       padding: EdgeInsets.all(16.w),
       child: Row(
@@ -298,7 +298,7 @@ class _LoadingCard extends StatelessWidget {
             width: 110.w,
             height: 110.w,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(18.r),
             ),
           ),
@@ -332,14 +332,14 @@ class _UnavailableCard extends StatelessWidget {
     return Container(
       height: 110.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColors.primary, width: 1.2),
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.2),
       ),
       alignment: Alignment.center,
-      child: const Text(
+      child: Text(
         'Spa unavailable',
-        style: TextStyle(color: Colors.white70),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
       ),
     );
   }

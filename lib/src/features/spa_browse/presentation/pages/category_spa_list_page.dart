@@ -23,17 +23,17 @@ class CategorySpaListPage extends StatelessWidget {
     final useCase = sl.get<StreamSpasByCategoryUseCase>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         title: Text(
           category,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 20.sp,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         centerTitle: true,
       ),
@@ -46,13 +46,13 @@ class CategorySpaListPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(
-                    color: Colors.deepPurple,
+                    color: Theme.of(context).colorScheme.primary,
                     strokeWidth: 3,
                   ),
                   SizedBox(height: 16.h),
                   Text(
                     'Loading spas...',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14.sp),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14.sp),
                   ),
                 ],
               ),
@@ -74,7 +74,7 @@ class CategorySpaListPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 8.h),
@@ -85,7 +85,7 @@ class CategorySpaListPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13.sp,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ),
@@ -118,13 +118,13 @@ class CategorySpaListPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
                     'No spas available in $category category',
-                    style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 14.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
                   ),
                 ],
               ),
@@ -137,7 +137,7 @@ class CategorySpaListPage extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 12.h),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(24.r),
                     bottomRight: Radius.circular(24.r),
@@ -148,7 +148,7 @@ class CategorySpaListPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                   ),
                 ),
               ),
@@ -229,11 +229,11 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
         child: Container(
           margin: EdgeInsets.only(bottom: 16.h),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A), // DARK CARD BACKGROUND
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20.r),
 
             // PRIMARY OUTLINE
-            border: Border.all(color: AppColors.primary, width: 1.8),
+            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.8),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(20.r),
@@ -266,12 +266,12 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                             )
                           : Container(
                               height: 180.h,
-                              color: AppColors.primary.withOpacity(0.15),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                               alignment: Alignment.center,
                               child: Icon(
                                 Icons.spa_rounded,
                                 size: 60.sp,
-                                color: AppColors.primary,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                     ),
@@ -290,7 +290,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                                 isFav
                                     ? Icons.favorite_rounded
                                     : Icons.favorite_border_rounded,
-                                color: isFav ? AppColors.primary : Colors.white,
+                                color: isFav ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                               ),
                               onPressed: () async {
                                 try {
@@ -331,14 +331,14 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white, // WHITE TEXT
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 16.sp,
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ],
                       ),
@@ -352,10 +352,10 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                           vertical: 5.h,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(6.r),
                           border: Border.all(
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                             width: 1.2,
                           ),
                         ),
@@ -365,14 +365,14 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                             Icon(
                               Icons.location_on_rounded,
                               size: 14.sp,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                             SizedBox(width: 4.w),
                             Text(
                               spa.city,
                               style: TextStyle(
                                 fontSize: 12.sp,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -390,10 +390,10 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                               vertical: 4.h,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2A2A2A),
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(6.r),
                               border: Border.all(
-                                color: AppColors.primary,
+                                color: Theme.of(context).colorScheme.primary,
                                 width: 1.2,
                               ),
                             ),
@@ -412,7 +412,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                                       : 'No rating',
                                   style: TextStyle(
                                     fontSize: 12.sp,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -429,7 +429,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                               );
                             },
                             style: TextButton.styleFrom(
-                              foregroundColor: AppColors.primary,
+                              foregroundColor: Theme.of(context).colorScheme.primary,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -437,7 +437,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                                 Icon(
                                   Icons.visibility_rounded,
                                   size: 16.sp,
-                                  color: AppColors.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
@@ -460,7 +460,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                           Icon(
                             Icons.place_outlined,
                             size: 16.sp,
-                            color: Colors.grey[400],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                           ),
                           SizedBox(width: 6.w),
                           Expanded(
@@ -473,7 +473,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 height: 1.4,
-                                color: Colors.grey[300], // LIGHT GREY TEXT
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ),

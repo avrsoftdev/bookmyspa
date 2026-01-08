@@ -19,19 +19,19 @@ class SubcategorySpaListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final useCase = sl.get<StreamSpasByCategoryUseCase>();
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         title: Text(
           subcategory,
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 18.sp,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
         centerTitle: true,
       ),
       body: StreamBuilder<List<SpaEntity>>(
@@ -39,7 +39,7 @@ class SubcategorySpaListPage extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(color: Colors.white),
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
             );
           }
           if (snapshot.hasError) {
@@ -48,7 +48,7 @@ class SubcategorySpaListPage extends StatelessWidget {
                 padding: EdgeInsets.all(24.w),
                 child: Text(
                   snapshot.error.toString(),
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -86,7 +86,7 @@ class SubcategorySpaListPage extends StatelessWidget {
                   Text(
                     'No spas found for $subcategory',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -94,7 +94,7 @@ class SubcategorySpaListPage extends StatelessWidget {
                   SizedBox(height: 6.h),
                   Text(
                     'Try a related subcategory or explore other services',
-                    style: TextStyle(color: Colors.white70, fontSize: 13.sp),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 13.sp),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -109,7 +109,7 @@ class SubcategorySpaListPage extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 12.h),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(24.r),
                     bottomRight: Radius.circular(24.r),
@@ -120,7 +120,7 @@ class SubcategorySpaListPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                   ),
                 ),
               ),

@@ -209,19 +209,19 @@ class CategorySubcategoriesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final subs = _subcategories[category] ?? const <String>[];
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         elevation: 0,
         title: Text(
           '$category Subcategories',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 18.sp,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
         centerTitle: true,
       ),
       body: Padding(
@@ -230,16 +230,18 @@ class CategorySubcategoriesPage extends StatelessWidget {
             ? Center(
                 child: Text(
                   'No subcategories for $category',
-                  style: TextStyle(color: Colors.white70, fontSize: 14.sp),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 14.sp),
                 ),
               )
-            : ListView.separated(
+            : ListView.separated
+              (
                 shrinkWrap: true,
                 itemCount: subs.length,
                 separatorBuilder: (_, __) => SizedBox(height: 12.h),
                 itemBuilder: (context, i) {
                   final name = subs[i];
-                  return InkWell(
+                  return InkWell
+                  (
                     onTap: () {
                       Navigator.push(
                         context,
@@ -255,10 +257,10 @@ class CategorySubcategoriesPage extends StatelessWidget {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(14.r),
                         border: Border.all(
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           width: 1.2,
                         ),
                       ),
@@ -272,17 +274,17 @@ class CategorySubcategoriesPage extends StatelessWidget {
                             height: 34.h,
                             width: 34.h,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.15),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primary,
+                                color: Theme.of(context).colorScheme.primary,
                                 width: 1,
                               ),
                             ),
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.category_rounded,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                               size: 18.sp,
                             ),
                           ),
@@ -293,7 +295,7 @@ class CategorySubcategoriesPage extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -303,21 +305,21 @@ class CategorySubcategoriesPage extends StatelessWidget {
                             icon: Icon(
                               Icons.info_outline_rounded,
                               size: 18.sp,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                             onPressed: () {
                               final desc = _getDescription(category, name);
                               showDialog(
                                 context: context,
                                 builder: (_) => AlertDialog(
-                                  backgroundColor: const Color(0xFF1A1A1A),
+                                  backgroundColor: Theme.of(context).colorScheme.surface,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14.r),
                                   ),
                                   title: Text(
                                     name,
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -325,7 +327,7 @@ class CategorySubcategoriesPage extends StatelessWidget {
                                   content: Text(
                                     desc,
                                     style: TextStyle(
-                                      color: Colors.white70,
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                       fontSize: 13.sp,
                                       height: 1.4,
                                     ),
@@ -335,7 +337,7 @@ class CategorySubcategoriesPage extends StatelessWidget {
                                       onPressed: () => Navigator.of(context).pop(),
                                       child: Text(
                                         'Close',
-                                        style: TextStyle(color: AppColors.primary),
+                                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
                                       ),
                                     ),
                                   ],
@@ -346,7 +348,7 @@ class CategorySubcategoriesPage extends StatelessWidget {
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 14.sp,
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ],
                       ),

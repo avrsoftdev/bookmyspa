@@ -31,32 +31,32 @@ class SpaServicesPage extends StatelessWidget {
     final useCase = sl.get<StreamSpaByIdUseCase>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         title: const Text(
           'Services & Pricing',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
       ),
 
       body: StreamBuilder<SpaEntity?>(
         stream: useCase(spaId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+            return Center(
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
             );
           }
 
           final spa = snapshot.data;
           if (spa == null) {
-            return const Center(
+            return Center(
               child: Text(
                 "Spa not found",
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
             );
           }
@@ -72,7 +72,7 @@ class SpaServicesPage extends StatelessWidget {
                 "Services & Pricing",
                 style: TextStyle(
                   fontSize: 20.sp,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -87,7 +87,7 @@ class SpaServicesPage extends StatelessWidget {
                     child: Text(
                       "No pricing information available",
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 14.sp,
                       ),
                     ),
@@ -154,9 +154,9 @@ class _SpaHeaderCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(18.r),
-          border: Border.all(color: AppColors.primary, width: 1.4),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.4),
         ),
         padding: EdgeInsets.all(16.w),
         child: Row(
@@ -174,11 +174,11 @@ class _SpaHeaderCard extends StatelessWidget {
                   : Container(
                       width: 90.w,
                       height: 90.w,
-                      color: AppColors.primary.withOpacity(0.15),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                       child: Icon(
                         Icons.spa_rounded,
                         size: 40.sp,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
             ),
@@ -197,7 +197,7 @@ class _SpaHeaderCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
 
@@ -209,7 +209,7 @@ class _SpaHeaderCard extends StatelessWidget {
                       Icon(
                         Icons.location_on_rounded,
                         size: 16.sp,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       SizedBox(width: 6.w),
                       Expanded(
@@ -221,7 +221,7 @@ class _SpaHeaderCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: Colors.grey[300],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                           ),
                         ),
                       ),
@@ -236,7 +236,7 @@ class _SpaHeaderCard extends StatelessWidget {
                         "Tap for full details",
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -244,7 +244,7 @@ class _SpaHeaderCard extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward_rounded,
                         size: 14.sp,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ],
                   ),
@@ -289,9 +289,9 @@ class _ServicePricingCard extends StatelessWidget {
           margin: EdgeInsets.only(bottom: 14.h),
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: AppColors.primary, width: 1.2),
+            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.2),
           ),
           child: Column(
             children: [
@@ -302,7 +302,7 @@ class _ServicePricingCard extends StatelessWidget {
                     child: Text(
                       serviceName,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -312,7 +312,7 @@ class _ServicePricingCard extends StatelessWidget {
                   Text(
                     "₹$price",
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -380,7 +380,7 @@ class _AddServiceButton extends StatelessWidget {
         child: Text(
           'Add Service',
           style: TextStyle(
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
           ),

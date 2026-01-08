@@ -19,29 +19,35 @@ class SpaDetailPage extends StatelessWidget {
     final useCase = sl.get<StreamSpaByIdUseCase>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
-        title: const Text('Spa Details', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Spa Details'),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
       ),
 
       body: StreamBuilder<SpaEntity?>(
         stream: useCase(spaId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+            return Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
             );
           }
 
           final spa = snapshot.data;
           if (spa == null) {
-            return const Center(
+            return Center(
               child: Text(
                 "Spa not found",
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             );
           }
@@ -102,7 +108,10 @@ class _HeaderImageSection extends StatelessWidget {
       height: 200.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.primary, width: 1.5),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary,
+          width: 1.5,
+        ),
         image: img != null
             ? DecorationImage(image: NetworkImage(img), fit: BoxFit.cover)
             : null,
@@ -145,7 +154,7 @@ class _TitleSection extends StatelessWidget {
           style: TextStyle(
             fontSize: 22.sp,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         SizedBox(height: 6.h),
@@ -155,7 +164,10 @@ class _TitleSection extends StatelessWidget {
             SizedBox(width: 6.w),
             Text(
               spa.city,
-              style: TextStyle(color: Colors.grey[300], fontSize: 14.sp),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontSize: 14.sp,
+              ),
             ),
           ],
         ),
@@ -177,7 +189,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onSurface,
         fontSize: 18.sp,
         fontWeight: FontWeight.w600,
       ),
@@ -199,7 +211,7 @@ class _Photos extends StatelessWidget {
       return Container(
         height: 160.h,
         decoration: BoxDecoration(
-          color: Colors.grey[800],
+          color: Theme.of(context).colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(12.r),
         ),
       );
@@ -237,7 +249,11 @@ class _Description extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       description.isNotEmpty ? description : "No description available",
-      style: TextStyle(color: Colors.grey[300], fontSize: 14.sp, height: 1.4),
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        fontSize: 14.sp,
+        height: 1.4,
+      ),
     );
   }
 }
@@ -268,13 +284,16 @@ class _ServicesList extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(color: AppColors.primary, width: 1.2),
-                color: const Color(0xFF1A1A1A),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
+                color: Theme.of(context).colorScheme.surface,
               ),
               child: Text(
                 s,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 13.sp,
                   height: 1.2,
                 ),
@@ -310,9 +329,12 @@ class _PricingList extends StatelessWidget {
               margin: EdgeInsets.only(bottom: 12.h),
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.primary, width: 1.2),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -320,13 +342,16 @@ class _PricingList extends StatelessWidget {
                   Expanded(
                     child: Text(
                       p.service,
-                      style: TextStyle(color: Colors.white, fontSize: 15.sp),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 15.sp,
+                      ),
                     ),
                   ),
                   Text(
                     "₹${p.price}",
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -368,9 +393,12 @@ class _PricingBySubcategoryList extends StatelessWidget {
             margin: EdgeInsets.only(bottom: 12.h),
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.primary, width: 1.2),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,7 +406,7 @@ class _PricingBySubcategoryList extends StatelessWidget {
                 Text(
                   "$serviceName — $subcategory",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -396,14 +424,16 @@ class _PricingBySubcategoryList extends StatelessWidget {
                       Text(
                         label,
                         style: TextStyle(
-                          color: Colors.grey[300],
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                           fontSize: 14.sp,
                         ),
                       ),
                       Text(
                         "₹$price",
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
                         ),
@@ -441,7 +471,12 @@ class _LocationInfo extends StatelessWidget {
             Expanded(
               child: Text(
                 spa.fullAddress.isNotEmpty ? spa.fullAddress : "No address",
-                style: TextStyle(color: Colors.grey[300], fontSize: 14.sp),
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.7),
+                  fontSize: 14.sp,
+                ),
               ),
             ),
           ],
@@ -453,7 +488,10 @@ class _LocationInfo extends StatelessWidget {
             SizedBox(width: 8.w),
             Text(
               spa.city,
-              style: TextStyle(color: Colors.grey[300], fontSize: 14.sp),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontSize: 14.sp,
+              ),
             ),
           ],
         ),
