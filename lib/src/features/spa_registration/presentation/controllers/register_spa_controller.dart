@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -54,6 +55,7 @@ class RegisterSpaController extends ChangeNotifier {
 
   final List<Map<String, TextEditingController>> pricingRows = [];
   String? pricingPdfName;
+  String? pricingPdfUrl;
 
   final List<ImageProvider?> photos = [];
   final List<String> uploadedImageUrls = [];
@@ -131,6 +133,14 @@ class RegisterSpaController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        uploadError = 'Please sign in to upload';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
       final XFile? xfile = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
@@ -144,7 +154,9 @@ class RegisterSpaController extends ChangeNotifier {
       }
 
       final String id = const Uuid().v4();
-      final ref = FirebaseStorage.instance.ref().child('spa_photos/$id.jpg');
+      final ref = FirebaseStorage.instance.ref().child(
+        'spa_photos/$uid/$id.jpg',
+      );
 
       UploadTask task;
       if (kIsWeb) {
@@ -152,7 +164,7 @@ class RegisterSpaController extends ChangeNotifier {
         task = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       } else {
         final file = File(xfile.path);
-        task = ref.putFile(file);
+        task = ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
       }
 
       task.snapshotEvents.listen(
@@ -170,8 +182,24 @@ class RegisterSpaController extends ChangeNotifier {
         },
       );
 
-      await task;
-      final url = await ref.getDownloadURL();
+      final snapshot = await task;
+      if (snapshot.state != TaskState.success) {
+        uploadError = 'Upload failed';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      String url;
+      try {
+        url = await ref.getDownloadURL();
+      } catch (e) {
+        uploadError = 'Uploaded but URL not available';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
       uploadedImageUrls.add(url);
       if (kIsWeb) {
         photos.add(NetworkImage(url));
@@ -200,29 +228,48 @@ class RegisterSpaController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final XFile? xfile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 90,
-      );
-      if (xfile == null) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        uploadError = 'Please sign in to upload';
         isUploading = false;
         currentUploadKind = null;
         notifyListeners();
         return;
       }
-
-      final String id = const Uuid().v4();
-      final ref = FirebaseStorage.instance.ref().child(
-        'spa_documents/${kind}_$id.jpg',
+      final typeGroup = XTypeGroup(
+        label: 'documents',
+        extensions: ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
       );
+      final XFile? file = await openFile(acceptedTypeGroups: [typeGroup]);
+      if (file == null) {
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      final name = file.name;
+      final ext = name.toLowerCase().endsWith('.pdf')
+          ? '.pdf'
+          : (name.contains('.')
+                ? name.substring(name.lastIndexOf('.')).toLowerCase()
+                : '');
+      final isPdf = ext == '.pdf';
+      final String id = const Uuid().v4();
+      final path = 'spa_documents/$uid/${kind}_$id$ext';
+      final ref = FirebaseStorage.instance.ref().child(path);
+      final contentType = isPdf
+          ? 'application/pdf'
+          : (ext == '.png'
+                ? 'image/png'
+                : (ext == '.webp' ? 'image/webp' : 'image/jpeg'));
 
       UploadTask task;
-      if (kIsWeb) {
-        final bytes = await xfile.readAsBytes();
-        task = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      if (kIsWeb || (file.path.isEmpty)) {
+        final bytes = await file.readAsBytes();
+        task = ref.putData(bytes, SettableMetadata(contentType: contentType));
       } else {
-        final file = File(xfile.path);
-        task = ref.putFile(file);
+        final f = File(file.path);
+        task = ref.putFile(f, SettableMetadata(contentType: contentType));
       }
 
       task.snapshotEvents.listen(
@@ -240,19 +287,124 @@ class RegisterSpaController extends ChangeNotifier {
         },
       );
 
-      await task;
-      final url = await ref.getDownloadURL();
+      final snapshot = await task;
+      if (snapshot.state != TaskState.success) {
+        uploadError = 'Upload failed';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      String url;
+      try {
+        url = await ref.getDownloadURL();
+      } catch (e) {
+        uploadError = 'Uploaded but URL not available';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
 
       if (kind == 'aadhar') {
-        aadharFile = xfile.name;
+        aadharFile = name;
         aadharUrl = url;
       } else if (kind == 'pan') {
-        panFile = xfile.name;
+        panFile = name;
         panUrl = url;
       } else if (kind == 'license') {
-        licenseFile = xfile.name;
+        licenseFile = name;
         licenseUrl = url;
       }
+
+      uploadProgress = 1.0;
+      isUploading = false;
+      currentUploadKind = null;
+      notifyListeners();
+    } catch (e) {
+      uploadError = e.toString();
+      isUploading = false;
+      currentUploadKind = null;
+      notifyListeners();
+    }
+  }
+
+  Future<void> pickAndUploadPricingPdf() async {
+    uploadError = null;
+    currentUploadKind = 'pricing';
+    isUploading = true;
+    uploadProgress = 0.0;
+    notifyListeners();
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        uploadError = 'Please sign in to upload';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      final typeGroup = XTypeGroup(label: 'pdf', extensions: ['pdf']);
+      final XFile? file = await openFile(acceptedTypeGroups: [typeGroup]);
+      if (file == null) {
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      final String id = const Uuid().v4();
+      final ref = FirebaseStorage.instance.ref().child(
+        'spa_pricing/$uid/$id.pdf',
+      );
+
+      UploadTask task;
+      if (kIsWeb || (file.path.isEmpty)) {
+        final bytes = await file.readAsBytes();
+        task = ref.putData(
+          bytes,
+          SettableMetadata(contentType: 'application/pdf'),
+        );
+      } else {
+        final f = File(file.path);
+        task = ref.putFile(f, SettableMetadata(contentType: 'application/pdf'));
+      }
+
+      task.snapshotEvents.listen(
+        (snapshot) {
+          if (snapshot.totalBytes > 0) {
+            uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+            notifyListeners();
+          }
+        },
+        onError: (e) {
+          uploadError = e.toString();
+          isUploading = false;
+          currentUploadKind = null;
+          notifyListeners();
+        },
+      );
+
+      final snapshot = await task;
+      if (snapshot.state != TaskState.success) {
+        uploadError = 'Upload failed';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      String url;
+      try {
+        url = await ref.getDownloadURL();
+      } catch (e) {
+        uploadError = 'Uploaded but URL not available';
+        isUploading = false;
+        currentUploadKind = null;
+        notifyListeners();
+        return;
+      }
+      pricingPdfName = file.name;
+      pricingPdfUrl = url;
 
       uploadProgress = 1.0;
       isUploading = false;
@@ -392,6 +544,7 @@ class RegisterSpaController extends ChangeNotifier {
       if (aadharUrl != null) data['aadharUrl'] = aadharUrl;
       if (panUrl != null) data['panUrl'] = panUrl;
       if (licenseUrl != null) data['licenseUrl'] = licenseUrl;
+      if (pricingPdfUrl != null) data['pricingPdfUrl'] = pricingPdfUrl;
 
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) data['ownerUid'] = uid;

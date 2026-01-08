@@ -920,8 +920,12 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                 children: [
                   _fileUploadTile(
                     "Upload Pricing PDF (Optional)",
-                    _pricingPdfName,
-                    () {},
+                    _controller.pricingPdfName,
+                    () => _controller.pickAndUploadPricingPdf(),
+                    isLoading:
+                        _controller.isUploading &&
+                        _controller.currentUploadKind == 'pricing',
+                    progress: _controller.uploadProgress,
                   ),
                   SizedBox(height: 12.h),
                   Text(
@@ -936,6 +940,28 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                 icon: Icons.photo_library_rounded,
                 title: "Photos Upload (Max 10)",
                 children: [
+                  if (_controller.uploadError != null)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red[400]),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _controller.uploadError!,
+                              style: TextStyle(color: Colors.red[400]),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _controller.clearUploadError,
+                            child: const Text("Dismiss"),
+                          ),
+                        ],
+                      ),
+                    ),
                   // Show upload progress for photos when active
                   if (_controller.isUploading &&
                       _controller.currentUploadKind == 'photo') ...[
