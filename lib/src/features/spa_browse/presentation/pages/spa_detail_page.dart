@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
@@ -96,14 +97,48 @@ class SpaDetailPage extends StatelessWidget {
 // HEADER IMAGE SECTION
 //////////////////////////////////////////////////////////////////
 
-class _HeaderImageSection extends StatelessWidget {
+class _HeaderImageSection extends StatefulWidget {
   final SpaEntity spa;
   const _HeaderImageSection({required this.spa});
+  @override
+  State<_HeaderImageSection> createState() => _HeaderImageSectionState();
+}
+
+class _HeaderImageSectionState extends State<_HeaderImageSection> {
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _autoTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    final len = widget.spa.photos.length;
+    if (len > 1) {
+      _autoTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (!mounted) return;
+        final n = widget.spa.photos.length;
+        if (n <= 1) return;
+        _currentPage = (_currentPage + 1) % n;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final img = spa.photos.isNotEmpty ? spa.photos.first : null;
-
+    final spa = widget.spa;
     return Container(
       height: 200.h,
       decoration: BoxDecoration(
@@ -112,25 +147,87 @@ class _HeaderImageSection extends StatelessWidget {
           color: Theme.of(context).colorScheme.primary,
           width: 1.5,
         ),
-        image: img != null
-            ? DecorationImage(image: NetworkImage(img), fit: BoxFit.cover)
-            : null,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16.r),
-          color: Colors.black.withOpacity(0.45),
-        ),
-        padding: EdgeInsets.all(20.w),
-        alignment: Alignment.bottomLeft,
-        child: Text(
-          spa.businessName,
-          style: TextStyle(
-            fontSize: 22.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          if (spa.photos.isEmpty)
+            Container(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+            )
+          else
+            PageView.builder(
+              controller: _pageController,
+              itemCount: spa.photos.length,
+              onPageChanged: (i) => setState(() => _currentPage = i),
+              itemBuilder: (_, i) => Image.network(
+                spa.photos[i],
+                width: double.infinity,
+                height: 200.h,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.45),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            left: 20.w,
+            right: 20.w,
+            bottom: 16.h,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    spa.businessName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (spa.photos.length > 1)
+            Positioned(
+              bottom: 8.h,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(spa.photos.length, (i) {
+                  final active = i == _currentPage;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: EdgeInsets.symmetric(horizontal: 4.w),
+                    width: active ? 16.w : 8.w,
+                    height: 6.h,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  );
+                }),
+              ),
+            ),
+        ],
       ),
     );
   }

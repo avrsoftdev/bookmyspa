@@ -1,4 +1,5 @@
 import 'package:bookmyspa/src/core/theme/tokens.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
@@ -52,7 +53,12 @@ class CategorySpaListPage extends StatelessWidget {
                   SizedBox(height: 16.h),
                   Text(
                     'Loading spas...',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14.sp),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 14.sp,
+                    ),
                   ),
                 ],
               ),
@@ -85,7 +91,9 @@ class CategorySpaListPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13.sp,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ),
@@ -124,7 +132,12 @@ class CategorySpaListPage extends StatelessWidget {
                   SizedBox(height: 8.h),
                   Text(
                     'No spas available in $category category',
-                    style: TextStyle(fontSize: 14.sp, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
@@ -148,7 +161,9 @@ class CategorySpaListPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onPrimary.withOpacity(0.9),
                   ),
                 ),
               ),
@@ -191,36 +206,14 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.9,
-      end: 1.0,
-    ).animate(CurvedAnimation(curve: Curves.easeOutBack, parent: _controller));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.25, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(curve: Curves.easeOut, parent: _controller));
-
-    Future.delayed(Duration(milliseconds: widget.index * 60), () {
-      if (mounted) _controller.forward();
-    });
-  }
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _autoTimer;
 
   @override
   Widget build(BuildContext context) {
     final spa = widget.spa;
     final favController = sl.get<FavoritesController>();
-    final imageUrl = spa.photos.isNotEmpty ? spa.photos.first : null;
 
     return SlideTransition(
       position: _slideAnimation,
@@ -233,7 +226,10 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
             borderRadius: BorderRadius.circular(20.r),
 
             // PRIMARY OUTLINE
-            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.8),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.8,
+            ),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(20.r),
@@ -257,23 +253,7 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                         topLeft: Radius.circular(20.r),
                         topRight: Radius.circular(20.r),
                       ),
-                      child: imageUrl != null
-                          ? Image.network(
-                              imageUrl,
-                              height: 180.h,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              height: 180.h,
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.spa_rounded,
-                                size: 60.sp,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
+                      child: _buildImageCarousel(spa),
                     ),
                     Positioned(
                       top: 12,
@@ -290,7 +270,9 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                                 isFav
                                     ? Icons.favorite_rounded
                                     : Icons.favorite_border_rounded,
-                                color: isFav ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                                color: isFav
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
                               onPressed: () async {
                                 try {
@@ -311,6 +293,32 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                         },
                       ),
                     ),
+                    if (spa.photos.length > 1)
+                      Positioned(
+                        bottom: 10,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(spa.photos.length, (i) {
+                            final active = i == _currentPage;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin: EdgeInsets.symmetric(horizontal: 4.w),
+                              width: active ? 16.w : 8.w,
+                              height: 6.h,
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.primary.withOpacity(0.4),
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
                   ],
                 ),
 
@@ -412,7 +420,9 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                                       : 'No rating',
                                   style: TextStyle(
                                     fontSize: 12.sp,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -429,7 +439,9 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                               );
                             },
                             style: TextButton.styleFrom(
-                              foregroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -460,7 +472,9 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                           Icon(
                             Icons.place_outlined,
                             size: 16.sp,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.4),
                           ),
                           SizedBox(width: 6.w),
                           Expanded(
@@ -473,7 +487,9 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 height: 1.4,
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ),
@@ -488,5 +504,91 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.0,
+    ).animate(CurvedAnimation(curve: Curves.easeOutBack, parent: _controller));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.25, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(curve: Curves.easeOut, parent: _controller));
+
+    Future.delayed(Duration(milliseconds: widget.index * 60), () {
+      if (mounted) _controller.forward();
+    });
+
+    _pageController = PageController();
+    final photosLen = widget.spa.photos.length;
+    if (photosLen > 1) {
+      _autoTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (!mounted) return;
+        final len = widget.spa.photos.length;
+        if (len <= 1) return;
+        _currentPage = (_currentPage + 1) % len;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOut,
+        );
+      });
+    }
+  }
+
+  Widget _buildImageCarousel(SpaEntity spa) {
+    if (spa.photos.isEmpty) {
+      return Container(
+        height: 180.h,
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.spa_rounded,
+          size: 60.sp,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      );
+    }
+    return SizedBox(
+      height: 180.h,
+      width: double.infinity,
+      child: PageView.builder(
+        controller: _pageController,
+        itemCount: spa.photos.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentPage = index;
+          });
+        },
+        itemBuilder: (context, i) {
+          final url = spa.photos[i];
+          return Image.network(
+            url,
+            height: 180.h,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.medium,
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _autoTimer?.cancel();
+    _pageController.dispose();
+    _controller.dispose();
+    super.dispose();
   }
 }

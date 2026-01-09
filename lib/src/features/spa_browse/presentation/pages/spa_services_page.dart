@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -136,14 +138,48 @@ class SpaServicesPage extends StatelessWidget {
 // SPA HEADER CARD (Dark Premium UI)
 //////////////////////////////////////////////////////////////////
 
-class _SpaHeaderCard extends StatelessWidget {
+class _SpaHeaderCard extends StatefulWidget {
   final SpaEntity spa;
   const _SpaHeaderCard({required this.spa});
+  @override
+  State<_SpaHeaderCard> createState() => _SpaHeaderCardState();
+}
+
+class _SpaHeaderCardState extends State<_SpaHeaderCard> {
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _autoTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    final len = widget.spa.photos.length;
+    if (len > 1) {
+      _autoTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (!mounted) return;
+        final n = widget.spa.photos.length;
+        if (n <= 1) return;
+        _currentPage = (_currentPage + 1) % n;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = spa.photos.isNotEmpty ? spa.photos.first : null;
-
+    final spa = widget.spa;
     return InkWell(
       onTap: () {
         Navigator.pushNamed(
@@ -161,31 +197,11 @@ class _SpaHeaderCard extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         child: Row(
           children: [
-            // SPA IMAGE
             ClipRRect(
               borderRadius: BorderRadius.circular(12.r),
-              child: imageUrl != null
-                  ? Image.network(
-                      imageUrl,
-                      width: 90.w,
-                      height: 90.w,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 90.w,
-                      height: 90.w,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                      child: Icon(
-                        Icons.spa_rounded,
-                        size: 40.sp,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
+              child: _buildImageCarousel(spa),
             ),
-
             SizedBox(width: 16.w),
-
-            // SPA INFO
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,9 +216,7 @@ class _SpaHeaderCard extends StatelessWidget {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-
                   SizedBox(height: 8.h),
-
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -214,9 +228,7 @@ class _SpaHeaderCard extends StatelessWidget {
                       SizedBox(width: 6.w),
                       Expanded(
                         child: Text(
-                          spa.fullAddress.isNotEmpty
-                              ? spa.fullAddress
-                              : spa.city,
+                          spa.fullAddress.isNotEmpty ? spa.fullAddress : spa.city,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -227,9 +239,7 @@ class _SpaHeaderCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   SizedBox(height: 10.h),
-
                   Row(
                     children: [
                       Text(
@@ -253,6 +263,66 @@ class _SpaHeaderCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImageCarousel(SpaEntity spa) {
+    if (spa.photos.isEmpty) {
+      return Container(
+        width: 90.w,
+        height: 90.w,
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.spa_rounded,
+          size: 40.sp,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      );
+    }
+    return SizedBox(
+      width: 90.w,
+      height: 90.w,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: spa.photos.length,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemBuilder: (_, i) => Image.network(
+              spa.photos[i],
+              width: 90.w,
+              height: 90.w,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
+            ),
+          ),
+          if (spa.photos.length > 1)
+            Positioned(
+              bottom: 6,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(spa.photos.length, (i) {
+                  final active = i == _currentPage;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: EdgeInsets.symmetric(horizontal: 2.w),
+                    width: active ? 10.w : 6.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(3.r),
+                    ),
+                  );
+                }),
+              ),
+            ),
+        ],
       ),
     );
   }
