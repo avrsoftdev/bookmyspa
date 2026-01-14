@@ -21,6 +21,9 @@ import '../../features/bookings/presentation/controllers/bookings_controller.dar
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/theme_cubit.dart';
 import '../services/admob_service.dart';
+import '../services/google_places_service.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:convert';
 
 // Simple service locator
 class ServiceLocator {
@@ -91,4 +94,17 @@ Future<void> initDependencies() async {
   await themeCubit.load();
   sl.register<ThemeCubit>(themeCubit);
   sl.register<AdMobService>(AdMobService(FirebaseFirestore.instance));
+
+  // Google Places
+  try {
+    final raw = await rootBundle.loadString('assets/config/api_keys.json');
+    final key =
+        (JsonDecoder().convert(raw)
+                as Map<String, dynamic>)['google_maps_api_key']
+            as String? ??
+        '';
+    sl.register<GooglePlacesService>(GooglePlacesService(key));
+  } catch (_) {
+    sl.register<GooglePlacesService>(GooglePlacesService(''));
+  }
 }

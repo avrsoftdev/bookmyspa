@@ -6,6 +6,8 @@ import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 import '../controllers/register_spa_controller.dart';
+import '../controllers/google_places_controller.dart';
+import '../../../../core/services/google_places_service.dart';
 
 class RegisterYourSpaPage extends StatefulWidget {
   const RegisterYourSpaPage({super.key});
@@ -18,6 +20,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   final _formKey = GlobalKey<FormState>();
   late LocationBloc _locationBloc;
   late RegisterSpaController _controller;
+  late GooglePlacesController _placesController;
 
   // === All your original controllers & variables (FULLY RESTORED) ===
   final _spaName = TextEditingController();
@@ -243,6 +246,12 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
     _locationBloc.addListener(_onLocationChanged);
     _controller = RegisterSpaController(locationBloc: _locationBloc);
     _controller.addListener(() => setState(() {}));
+    _placesController = GooglePlacesController(
+      service: sl.get<GooglePlacesService>(),
+    );
+    _fullAddress.addListener(() {
+      _placesController.onQueryChanged(_fullAddress.text);
+    });
     _addPricingRow();
   }
 
@@ -273,6 +282,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
     }
     _locationBloc.removeListener(_onLocationChanged);
     _controller.dispose();
+    _placesController.dispose();
     super.dispose();
   }
 
@@ -543,7 +553,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                 icon: Icons.location_on_rounded,
                 title: "Address & Location",
                 children: [
-                  _inputField(_fullAddress, "Full Address *", maxLines: 3),
+                  _fullAddressAutocomplete(),
                   Row(
                     children: [
                       Expanded(child: _inputField(_city, "City *")),
@@ -1244,6 +1254,122 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
           : null,
     ),
   );
+
+  Widget _fullAddressAutocomplete() {
+    return AnimatedBuilder(
+      animation: _placesController,
+      builder: (context, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Stack(
+              alignment: Alignment.centerRight,
+              children: [
+                _inputField(_fullAddress, "Full Address *", maxLines: 1),
+                if (_placesController.isLoading)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (_placesController.suggestions.isNotEmpty ||
+                (_placesController.errorMessage != null &&
+                    _placesController.errorMessage == 'No suggestions'))
+              Material(
+                elevation: 2,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: _placesController.suggestions.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            'No suggestions',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: _placesController.suggestions.length,
+                          separatorBuilder: (_, __) =>
+                              Divider(height: 1, color: Colors.grey[300]),
+                          itemBuilder: (ctx, i) {
+                            final s = _placesController.suggestions[i];
+                            return InkWell(
+                              onTap: () async {
+                                try {
+                                  final details = await _placesController
+                                      .selectSuggestion(s);
+                                  setState(() {
+                                    _fullAddress.text =
+                                        details.formattedAddress;
+                                    _latitude = details.lat;
+                                    _longitude = details.lng;
+                                  });
+                                } catch (_) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Failed to fetch address details',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text(
+                                  s.description,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            if (_placesController.errorMessage != null &&
+                _placesController.errorMessage != 'No suggestions')
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    _placesController.errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 
   Widget _yearField(TextEditingController c, String label) => Padding(
     padding: EdgeInsets.only(bottom: 16.h),
