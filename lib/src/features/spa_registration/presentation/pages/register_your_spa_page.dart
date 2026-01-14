@@ -248,6 +248,8 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
     _controller.addListener(() => setState(() {}));
     _placesController = GooglePlacesController(
       service: sl.get<GooglePlacesService>(),
+      biasLatProvider: () => _locationBloc.state.location?.latitude,
+      biasLngProvider: () => _locationBloc.state.location?.longitude,
     );
     _fullAddress.addListener(() {
       _placesController.onQueryChanged(_fullAddress.text);

@@ -22,16 +22,29 @@ class GooglePlacesService {
   final String apiKey;
   GooglePlacesService(this.apiKey);
 
-  Future<List<PlaceSuggestion>> autocomplete(String input) async {
+  Future<List<PlaceSuggestion>> autocomplete(
+    String input, {
+    String? sessionToken,
+    String? type,
+    double? lat,
+    double? lng,
+    int radiusMeters = 50000,
+  }) async {
     if (apiKey.isEmpty) {
       throw Exception('Google Maps API key is not configured');
     }
+    final params = <String>[
+      'input=${Uri.encodeComponent(input)}',
+      'components=country:in',
+      if (type != null && type.isNotEmpty) 'types=$type',
+      if (sessionToken != null && sessionToken.isNotEmpty)
+        'sessiontoken=$sessionToken',
+      if (lat != null && lng != null)
+        'locationbias=circle:$radiusMeters@${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}',
+      'key=$apiKey',
+    ].join('&');
     final uri = Uri.parse(
-      'https://maps.googleapis.com/maps/api/place/autocomplete/json'
-      '?input=${Uri.encodeComponent(input)}'
-      '&types=geocode'
-      '&components=country:in'
-      '&key=$apiKey',
+      'https://maps.googleapis.com/maps/api/place/autocomplete/json?$params',
     );
     final client = HttpClient();
     try {
@@ -79,7 +92,9 @@ class GooglePlacesService {
       final data = json.decode(body) as Map<String, dynamic>;
       final status = data['status'] as String?;
       if (status != 'OK') {
-        throw Exception(data['error_message'] ?? 'Places Details error: $status');
+        throw Exception(
+          data['error_message'] ?? 'Places Details error: $status',
+        );
       }
       final result = data['result'] as Map<String, dynamic>? ?? {};
       final formatted = result['formatted_address'] as String? ?? '';

@@ -1,10 +1,17 @@
 import 'dart:async';
 import '../../../../core/services/google_places_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 
 class GooglePlacesController extends ChangeNotifier {
   final GooglePlacesService service;
-  GooglePlacesController({required this.service});
+  final double? Function()? biasLatProvider;
+  final double? Function()? biasLngProvider;
+  GooglePlacesController({
+    required this.service,
+    this.biasLatProvider,
+    this.biasLngProvider,
+  });
 
   final List<PlaceSuggestion> suggestions = [];
   bool isLoading = false;
@@ -12,6 +19,7 @@ class GooglePlacesController extends ChangeNotifier {
 
   Timer? _debounce;
   String _lastQuery = '';
+  String? _sessionToken;
 
   void onQueryChanged(String q) {
     _lastQuery = q;
@@ -22,6 +30,7 @@ class GooglePlacesController extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    _sessionToken ??= const Uuid().v4();
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       await _fetchSuggestions(q.trim());
     });
@@ -32,11 +41,30 @@ class GooglePlacesController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      final res = await service.autocomplete(q);
+      final lat = biasLatProvider?.call();
+      final lng = biasLngProvider?.call();
+      final establishments = await service.autocomplete(
+        q,
+        sessionToken: _sessionToken,
+        type: 'establishment',
+        lat: lat,
+        lng: lng,
+      );
+      final addresses = await service.autocomplete(
+        q,
+        sessionToken: _sessionToken,
+        type: 'address',
+        lat: lat,
+        lng: lng,
+      );
+      final merged = <String, PlaceSuggestion>{};
+      for (final s in [...establishments, ...addresses]) {
+        merged[s.placeId] = s;
+      }
       suggestions
         ..clear()
-        ..addAll(res);
-      if (res.isEmpty) {
+        ..addAll(merged.values.toList());
+      if (suggestions.isEmpty) {
         errorMessage = 'No suggestions';
       }
     } catch (e) {
@@ -55,6 +83,7 @@ class GooglePlacesController extends ChangeNotifier {
     try {
       final details = await service.getPlaceDetails(s.placeId);
       suggestions.clear();
+      _sessionToken = null;
       isLoading = false;
       notifyListeners();
       return details;
