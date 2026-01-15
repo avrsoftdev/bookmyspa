@@ -13,6 +13,7 @@ enum RegisterSpaStatus { initial, loading, success, error }
 
 class RegisterSpaController extends ChangeNotifier {
   final LocationBloc _locationBloc;
+  bool _isDisposed = false;
 
   // Form controllers
   final TextEditingController spaName = TextEditingController();
@@ -96,6 +97,12 @@ class RegisterSpaController extends ChangeNotifier {
     _init();
   }
 
+  void _safeNotify() {
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
   void _init() {
     _locationBloc.addListener(_onLocationChanged);
     _addPricingRow();
@@ -110,10 +117,10 @@ class RegisterSpaController extends ChangeNotifier {
       longitude = location.longitude;
       fullAddress.text = location.address;
       city.text = location.city;
-      notifyListeners();
+      _safeNotify();
     } else if (state.status == LocationStatus.error) {
       errorMessage = state.errorMessage;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -130,7 +137,7 @@ class RegisterSpaController extends ChangeNotifier {
     currentUploadKind = 'photo';
     isUploading = true;
     uploadProgress = 0.0;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -138,7 +145,7 @@ class RegisterSpaController extends ChangeNotifier {
         uploadError = 'Please sign in to upload';
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
       final XFile? xfile = await _picker.pickImage(
@@ -149,7 +156,7 @@ class RegisterSpaController extends ChangeNotifier {
         // user cancelled
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
 
@@ -171,14 +178,14 @@ class RegisterSpaController extends ChangeNotifier {
         (snapshot) {
           if (snapshot.totalBytes > 0) {
             uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-            notifyListeners();
+            _safeNotify();
           }
         },
         onError: (e) {
           uploadError = e.toString();
           isUploading = false;
           currentUploadKind = null;
-          notifyListeners();
+          _safeNotify();
         },
       );
 
@@ -187,7 +194,7 @@ class RegisterSpaController extends ChangeNotifier {
         uploadError = 'Upload failed';
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
       String url;
@@ -197,7 +204,7 @@ class RegisterSpaController extends ChangeNotifier {
         uploadError = 'Uploaded but URL not available';
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
       uploadedImageUrls.add(url);
@@ -211,12 +218,12 @@ class RegisterSpaController extends ChangeNotifier {
       uploadProgress = 1.0;
       isUploading = false;
       currentUploadKind = null;
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       uploadError = e.toString();
       isUploading = false;
       currentUploadKind = null;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -225,7 +232,7 @@ class RegisterSpaController extends ChangeNotifier {
     currentUploadKind = kind;
     isUploading = true;
     uploadProgress = 0.0;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -233,7 +240,7 @@ class RegisterSpaController extends ChangeNotifier {
         uploadError = 'Please sign in to upload';
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
       final typeGroup = XTypeGroup(
@@ -244,7 +251,7 @@ class RegisterSpaController extends ChangeNotifier {
       if (file == null) {
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
       final name = file.name;
@@ -276,14 +283,14 @@ class RegisterSpaController extends ChangeNotifier {
         (snapshot) {
           if (snapshot.totalBytes > 0) {
             uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-            notifyListeners();
+            _safeNotify();
           }
         },
         onError: (e) {
           uploadError = e.toString();
           isUploading = false;
           currentUploadKind = null;
-          notifyListeners();
+          _safeNotify();
         },
       );
 
@@ -292,7 +299,7 @@ class RegisterSpaController extends ChangeNotifier {
         uploadError = 'Upload failed';
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
       String url;
@@ -302,7 +309,7 @@ class RegisterSpaController extends ChangeNotifier {
         uploadError = 'Uploaded but URL not available';
         isUploading = false;
         currentUploadKind = null;
-        notifyListeners();
+        _safeNotify();
         return;
       }
 
@@ -320,12 +327,12 @@ class RegisterSpaController extends ChangeNotifier {
       uploadProgress = 1.0;
       isUploading = false;
       currentUploadKind = null;
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       uploadError = e.toString();
       isUploading = false;
       currentUploadKind = null;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -420,7 +427,7 @@ class RegisterSpaController extends ChangeNotifier {
 
   void clearUploadError() {
     uploadError = null;
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Check if location is being fetched
@@ -441,7 +448,7 @@ class RegisterSpaController extends ChangeNotifier {
   /// Add a new pricing row
   void addPricingRow() {
     _addPricingRow();
-    notifyListeners();
+    _safeNotify();
   }
 
   void _addPricingRow() {
@@ -456,7 +463,7 @@ class RegisterSpaController extends ChangeNotifier {
     pricingRows[index]['service']!.dispose();
     pricingRows[index]['price']!.dispose();
     pricingRows.removeAt(index);
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Toggle service selection
@@ -466,7 +473,7 @@ class RegisterSpaController extends ChangeNotifier {
     } else {
       selectedServices.add(service);
     }
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Toggle facility selection
@@ -476,13 +483,13 @@ class RegisterSpaController extends ChangeNotifier {
     } else {
       selectedFacilities.add(facility);
     }
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Toggle terms acceptance
   void toggleTermsAcceptance(bool value) {
     acceptedTerms = value;
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Validate form
@@ -505,6 +512,8 @@ class RegisterSpaController extends ChangeNotifier {
   /// Clean up resources
   @override
   void dispose() {
+    _isDisposed = true;
+    _locationBloc.removeListener(_onLocationChanged);
     spaName.dispose();
     ownerName.dispose();
     yearOfEst.dispose();
@@ -525,7 +534,6 @@ class RegisterSpaController extends ChangeNotifier {
       row['price']!.dispose();
     }
 
-    _locationBloc.removeListener(_onLocationChanged);
     super.dispose();
   }
 
@@ -534,7 +542,7 @@ class RegisterSpaController extends ChangeNotifier {
   /// and writes a document under `spas` with a server timestamp and pending status.
   Future<DocumentReference> submitSpa(Map<String, dynamic> spaData) async {
     status = RegisterSpaStatus.loading;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final data = Map<String, dynamic>.from(spaData);
@@ -557,12 +565,12 @@ class RegisterSpaController extends ChangeNotifier {
           .add(data);
 
       status = RegisterSpaStatus.success;
-      notifyListeners();
+      _safeNotify();
       return docRef;
     } catch (e) {
       errorMessage = e.toString();
       status = RegisterSpaStatus.error;
-      notifyListeners();
+      _safeNotify();
       rethrow;
     }
   }
