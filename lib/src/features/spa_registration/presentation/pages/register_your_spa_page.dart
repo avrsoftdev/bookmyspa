@@ -1284,9 +1284,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                   ),
               ],
             ),
-            if (_placesController.suggestions.isNotEmpty ||
-                (_placesController.errorMessage != null &&
-                    _placesController.errorMessage == 'No suggestions'))
+            if (_placesController.suggestions.isNotEmpty)
               Material(
                 elevation: 2,
                 borderRadius: BorderRadius.circular(12),
@@ -1299,52 +1297,53 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey[300]!),
                   ),
-                  child: _placesController.suggestions.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            'No suggestions',
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                        )
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: _placesController.suggestions.length,
-                          separatorBuilder: (_, __) =>
-                              Divider(height: 1, color: Colors.grey[300]),
-                          itemBuilder: (ctx, i) {
-                            final s = _placesController.suggestions[i];
-                            return InkWell(
-                              onTap: () async {
-                                try {
-                                  final details = await _placesController
-                                      .selectSuggestion(s);
-                                  setState(() {
-                                    _fullAddress.text =
-                                        details.formattedAddress;
-                                    _latitude = details.lat;
-                                    _longitude = details.lng;
-                                  });
-                                } catch (_) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Failed to fetch address details',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Text(
-                                  s.description,
-                                  style: const TextStyle(fontSize: 14),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _placesController.suggestions.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: Colors.grey[300]),
+                    itemBuilder: (ctx, i) {
+                      final s = _placesController.suggestions[i];
+                      return InkWell(
+                        onTap: () async {
+                          try {
+                            final details = await _placesController
+                                .selectSuggestion(s);
+                            setState(() {
+                              _placesController.suppressNextQuery = true;
+                              _fullAddress.text = details.formattedAddress;
+                              _latitude = details.lat;
+                              _longitude = details.lng;
+                              if (details.city != null &&
+                                  details.city!.trim().isNotEmpty) {
+                                _city.text = details.city!;
+                              }
+                              if (details.pincode != null &&
+                                  details.pincode!.trim().isNotEmpty) {
+                                _pincode.text = details.pincode!;
+                              }
+                            });
+                            FocusScope.of(context).unfocus();
+                          } catch (_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Failed to fetch address details',
                                 ),
                               ),
                             );
-                          },
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text(
+                            s.description,
+                            style: const TextStyle(fontSize: 14),
+                          ),
                         ),
+                      );
+                    },
+                  ),
                 ),
               ),
             if (_placesController.errorMessage != null &&

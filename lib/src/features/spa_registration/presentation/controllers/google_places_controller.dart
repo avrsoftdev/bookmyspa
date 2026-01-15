@@ -20,8 +20,16 @@ class GooglePlacesController extends ChangeNotifier {
   Timer? _debounce;
   String _lastQuery = '';
   String? _sessionToken;
+  bool suppressNextQuery = false;
 
   void onQueryChanged(String q) {
+    if (suppressNextQuery) {
+      suppressNextQuery = false;
+      suggestions.clear();
+      errorMessage = null;
+      notifyListeners();
+      return;
+    }
     _lastQuery = q;
     _debounce?.cancel();
     if (q.trim().length < 3) {

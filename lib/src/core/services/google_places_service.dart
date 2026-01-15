@@ -11,10 +11,14 @@ class PlaceDetails {
   final String formattedAddress;
   final double lat;
   final double lng;
+  final String? city;
+  final String? pincode;
   PlaceDetails({
     required this.formattedAddress,
     required this.lat,
     required this.lng,
+    this.city,
+    this.pincode,
   });
 }
 
@@ -81,7 +85,7 @@ class GooglePlacesService {
     final uri = Uri.parse(
       'https://maps.googleapis.com/maps/api/place/details/json'
       '?place_id=$placeId'
-      '&fields=formatted_address,geometry'
+      '&fields=formatted_address,geometry,address_component,address_components'
       '&key=$apiKey',
     );
     final client = HttpClient();
@@ -102,10 +106,35 @@ class GooglePlacesService {
       final location = geometry['location'] as Map<String, dynamic>? ?? {};
       final lat = (location['lat'] as num?)?.toDouble();
       final lng = (location['lng'] as num?)?.toDouble();
+      String? city;
+      String? pincode;
+      final comps = result['address_components'] as List<dynamic>? ?? [];
+      for (final c in comps) {
+        final comp = c as Map<String, dynamic>;
+        final types = (comp['types'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+        if (types.contains('locality')) {
+          city = comp['long_name'] as String?;
+        } else if (types.contains('administrative_area_level_2') &&
+            city == null) {
+          city = comp['long_name'] as String?;
+        } else if (types.contains('sublocality_level_1') && city == null) {
+          city = comp['long_name'] as String?;
+        } else if (types.contains('postal_code')) {
+          pincode = comp['long_name'] as String?;
+        }
+      }
       if (formatted.isEmpty || lat == null || lng == null) {
         throw Exception('Incomplete place details returned');
       }
-      return PlaceDetails(formattedAddress: formatted, lat: lat, lng: lng);
+      return PlaceDetails(
+        formattedAddress: formatted,
+        lat: lat,
+        lng: lng,
+        city: city,
+        pincode: pincode,
+      );
     } on SocketException {
       throw Exception('No internet connection');
     } finally {
