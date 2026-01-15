@@ -1,5 +1,6 @@
 import 'package:bookmyspa/src/core/theme/tokens.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
@@ -8,6 +9,7 @@ import '../../../../core/di/di.dart';
 import 'spa_services_page.dart';
 import 'spa_detail_page.dart';
 import '../controllers/favorites_controller.dart';
+import '../../../location/presentation/bloc/location_bloc.dart';
 
 class CategorySpasArgs {
   final String category;
@@ -101,16 +103,50 @@ class CategorySpaListPage extends StatelessWidget {
               ),
             );
           }
-          final spas = [...(snapshot.data ?? const [])];
-          spas.sort((a, b) {
-            final ad = a.publishedAt;
-            final bd = b.publishedAt;
-            if (ad == null && bd == null) return 0;
-            if (ad == null) return 1;
-            if (bd == null) return -1;
-            return bd.compareTo(ad);
-          });
-          if (spas.isEmpty) {
+          final location = sl.get<LocationBloc>().state.location;
+          final userLat = location?.latitude;
+          final userLng = location?.longitude;
+          double? _distance(double? lat, double? lng) {
+            if (userLat == null ||
+                userLng == null ||
+                lat == null ||
+                lng == null)
+              return null;
+            const r = 6371.0;
+            final dLat = (lat - userLat) * 3.141592653589793 / 180.0;
+            final dLng = (lng - userLng) * 3.141592653589793 / 180.0;
+            final a =
+                (math.sin(dLat / 2) * math.sin(dLat / 2)) +
+                math.cos(userLat * 3.141592653589793 / 180.0) *
+                    math.cos(lat * 3.141592653589793 / 180.0) *
+                    (math.sin(dLng / 2) * math.sin(dLng / 2));
+            final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+            return r * c;
+          }
+
+          final spasWithDist = (snapshot.data ?? const <SpaEntity>[])
+              .map((s) => (s, _distance(s.latitude, s.longitude)))
+              .toList();
+          if (userLat != null && userLng != null) {
+            spasWithDist.sort((a, b) {
+              final da = a.$2;
+              final db = b.$2;
+              if (da == null && db == null) return 0;
+              if (da == null) return 1;
+              if (db == null) return -1;
+              return da.compareTo(db);
+            });
+          } else {
+            spasWithDist.sort((a, b) {
+              final ad = a.$1.publishedAt;
+              final bd = b.$1.publishedAt;
+              if (ad == null && bd == null) return 0;
+              if (ad == null) return 1;
+              if (bd == null) return -1;
+              return bd.compareTo(ad);
+            });
+          }
+          if (spasWithDist.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -157,7 +193,7 @@ class CategorySpaListPage extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  '${spas.length} ${spas.length == 1 ? 'Spa' : 'Spas'} Available',
+                  '${spasWithDist.length} ${spasWithDist.length == 1 ? 'Spa' : 'Spas'} Available',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
@@ -170,11 +206,12 @@ class CategorySpaListPage extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   padding: EdgeInsets.all(16.w),
-                  itemCount: spas.length,
+                  itemCount: spasWithDist.length,
                   separatorBuilder: (context, index) => SizedBox(height: 16.h),
                   itemBuilder: (context, index) {
-                    final spa = spas[index];
-                    return SpaCard(spa: spa, index: index);
+                    final spa = spasWithDist[index].$1;
+                    final d = spasWithDist[index].$2;
+                    return SpaCard(spa: spa, index: index, distanceKm: d);
                   },
                 ),
               ),
@@ -189,11 +226,13 @@ class CategorySpaListPage extends StatelessWidget {
 class SpaCard extends StatefulWidget {
   final SpaEntity spa;
   final int index;
+  final double? distanceKm;
 
   const SpaCard({
     super.key,
     required this.spa,
     required this.index,
+    this.distanceKm,
     this.selectedSubcategory,
   });
   final String? selectedSubcategory;
@@ -495,6 +534,29 @@ class _SpaCardState extends State<SpaCard> with SingleTickerProviderStateMixin {
                           ),
                         ],
                       ),
+                      if (widget.distanceKm != null) ...[
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.directions_walk_rounded,
+                              size: 16.sp,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              '${widget.distanceKm!.toStringAsFixed(widget.distanceKm! >= 10 ? 0 : 1)} km away',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

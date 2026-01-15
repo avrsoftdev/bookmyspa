@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:math' as math;
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spas_by_category_usecase.dart';
 import '../../../../core/di/di.dart';
 import '../../../../core/theme/tokens.dart';
 import 'category_spa_list_page.dart';
+import '../../../location/presentation/bloc/location_bloc.dart';
 
 class SubcategorySpaListPage extends StatelessWidget {
   final String category;
@@ -31,7 +33,9 @@ class SubcategorySpaListPage extends StatelessWidget {
             fontSize: 18.sp,
           ),
         ),
-        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
         centerTitle: true,
       ),
       body: StreamBuilder<List<SpaEntity>>(
@@ -39,7 +43,9 @@ class SubcategorySpaListPage extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
             );
           }
           if (snapshot.hasError) {
@@ -48,7 +54,11 @@ class SubcategorySpaListPage extends StatelessWidget {
                 padding: EdgeInsets.all(24.w),
                 child: Text(
                   snapshot.error.toString(),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -71,6 +81,40 @@ class SubcategorySpaListPage extends StatelessWidget {
               (sc) => sc.trim().toLowerCase() == target,
             );
           }).toList();
+          final location = sl.get<LocationBloc>().state.location;
+          final userLat = location?.latitude;
+          final userLng = location?.longitude;
+          double? _distance(double? lat, double? lng) {
+            if (userLat == null ||
+                userLng == null ||
+                lat == null ||
+                lng == null)
+              return null;
+            const r = 6371.0;
+            final dLat = (lat - userLat) * 3.141592653589793 / 180.0;
+            final dLng = (lng - userLng) * 3.141592653589793 / 180.0;
+            final a =
+                (math.sin(dLat / 2) * math.sin(dLat / 2)) +
+                math.cos(userLat * 3.141592653589793 / 180.0) *
+                    math.cos(lat * 3.141592653589793 / 180.0) *
+                    (math.sin(dLng / 2) * math.sin(dLng / 2));
+            final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+            return r * c;
+          }
+
+          final spasWithDist = spas
+              .map((s) => (s, _distance(s.latitude, s.longitude)))
+              .toList();
+          if (userLat != null && userLng != null) {
+            spasWithDist.sort((a, b) {
+              final da = a.$2;
+              final db = b.$2;
+              if (da == null && db == null) return 0;
+              if (da == null) return 1;
+              if (db == null) return -1;
+              return da.compareTo(db);
+            });
+          }
 
           if (spas.isEmpty) {
             return Center(
@@ -94,7 +138,12 @@ class SubcategorySpaListPage extends StatelessWidget {
                   SizedBox(height: 6.h),
                   Text(
                     'Try a related subcategory or explore other services',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 13.sp),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 13.sp,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -120,20 +169,24 @@ class SubcategorySpaListPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onPrimary.withOpacity(0.9),
                   ),
                 ),
               ),
               Expanded(
                 child: ListView.separated(
                   padding: EdgeInsets.all(16.w),
-                  itemCount: spas.length,
+                  itemCount: spasWithDist.length,
                   separatorBuilder: (context, index) => SizedBox(height: 16.h),
                   itemBuilder: (context, index) {
-                    final spa = spas[index];
+                    final spa = spasWithDist[index].$1;
+                    final d = spasWithDist[index].$2;
                     return SpaCard(
                       spa: spa,
                       index: index,
+                      distanceKm: d,
                       selectedSubcategory: subcategory,
                     );
                   },
