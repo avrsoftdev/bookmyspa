@@ -160,4 +160,51 @@ class SpaRepositoryImpl implements SpaRepository {
       }).toList();
     });
   }
+
+  @override
+  Stream<List<SpaEntity>> streamApprovedAll() {
+    final query = firestore
+        .collection('spas')
+        .where('status', isEqualTo: 'approved');
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        final ts = data['publishedAt'];
+        DateTime? publishedAt;
+        if (ts is Timestamp) {
+          publishedAt = ts.toDate();
+        }
+        final latRaw = data['latitude'];
+        final lngRaw = data['longitude'];
+        final latitude = latRaw is num ? latRaw.toDouble() : double.tryParse(latRaw?.toString() ?? '');
+        final longitude = lngRaw is num ? lngRaw.toDouble() : double.tryParse(lngRaw?.toString() ?? '');
+        final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final parsedDetails = <String, ServiceDetail>{};
+        for (final entry in rawDetails.entries) {
+          final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          parsedDetails[entry.key] = ServiceDetail.fromMap(v);
+        }
+        return SpaEntity(
+          id: doc.id,
+          businessName: data['businessName'] ?? '',
+          city: data['city'] ?? '',
+          description: data['description'] ?? '',
+          fullAddress: data['fullAddress'] ?? '',
+          latitude: latitude,
+          longitude: longitude,
+          services: List<String>.from((data['services'] as List?) ?? const []),
+          pricing: ((data['pricing'] as List?) ?? const [])
+              .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
+              .toList(),
+          photos: List<String>.from((data['photos'] as List?) ?? const []),
+          status: data['status'] ?? '',
+          publishedAt: publishedAt,
+          rating:
+              _parseRating(data['rating']) ?? _parseRating(data['averageRating']),
+          serviceDetails: parsedDetails,
+        );
+      }).toList();
+    });
+  }
 }

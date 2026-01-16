@@ -15,6 +15,7 @@ import '../../features/spa_browse/data/repositories/spa_repository_impl.dart';
 import '../../features/spa_browse/domain/usecases/stream_spas_by_category_usecase.dart';
 import '../../features/spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 import '../../features/spa_browse/domain/usecases/stream_spas_by_owner_usecase.dart';
+import '../../features/spa_browse/domain/usecases/stream_all_approved_spas_usecase.dart';
 import '../../features/spa_browse/presentation/controllers/favorites_controller.dart';
 import '../../features/cart/presentation/bloc/cart_bloc.dart';
 import '../../features/bookings/presentation/controllers/bookings_controller.dart';
@@ -74,6 +75,7 @@ Future<void> initDependencies() async {
   );
   sl.register<StreamSpaByIdUseCase>(StreamSpaByIdUseCase(sl.get()));
   sl.register<StreamSpasByOwnerUseCase>(StreamSpasByOwnerUseCase(sl.get()));
+  sl.register<StreamAllApprovedSpasUseCase>(StreamAllApprovedSpasUseCase(sl.get()));
 
   // Favorites
   sl.register<FavoritesController>(
