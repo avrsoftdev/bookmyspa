@@ -5,6 +5,11 @@ import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 import '../../../../core/di/di.dart';
 import '../../../../core/theme/tokens.dart';
+import '../../domain/entities/review_entity.dart';
+import '../../domain/usecases/stream_reviews_by_spa_usecase.dart';
+import '../../domain/usecases/add_review_usecase.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SpaDetailArgs {
   final String spaId;
@@ -82,12 +87,38 @@ class SpaDetailPage extends StatelessWidget {
               _PricingBySubcategoryList(details: spa.serviceDetails),
               SizedBox(height: 26.h),
 
-              _SectionTitle("Location"),
+              _SectionTitle("Ratings & Reviews"),
               SizedBox(height: 12.h),
-              _LocationInfo(spa: spa),
+              ReviewsSection(spaId: spa.id),
             ],
           );
         },
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+          child: SizedBox(
+            width: double.infinity,
+            height: 44.h,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/spa-services',
+                  arguments: {'spaId': spaId},
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              child: Text(
+                'Book a Service',
+                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -220,7 +251,9 @@ class _HeaderImageSectionState extends State<_HeaderImageSection> {
                     decoration: BoxDecoration(
                       color: active
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   );
@@ -229,6 +262,291 @@ class _HeaderImageSectionState extends State<_HeaderImageSection> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class ReviewsSection extends StatefulWidget {
+  final String spaId;
+  const ReviewsSection({required this.spaId});
+  @override
+  State<ReviewsSection> createState() => _ReviewsSectionState();
+}
+
+class _ReviewsSectionState extends State<ReviewsSection> {
+  int _selectedRating = 0;
+  final TextEditingController _controller = TextEditingController();
+  bool _submitting = false;
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final streamUseCase = sl.get<StreamReviewsBySpaUseCase>();
+    final addUseCase = sl.get<AddReviewUseCase>();
+    final auth = sl.get<AuthController>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (auth.isLoggedIn)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Write a review',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Row(
+                children: List.generate(5, (i) {
+                  final idx = i + 1;
+                  final active = idx <= _selectedRating;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedRating = idx;
+                      });
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w),
+                      child: Icon(
+                        active ? Icons.star_rounded : Icons.star_border_rounded,
+                        size: 22.sp,
+                        color: Colors.amber,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              SizedBox(height: 10.h),
+              TextField(
+                controller: _controller,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Share your experience',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: _submitting
+                      ? null
+                      : () async {
+                          if (_selectedRating <= 0) return;
+                          final user = auth.currentUser!;
+                          setState(() {
+                            _submitting = true;
+                          });
+                          try {
+                            await addUseCase(
+                              spaId: widget.spaId,
+                              userId: user.id,
+                              userName: user.name,
+                              rating: _selectedRating.toDouble(),
+                              text: _controller.text.trim(),
+                            );
+                            _controller.clear();
+                            setState(() {
+                              _selectedRating = 0;
+                            });
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() {
+                                _submitting = false;
+                              });
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  child: Text('Submit'),
+                ),
+              ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Icon(
+                Icons.lock_rounded,
+                size: 16.sp,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  'Sign in to write a review',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        SizedBox(height: 16.h),
+        StreamBuilder<List<ReviewEntity>>(
+          stream: streamUseCase(widget.spaId),
+          builder: (context, snapshot) {
+            final reviews = snapshot.data ?? const <ReviewEntity>[];
+            double? avg;
+            if (reviews.isNotEmpty) {
+              avg =
+                  reviews.map((r) => r.rating).reduce((a, b) => a + b) /
+                  reviews.length;
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (avg != null)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 16.sp,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        avg.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        '(${reviews.length})',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                SizedBox(height: 12.h),
+                if (reviews.isEmpty)
+                  Text(
+                    'No reviews yet',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 14.sp,
+                    ),
+                  )
+                else
+                  SizedBox(
+                    height: 140.h,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: reviews.length,
+                      separatorBuilder: (_, __) => SizedBox(width: 10.w),
+                      itemBuilder: (_, i) {
+                        final r = reviews[i];
+                        return Container(
+                          width: 280.w,
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.person_rounded,
+                                    size: 16.sp,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.7),
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Expanded(
+                                    child: Text(
+                                      r.userName.isNotEmpty
+                                          ? r.userName
+                                          : 'Anonymous',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    children: List.generate(5, (idx) {
+                                      return Icon(
+                                        idx < r.rating.round()
+                                            ? Icons.star_rounded
+                                            : Icons.star_border_rounded,
+                                        size: 14.sp,
+                                        color: Colors.amber,
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8.h),
+                              Expanded(
+                                child: Text(
+                                  r.text,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.8),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -255,15 +573,56 @@ class _TitleSection extends StatelessWidget {
           ),
         ),
         SizedBox(height: 6.h),
+        InkWell(
+          onTap: () async {
+            final lat = spa.latitude;
+            final lng = spa.longitude;
+            Uri url;
+            if (lat != null && lng != null) {
+              url = Uri.parse(
+                'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+              );
+            } else {
+              final q = spa.fullAddress.isNotEmpty ? spa.fullAddress : spa.city;
+              url = Uri.parse(
+                'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(q)}',
+              );
+            }
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            }
+          },
+          child: Row(
+            children: [
+              Icon(Icons.location_on, color: AppColors.primary, size: 18.sp),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  spa.fullAddress.isNotEmpty ? spa.fullAddress : spa.city,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 8.h),
         Row(
           children: [
-            Icon(Icons.location_on, color: AppColors.primary, size: 18.sp),
+            Icon(Icons.star_rounded, color: Colors.amber, size: 16.sp),
             SizedBox(width: 6.w),
             Text(
-              spa.city,
+              spa.rating != null ? spa.rating!.toStringAsFixed(1) : 'No rating',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                fontSize: 14.sp,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -545,54 +904,5 @@ class _PricingBySubcategoryList extends StatelessWidget {
       );
     }
     return Column(children: children);
-  }
-}
-
-//////////////////////////////////////////////////////////////////
-// LOCATION SECTION
-//////////////////////////////////////////////////////////////////
-
-class _LocationInfo extends StatelessWidget {
-  final SpaEntity spa;
-  const _LocationInfo({required this.spa});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.location_on, color: AppColors.primary, size: 18.sp),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                spa.fullAddress.isNotEmpty ? spa.fullAddress : "No address",
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.7),
-                  fontSize: 14.sp,
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10.h),
-        Row(
-          children: [
-            Icon(Icons.location_city, color: AppColors.primary, size: 18.sp),
-            SizedBox(width: 8.w),
-            Text(
-              spa.city,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                fontSize: 14.sp,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 }

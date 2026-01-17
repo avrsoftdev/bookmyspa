@@ -51,14 +51,27 @@ class AppRouter {
         }
         return MaterialPageRoute(builder: (_) => const Scaffold());
       case '/spa-services':
-        final args = settings.arguments as SpaServicesArgs?;
-        final spaId = args?.spaId ?? '';
-        return MaterialPageRoute(
-          builder: (_) => SpaServicesPage(
-            spaId: spaId,
-            selectedSubcategory: args?.selectedSubcategory,
-          ),
-        );
+        if (settings.arguments is SpaServicesArgs) {
+          final args = settings.arguments as SpaServicesArgs?;
+          final spaId = args?.spaId ?? '';
+          return MaterialPageRoute(
+            builder: (_) => SpaServicesPage(
+              spaId: spaId,
+              selectedSubcategory: args?.selectedSubcategory,
+            ),
+          );
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          final spaId = (map['spaId'] as String?) ?? '';
+          final selectedSubcategory = (map['selectedSubcategory'] as String?);
+          return MaterialPageRoute(
+            builder: (_) => SpaServicesPage(
+              spaId: spaId,
+              selectedSubcategory: selectedSubcategory,
+            ),
+          );
+        }
+        return MaterialPageRoute(builder: (_) => const Scaffold());
       case '/spa-detail':
         final args = settings.arguments as SpaDetailArgs?;
         final spaId = args?.spaId ?? '';
