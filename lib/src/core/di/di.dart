@@ -20,6 +20,8 @@ import '../../features/spa_browse/domain/repositories/reviews_repository.dart';
 import '../../features/spa_browse/data/repositories/reviews_repository_impl.dart';
 import '../../features/spa_browse/domain/usecases/stream_reviews_by_spa_usecase.dart';
 import '../../features/spa_browse/domain/usecases/add_review_usecase.dart';
+import '../../features/spa_browse/domain/usecases/like_review_usecase.dart';
+import '../../features/spa_browse/domain/usecases/dislike_review_usecase.dart';
 import '../../features/spa_browse/presentation/controllers/favorites_controller.dart';
 import '../../features/cart/presentation/bloc/cart_bloc.dart';
 import '../../features/bookings/presentation/controllers/bookings_controller.dart';
@@ -79,10 +81,16 @@ Future<void> initDependencies() async {
   );
   sl.register<StreamSpaByIdUseCase>(StreamSpaByIdUseCase(sl.get()));
   sl.register<StreamSpasByOwnerUseCase>(StreamSpasByOwnerUseCase(sl.get()));
-  sl.register<StreamAllApprovedSpasUseCase>(StreamAllApprovedSpasUseCase(sl.get()));
-  sl.register<ReviewsRepository>(ReviewsRepositoryImpl(FirebaseFirestore.instance));
+  sl.register<StreamAllApprovedSpasUseCase>(
+    StreamAllApprovedSpasUseCase(sl.get()),
+  );
+  sl.register<ReviewsRepository>(
+    ReviewsRepositoryImpl(FirebaseFirestore.instance),
+  );
   sl.register<StreamReviewsBySpaUseCase>(StreamReviewsBySpaUseCase(sl.get()));
   sl.register<AddReviewUseCase>(AddReviewUseCase(sl.get()));
+  sl.register<LikeReviewUseCase>(LikeReviewUseCase(sl.get()));
+  sl.register<DislikeReviewUseCase>(DislikeReviewUseCase(sl.get()));
 
   // Favorites
   sl.register<FavoritesController>(

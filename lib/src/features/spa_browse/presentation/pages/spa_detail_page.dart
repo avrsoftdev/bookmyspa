@@ -10,6 +10,8 @@ import '../../domain/usecases/stream_reviews_by_spa_usecase.dart';
 import '../../domain/usecases/add_review_usecase.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../domain/usecases/like_review_usecase.dart';
+import '../../domain/usecases/dislike_review_usecase.dart';
 
 class SpaDetailArgs {
   final String spaId;
@@ -410,6 +412,9 @@ class _ReviewsSectionState extends State<ReviewsSection> {
           stream: streamUseCase(widget.spaId),
           builder: (context, snapshot) {
             final reviews = snapshot.data ?? const <ReviewEntity>[];
+            final textReviews = reviews
+                .where((r) => r.text.trim().isNotEmpty)
+                .toList();
             double? avg;
             if (reviews.isNotEmpty) {
               avg =
@@ -438,7 +443,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        '(${reviews.length})',
+                        '(${textReviews.length})',
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Theme.of(
@@ -449,7 +454,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                     ],
                   ),
                 SizedBox(height: 12.h),
-                if (reviews.isEmpty)
+                if (textReviews.isEmpty)
                   Text(
                     'No reviews yet',
                     style: TextStyle(
@@ -464,10 +469,25 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                     height: 140.h,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: reviews.length,
+                      itemCount: textReviews.length,
                       separatorBuilder: (_, __) => SizedBox(width: 10.w),
                       itemBuilder: (_, i) {
-                        final r = reviews[i];
+                        final r = textReviews[i];
+                        final now = DateTime.now();
+                        final diff = now.difference(r.createdAt);
+                        String timeLabel;
+                        if (diff.inDays >= 7) {
+                          timeLabel =
+                              "${r.createdAt.year}-${r.createdAt.month.toString().padLeft(2, '0')}-${r.createdAt.day.toString().padLeft(2, '0')}";
+                        } else if (diff.inDays >= 1) {
+                          timeLabel = "${diff.inDays}d ago";
+                        } else if (diff.inHours >= 1) {
+                          timeLabel = "${diff.inHours}h ago";
+                        } else if (diff.inMinutes >= 1) {
+                          timeLabel = "${diff.inMinutes}m ago";
+                        } else {
+                          timeLabel = "Just now";
+                        }
                         return Container(
                           width: 280.w,
                           padding: EdgeInsets.all(12.w),
@@ -535,6 +555,108 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                                     height: 1.4,
                                   ),
                                 ),
+                              ),
+                              SizedBox(height: 8.h),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    size: 14.sp,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    timeLabel,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      try {
+                                        await sl.get<LikeReviewUseCase>().call(
+                                          spaId: widget.spaId,
+                                          reviewId: r.id,
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(content: Text(e.toString())),
+                                        );
+                                      }
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.thumb_up_alt_outlined,
+                                          size: 16.sp,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          r.likes.toString(),
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      try {
+                                        await sl
+                                            .get<DislikeReviewUseCase>()
+                                            .call(
+                                              spaId: widget.spaId,
+                                              reviewId: r.id,
+                                            );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(content: Text(e.toString())),
+                                        );
+                                      }
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.thumb_down_alt_outlined,
+                                          size: 16.sp,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          r.dislikes.toString(),
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
