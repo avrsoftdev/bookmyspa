@@ -9,6 +9,14 @@ abstract class ReviewsRepository {
     required double rating,
     required String text,
   });
-  Future<void> likeReview({required String spaId, required String reviewId});
-  Future<void> dislikeReview({required String spaId, required String reviewId});
+  Future<void> likeReview({
+    required String spaId,
+    required String reviewId,
+    required String userId,
+  });
+  Future<void> dislikeReview({
+    required String spaId,
+    required String reviewId,
+    required String userId,
+  });
 }

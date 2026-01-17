@@ -473,6 +473,11 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                       separatorBuilder: (_, __) => SizedBox(width: 10.w),
                       itemBuilder: (_, i) {
                         final r = textReviews[i];
+                        final userId = auth.currentUser?.id;
+                        final userLiked =
+                            userId != null && r.likedBy.contains(userId);
+                        final userDisliked =
+                            userId != null && r.dislikedBy.contains(userId);
                         final now = DateTime.now();
                         final diff = now.difference(r.createdAt);
                         String timeLabel;
@@ -579,27 +584,50 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                                   const Spacer(),
                                   GestureDetector(
                                     onTap: () async {
-                                      try {
-                                        await sl.get<LikeReviewUseCase>().call(
-                                          spaId: widget.spaId,
-                                          reviewId: r.id,
-                                        );
-                                      } catch (e) {
+                                      if (auth.isLoggedIn) {
+                                        try {
+                                          await sl
+                                              .get<LikeReviewUseCase>()
+                                              .call(
+                                                spaId: widget.spaId,
+                                                reviewId: r.id,
+                                                userId: auth.currentUser!.id,
+                                              );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(e.toString()),
+                                            ),
+                                          );
+                                        }
+                                      } else {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          SnackBar(content: Text(e.toString())),
+                                          const SnackBar(
+                                            content: Text(
+                                              'Sign in to like a review',
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
                                     child: Row(
                                       children: [
                                         Icon(
-                                          Icons.thumb_up_alt_outlined,
-                                          size: 16.sp,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
+                                          userLiked
+                                              ? Icons.thumb_up
+                                              : Icons.thumb_up_alt_outlined,
+                                          size: 18.sp,
+                                          color: userLiked
+                                              ? Theme.of(
+                                                  context,
+                                                ).colorScheme.primary
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
                                         ),
                                         SizedBox(width: 4.w),
                                         Text(
@@ -618,29 +646,50 @@ class _ReviewsSectionState extends State<ReviewsSection> {
                                   SizedBox(width: 12.w),
                                   GestureDetector(
                                     onTap: () async {
-                                      try {
-                                        await sl
-                                            .get<DislikeReviewUseCase>()
-                                            .call(
-                                              spaId: widget.spaId,
-                                              reviewId: r.id,
-                                            );
-                                      } catch (e) {
+                                      if (auth.isLoggedIn) {
+                                        try {
+                                          await sl
+                                              .get<DislikeReviewUseCase>()
+                                              .call(
+                                                spaId: widget.spaId,
+                                                reviewId: r.id,
+                                                userId: auth.currentUser!.id,
+                                              );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(e.toString()),
+                                            ),
+                                          );
+                                        }
+                                      } else {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          SnackBar(content: Text(e.toString())),
+                                          const SnackBar(
+                                            content: Text(
+                                              'Sign in to dislike a review',
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
                                     child: Row(
                                       children: [
                                         Icon(
-                                          Icons.thumb_down_alt_outlined,
-                                          size: 16.sp,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
+                                          userDisliked
+                                              ? Icons.thumb_down
+                                              : Icons.thumb_down_alt_outlined,
+                                          size: 18.sp,
+                                          color: userDisliked
+                                              ? Theme.of(
+                                                  context,
+                                                ).colorScheme.primary
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
                                         ),
                                         SizedBox(width: 4.w),
                                         Text(

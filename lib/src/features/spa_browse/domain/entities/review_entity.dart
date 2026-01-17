@@ -7,6 +7,8 @@ class ReviewEntity {
   final DateTime createdAt;
   final int likes;
   final int dislikes;
+  final List<String> likedBy;
+  final List<String> dislikedBy;
   const ReviewEntity({
     required this.id,
     required this.userId,
@@ -16,6 +18,8 @@ class ReviewEntity {
     required this.createdAt,
     this.likes = 0,
     this.dislikes = 0,
+    this.likedBy = const [],
+    this.dislikedBy = const [],
   });
   factory ReviewEntity.fromDoc(String id, Map<String, dynamic> map) {
     final r = map['rating'];
@@ -38,6 +42,14 @@ class ReviewEntity {
     final dislikes = dislikesRaw is num
         ? dislikesRaw.toInt()
         : int.tryParse(dislikesRaw?.toString() ?? '') ?? 0;
+    final lb = map['likedBy'];
+    final db = map['dislikedBy'];
+    final likedBy = lb is List
+        ? lb.map((e) => e.toString()).toList()
+        : <String>[];
+    final dislikedBy = db is List
+        ? db.map((e) => e.toString()).toList()
+        : <String>[];
     return ReviewEntity(
       id: id,
       userId: map['userId'] ?? '',
@@ -47,6 +59,8 @@ class ReviewEntity {
       createdAt: createdAt,
       likes: likes,
       dislikes: dislikes,
+      likedBy: likedBy,
+      dislikedBy: dislikedBy,
     );
   }
 }

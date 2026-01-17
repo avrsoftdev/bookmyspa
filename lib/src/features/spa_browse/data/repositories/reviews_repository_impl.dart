@@ -28,14 +28,28 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
         final rating = r is num
             ? r.toDouble()
             : double.tryParse(r?.toString() ?? '') ?? 0.0;
+        final lb = data['likedBy'];
+        final db = data['dislikedBy'];
+        final likedBy = lb is List
+            ? lb.map((e) => e.toString()).toList()
+            : <String>[];
+        final dislikedBy = db is List
+            ? db.map((e) => e.toString()).toList()
+            : <String>[];
         final likesRaw = data['likes'];
         final dislikesRaw = data['dislikes'];
-        final likes = likesRaw is num
-            ? likesRaw.toInt()
-            : int.tryParse(likesRaw?.toString() ?? '') ?? 0;
-        final dislikes = dislikesRaw is num
-            ? dislikesRaw.toInt()
-            : int.tryParse(dislikesRaw?.toString() ?? '') ?? 0;
+        int likes = likedBy.length;
+        int dislikes = dislikedBy.length;
+        if (likes == 0 && likesRaw != null) {
+          likes = likesRaw is num
+              ? likesRaw.toInt()
+              : int.tryParse(likesRaw.toString()) ?? 0;
+        }
+        if (dislikes == 0 && dislikesRaw != null) {
+          dislikes = dislikesRaw is num
+              ? dislikesRaw.toInt()
+              : int.tryParse(dislikesRaw.toString()) ?? 0;
+        }
         return ReviewEntity(
           id: d.id,
           userId: data['userId'] ?? '',
@@ -45,6 +59,8 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
           createdAt: createdAt,
           likes: likes,
           dislikes: dislikes,
+          likedBy: likedBy,
+          dislikedBy: dislikedBy,
         );
       }).toList();
     });
@@ -81,6 +97,8 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
         'createdAt': FieldValue.serverTimestamp(),
         'likes': 0,
         'dislikes': 0,
+        'likedBy': <String>[],
+        'dislikedBy': <String>[],
       });
       tx.update(spaRef, {
         'averageRating': double.parse(newAvg.toStringAsFixed(2)),
@@ -93,25 +111,81 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
   Future<void> likeReview({
     required String spaId,
     required String reviewId,
+    required String userId,
   }) async {
     final ref = firestore
         .collection('spas')
         .doc(spaId)
         .collection('reviews')
         .doc(reviewId);
-    await ref.update({'likes': FieldValue.increment(1)});
+    await firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data() ?? {};
+      final likedBy =
+          (data['likedBy'] as List?)?.map((e) => e.toString()).toList() ??
+          <String>[];
+      final dislikedBy =
+          (data['dislikedBy'] as List?)?.map((e) => e.toString()).toList() ??
+          <String>[];
+      bool hasLiked = likedBy.contains(userId);
+      bool hasDisliked = dislikedBy.contains(userId);
+      if (hasLiked) {
+        likedBy.remove(userId);
+      } else {
+        likedBy.add(userId);
+        if (hasDisliked) {
+          dislikedBy.remove(userId);
+        }
+      }
+      final likes = likedBy.length;
+      final dislikes = dislikedBy.length;
+      tx.update(ref, {
+        'likedBy': likedBy,
+        'dislikedBy': dislikedBy,
+        'likes': likes,
+        'dislikes': dislikes,
+      });
+    });
   }
 
   @override
   Future<void> dislikeReview({
     required String spaId,
     required String reviewId,
+    required String userId,
   }) async {
     final ref = firestore
         .collection('spas')
         .doc(spaId)
         .collection('reviews')
         .doc(reviewId);
-    await ref.update({'dislikes': FieldValue.increment(1)});
+    await firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data() ?? {};
+      final likedBy =
+          (data['likedBy'] as List?)?.map((e) => e.toString()).toList() ??
+          <String>[];
+      final dislikedBy =
+          (data['dislikedBy'] as List?)?.map((e) => e.toString()).toList() ??
+          <String>[];
+      bool hasLiked = likedBy.contains(userId);
+      bool hasDisliked = dislikedBy.contains(userId);
+      if (hasDisliked) {
+        dislikedBy.remove(userId);
+      } else {
+        dislikedBy.add(userId);
+        if (hasLiked) {
+          likedBy.remove(userId);
+        }
+      }
+      final likes = likedBy.length;
+      final dislikes = dislikedBy.length;
+      tx.update(ref, {
+        'likedBy': likedBy,
+        'dislikedBy': dislikedBy,
+        'likes': likes,
+        'dislikes': dislikes,
+      });
+    });
   }
 }
