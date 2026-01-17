@@ -84,7 +84,12 @@ class _HomePageState extends State<HomePage> {
         index: _currentIndex,
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: 120,
+            ),
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,6 +105,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 _SuggestedNearbySpas(locationBloc: _locationBloc),
+                const SizedBox(height: 8),
+                const _TopListedSpas(),
+                const SizedBox(height: 16),
+                const _BrandingFooter(),
               ],
             ),
           ),
@@ -269,6 +278,213 @@ class _SuggestedNearbySpas extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _TopListedSpas extends StatelessWidget {
+  const _TopListedSpas();
+
+  @override
+  Widget build(BuildContext context) {
+    final useCase = sl.get<StreamAllApprovedSpasUseCase>();
+    return StreamBuilder<List<SpaEntity>>(
+      stream: useCase(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+                strokeWidth: 3,
+              ),
+            ),
+          );
+        }
+        if (snapshot.hasError) return const SizedBox.shrink();
+        final spas = (snapshot.data ?? const <SpaEntity>[])
+            .where((s) => (s.rating ?? 0) > 0)
+            .toList();
+        spas.sort((a, b) {
+          final ar = a.rating ?? 0;
+          final br = b.rating ?? 0;
+          if (ar == br) {
+            final ad = a.publishedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bd = b.publishedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bd.compareTo(ad);
+          }
+          return br.compareTo(ar);
+        });
+        final top5 = spas.take(5).toList();
+        if (top5.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Top listed spas',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 160.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                primary: false,
+                shrinkWrap: true,
+                physics: const BouncingScrollPhysics(),
+                itemCount: top5.length,
+                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  final spa = top5[index];
+                  return _TopListedCard(spa: spa);
+                },
+              ),
+            ),
+            SizedBox(height: 24.h),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _TopListedCard extends StatelessWidget {
+  final SpaEntity spa;
+  const _TopListedCard({required this.spa});
+
+  @override
+  Widget build(BuildContext context) {
+    final image = spa.photos.isNotEmpty ? spa.photos.first : null;
+    final ratingText = (spa.rating ?? 0).toStringAsFixed(1);
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/spa-detail',
+          arguments: SpaDetailArgs(spa.id),
+        );
+      },
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        width: 220.w,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.2,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                topRight: Radius.circular(12.r),
+              ),
+              child: image != null
+                  ? Image.network(
+                      image,
+                      width: 220.w,
+                      height: 90.h,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.medium,
+                    )
+                  : Container(
+                      width: 220.w,
+                      height: 90.h,
+                      alignment: Alignment.center,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.15),
+                      child: Icon(
+                        Icons.spa_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 28.sp,
+                      ),
+                    ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    spa.businessName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        size: 14.sp,
+                        color: Colors.amber[700],
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        ratingText,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          spa.city,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandingFooter extends StatelessWidget {
+  const _BrandingFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
+      child: Center(
+        child: Text(
+          'BookMySpa by AVR Softwares',
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }
