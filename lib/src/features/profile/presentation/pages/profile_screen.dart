@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../../utils/constants/image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/theme_cubit.dart';
+import '../../../help_center/presentation/pages/help_center_page.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -229,7 +230,14 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.help_outline_rounded,
                     title: 'Help Centre',
                     subtitle: 'Get support and answers',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpCenterPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildThemeToggle(context),
                   _buildMenuItem(
