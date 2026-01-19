@@ -12,6 +12,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../domain/usecases/like_review_usecase.dart';
 import '../../domain/usecases/dislike_review_usecase.dart';
+import 'package:bookmyspa/utils/constants/image.dart';
 
 class SpaDetailArgs {
   final String spaId;
@@ -60,38 +61,42 @@ class SpaDetailPage extends StatelessWidget {
             );
           }
 
-          return ListView(
-            padding: EdgeInsets.all(16.w),
+          return Stack(
             children: [
-              _HeaderImageSection(spa: spa),
-              SizedBox(height: 20.h),
-
-              _TitleSection(spa: spa),
-              SizedBox(height: 26.h),
-
-              _SectionTitle("Photos"),
-              SizedBox(height: 12.h),
-              _Photos(photos: spa.photos),
-              SizedBox(height: 26.h),
-
-              _SectionTitle("Description"),
-              SizedBox(height: 10.h),
-              _Description(spa.description),
-              SizedBox(height: 26.h),
-
-              _SectionTitle("Services Offered"),
-              SizedBox(height: 14.h),
-              _ServicesList(spa.services),
-              SizedBox(height: 26.h),
-
-              _SectionTitle("Services & Pricing"),
-              SizedBox(height: 12.h),
-              _PricingBySubcategoryList(details: spa.serviceDetails),
-              SizedBox(height: 26.h),
-
-              _SectionTitle("Ratings & Reviews"),
-              SizedBox(height: 12.h),
-              ReviewsSection(spaId: spa.id),
+              ListView(
+                padding: EdgeInsets.all(16.w),
+                children: [
+                  _HeaderImageSection(spa: spa),
+                  SizedBox(height: 20.h),
+                  _TitleSection(spa: spa),
+                  SizedBox(height: 26.h),
+                  _SectionTitle("Photos"),
+                  SizedBox(height: 12.h),
+                  _Photos(photos: spa.photos),
+                  SizedBox(height: 26.h),
+                  _SectionTitle("Description"),
+                  SizedBox(height: 10.h),
+                  _Description(spa.description),
+                  SizedBox(height: 26.h),
+                  _SectionTitle("Services Offered"),
+                  SizedBox(height: 14.h),
+                  _ServicesList(spa.services),
+                  SizedBox(height: 26.h),
+                  _SectionTitle("Services & Pricing"),
+                  SizedBox(height: 12.h),
+                  _PricingBySubcategoryList(details: spa.serviceDetails),
+                  SizedBox(height: 26.h),
+                  _SectionTitle("Ratings & Reviews"),
+                  SizedBox(height: 12.h),
+                  ReviewsSection(spaId: spa.id),
+                ],
+              ),
+              if ((spa.whatsappNumber ?? '').isNotEmpty)
+                Positioned(
+                  right: 16.w,
+                  bottom: 80.h,
+                  child: _WhatsAppButton(number: spa.whatsappNumber!),
+                ),
             ],
           );
         },
@@ -819,6 +824,68 @@ class _SectionTitle extends StatelessWidget {
         color: Theme.of(context).colorScheme.onSurface,
         fontSize: 18.sp,
         fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+//////////////////////////////////////////////////////////////////
+// WHATSAPP FLOATING BUTTON
+//////////////////////////////////////////////////////////////////
+
+class _WhatsAppButton extends StatelessWidget {
+  final String number;
+  const _WhatsAppButton({required this.number});
+
+  String _toWaMeNumber(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 10) {
+      return '91$digits';
+    }
+    return digits;
+  }
+
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final n = _toWaMeNumber(number);
+    if (n.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('WhatsApp number not available')),
+      );
+      return;
+    }
+    final url = Uri.parse('https://wa.me/$n');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to open WhatsApp')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _openWhatsApp(context),
+      child: Container(
+        width: 56.h,
+        height: 56.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          ),
+        ),
+        padding: EdgeInsets.all(10.h),
+        child: Image.asset(Images.wsap),
       ),
     );
   }

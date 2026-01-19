@@ -73,6 +73,7 @@ class SpaEntity {
   final String fullAddress;
   final double? latitude;
   final double? longitude;
+  final String? whatsappNumber;
   final List<String> services;
   final List<ServicePricing> pricing;
   final List<String> photos;
@@ -89,6 +90,7 @@ class SpaEntity {
     required this.fullAddress,
     this.latitude,
     this.longitude,
+    this.whatsappNumber,
     required this.services,
     required this.pricing,
     required this.photos,
@@ -111,8 +113,12 @@ class SpaEntity {
     }
     final latRaw = map['latitude'];
     final lngRaw = map['longitude'];
-    final lat = latRaw is num ? latRaw.toDouble() : double.tryParse(latRaw?.toString() ?? '');
-    final lng = lngRaw is num ? lngRaw.toDouble() : double.tryParse(lngRaw?.toString() ?? '');
+    final lat = latRaw is num
+        ? latRaw.toDouble()
+        : double.tryParse(latRaw?.toString() ?? '');
+    final lng = lngRaw is num
+        ? lngRaw.toDouble()
+        : double.tryParse(lngRaw?.toString() ?? '');
     return SpaEntity(
       id: id,
       businessName: map['businessName'] ?? '',
@@ -121,6 +127,7 @@ class SpaEntity {
       fullAddress: map['fullAddress'] ?? '',
       latitude: lat,
       longitude: lng,
+      whatsappNumber: map['whatsappNumber']?.toString(),
       services: List<String>.from((map['services'] as List?) ?? const []),
       pricing: ((map['pricing'] as List?) ?? const [])
           .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))

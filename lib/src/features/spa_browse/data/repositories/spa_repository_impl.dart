@@ -39,12 +39,20 @@ class SpaRepositoryImpl implements SpaRepository {
         }
         final latRaw = data['latitude'];
         final lngRaw = data['longitude'];
-        final latitude = latRaw is num ? latRaw.toDouble() : double.tryParse(latRaw?.toString() ?? '');
-        final longitude = lngRaw is num ? lngRaw.toDouble() : double.tryParse(lngRaw?.toString() ?? '');
-        final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final latitude = latRaw is num
+            ? latRaw.toDouble()
+            : double.tryParse(latRaw?.toString() ?? '');
+        final longitude = lngRaw is num
+            ? lngRaw.toDouble()
+            : double.tryParse(lngRaw?.toString() ?? '');
+        final rawDetails =
+            (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{};
         final parsedDetails = <String, ServiceDetail>{};
         for (final entry in rawDetails.entries) {
-          final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          final v =
+              (entry.value as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
           parsedDetails[entry.key] = ServiceDetail.fromMap(v);
         }
         return SpaEntity(
@@ -55,6 +63,7 @@ class SpaRepositoryImpl implements SpaRepository {
           fullAddress: data['fullAddress'] ?? '',
           latitude: latitude,
           longitude: longitude,
+          whatsappNumber: data['whatsappNumber']?.toString(),
           services: List<String>.from((data['services'] as List?) ?? const []),
           pricing: ((data['pricing'] as List?) ?? const [])
               .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
@@ -83,12 +92,20 @@ class SpaRepositoryImpl implements SpaRepository {
       }
       final latRaw = data['latitude'];
       final lngRaw = data['longitude'];
-      final latitude = latRaw is num ? latRaw.toDouble() : double.tryParse(latRaw?.toString() ?? '');
-      final longitude = lngRaw is num ? lngRaw.toDouble() : double.tryParse(lngRaw?.toString() ?? '');
-      final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+      final latitude = latRaw is num
+          ? latRaw.toDouble()
+          : double.tryParse(latRaw?.toString() ?? '');
+      final longitude = lngRaw is num
+          ? lngRaw.toDouble()
+          : double.tryParse(lngRaw?.toString() ?? '');
+      final rawDetails =
+          (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
       final parsedDetails = <String, ServiceDetail>{};
       for (final entry in rawDetails.entries) {
-        final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final v =
+            (entry.value as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{};
         parsedDetails[entry.key] = ServiceDetail.fromMap(v);
       }
       return SpaEntity(
@@ -99,6 +116,7 @@ class SpaRepositoryImpl implements SpaRepository {
         fullAddress: data['fullAddress'] ?? '',
         latitude: latitude,
         longitude: longitude,
+        whatsappNumber: data['whatsappNumber']?.toString(),
         services: List<String>.from((data['services'] as List?) ?? const []),
         pricing: ((data['pricing'] as List?) ?? const [])
             .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
@@ -129,12 +147,20 @@ class SpaRepositoryImpl implements SpaRepository {
         }
         final latRaw = data['latitude'];
         final lngRaw = data['longitude'];
-        final latitude = latRaw is num ? latRaw.toDouble() : double.tryParse(latRaw?.toString() ?? '');
-        final longitude = lngRaw is num ? lngRaw.toDouble() : double.tryParse(lngRaw?.toString() ?? '');
-        final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final latitude = latRaw is num
+            ? latRaw.toDouble()
+            : double.tryParse(latRaw?.toString() ?? '');
+        final longitude = lngRaw is num
+            ? lngRaw.toDouble()
+            : double.tryParse(lngRaw?.toString() ?? '');
+        final rawDetails =
+            (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{};
         final parsedDetails = <String, ServiceDetail>{};
         for (final entry in rawDetails.entries) {
-          final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          final v =
+              (entry.value as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
           parsedDetails[entry.key] = ServiceDetail.fromMap(v);
         }
         return SpaEntity(
@@ -145,6 +171,7 @@ class SpaRepositoryImpl implements SpaRepository {
           fullAddress: data['fullAddress'] ?? '',
           latitude: latitude,
           longitude: longitude,
+          whatsappNumber: data['whatsappNumber']?.toString(),
           services: List<String>.from((data['services'] as List?) ?? const []),
           pricing: ((data['pricing'] as List?) ?? const [])
               .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
@@ -177,12 +204,20 @@ class SpaRepositoryImpl implements SpaRepository {
         }
         final latRaw = data['latitude'];
         final lngRaw = data['longitude'];
-        final latitude = latRaw is num ? latRaw.toDouble() : double.tryParse(latRaw?.toString() ?? '');
-        final longitude = lngRaw is num ? lngRaw.toDouble() : double.tryParse(lngRaw?.toString() ?? '');
-        final rawDetails = (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+        final latitude = latRaw is num
+            ? latRaw.toDouble()
+            : double.tryParse(latRaw?.toString() ?? '');
+        final longitude = lngRaw is num
+            ? lngRaw.toDouble()
+            : double.tryParse(lngRaw?.toString() ?? '');
+        final rawDetails =
+            (data['serviceDetails'] as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{};
         final parsedDetails = <String, ServiceDetail>{};
         for (final entry in rawDetails.entries) {
-          final v = (entry.value as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          final v =
+              (entry.value as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
           parsedDetails[entry.key] = ServiceDetail.fromMap(v);
         }
         return SpaEntity(
@@ -193,6 +228,7 @@ class SpaRepositoryImpl implements SpaRepository {
           fullAddress: data['fullAddress'] ?? '',
           latitude: latitude,
           longitude: longitude,
+          whatsappNumber: data['whatsappNumber']?.toString(),
           services: List<String>.from((data['services'] as List?) ?? const []),
           pricing: ((data['pricing'] as List?) ?? const [])
               .map((e) => ServicePricing.fromMap(e as Map<String, dynamic>))
@@ -201,7 +237,8 @@ class SpaRepositoryImpl implements SpaRepository {
           status: data['status'] ?? '',
           publishedAt: publishedAt,
           rating:
-              _parseRating(data['rating']) ?? _parseRating(data['averageRating']),
+              _parseRating(data['rating']) ??
+              _parseRating(data['averageRating']),
           serviceDetails: parsedDetails,
         );
       }).toList();

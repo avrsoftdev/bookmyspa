@@ -15,4 +15,5 @@ class Images {
   static const haircut = 'images/barber.png';
   static const menu = 'images/menu.png';
   static const therapy = 'images/therapies.png';
+  static const wsap = 'images/wsapicon.png';
 }
