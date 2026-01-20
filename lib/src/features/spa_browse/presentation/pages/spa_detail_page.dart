@@ -13,19 +13,28 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../domain/usecases/like_review_usecase.dart';
 import '../../domain/usecases/dislike_review_usecase.dart';
 import 'package:bookmyspa/utils/constants/image.dart';
+import '../../../../core/services/share_service.dart';
 
 class SpaDetailArgs {
   final String spaId;
   const SpaDetailArgs(this.spaId);
 }
 
-class SpaDetailPage extends StatelessWidget {
+class SpaDetailPage extends StatefulWidget {
   final String spaId;
   const SpaDetailPage({super.key, required this.spaId});
 
   @override
+  State<SpaDetailPage> createState() => _SpaDetailPageState();
+}
+
+class _SpaDetailPageState extends State<SpaDetailPage> {
+  SpaEntity? _latestSpa;
+
+  @override
   Widget build(BuildContext context) {
     final useCase = sl.get<StreamSpaByIdUseCase>();
+    final shareService = sl.get<ShareService>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
@@ -36,10 +45,35 @@ class SpaDetailPage extends StatelessWidget {
         iconTheme: IconThemeData(
           color: Theme.of(context).colorScheme.onPrimary,
         ),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final spa = _latestSpa;
+              if (spa == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Loading spa details...')),
+                );
+                return;
+              }
+              await shareService.shareSpa(
+                spaId: spa.id,
+                spaName: spa.businessName,
+                context: context,
+              );
+            },
+            icon: Icon(
+              Theme.of(context).platform == TargetPlatform.iOS
+                  ? Icons.ios_share
+                  : Icons.share,
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+            tooltip: 'Share',
+          ),
+        ],
       ),
 
       body: StreamBuilder<SpaEntity?>(
-        stream: useCase(spaId),
+        stream: useCase(widget.spaId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
@@ -60,6 +94,7 @@ class SpaDetailPage extends StatelessWidget {
               ),
             );
           }
+          _latestSpa = spa;
 
           return Stack(
             children: [
@@ -112,7 +147,7 @@ class SpaDetailPage extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   '/spa-services',
-                  arguments: {'spaId': spaId},
+                  arguments: {'spaId': widget.spaId},
                 );
               },
               style: ElevatedButton.styleFrom(

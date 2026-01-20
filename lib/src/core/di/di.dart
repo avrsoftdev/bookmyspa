@@ -31,6 +31,8 @@ import '../services/admob_service.dart';
 import '../services/google_places_service.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
+import '../services/share_service.dart';
+import '../services/deep_link_service.dart';
 
 // Simple service locator
 class ServiceLocator {
@@ -124,4 +126,6 @@ Future<void> initDependencies() async {
   } catch (_) {
     sl.register<GooglePlacesService>(GooglePlacesService(''));
   }
+  sl.register<ShareService>(ShareService());
+  sl.register<DeepLinkService>(DeepLinkService());
 }

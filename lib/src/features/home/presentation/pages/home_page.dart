@@ -6,6 +6,7 @@ import 'package:bookmyspa/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:async';
 import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../bookings/presentation/pages/my_bookings_page.dart';
 import '../../../spa_browse/presentation/pages/favorites_page.dart';
@@ -17,6 +18,7 @@ import '../../../spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_all_approved_spas_usecase.dart';
 import 'dart:math' as math;
+import '../../../../core/services/deep_link_service.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -31,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   late LocationBloc _locationBloc;
   String? _overriddenAddress;
   final TextEditingController _searchController = TextEditingController();
+  StreamSubscription<String>? _linkSub;
 
   // Category data using your Images class
   final List<Map<String, String>> _categories = [
@@ -53,14 +56,17 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _locationBloc = sl.get<LocationBloc>();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _locationBloc.getCurrentLocation(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _locationBloc.getCurrentLocation();
+      _handleInitialDeepLink();
+      _subscribeDeepLinks();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _linkSub?.cancel();
     super.dispose();
   }
 
@@ -180,6 +186,28 @@ class _HomePageState extends State<HomePage> {
   // =========================
   // Suggested Nearby Spas
   // =========================
+  Future<void> _handleInitialDeepLink() async {
+    final deepLinkService = sl.get<DeepLinkService>();
+    final spaId = await deepLinkService.getInitialSpaId();
+    if (!mounted) return;
+    if (spaId != null && spaId.isNotEmpty) {
+      Navigator.of(
+        context,
+      ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
+    }
+  }
+
+  void _subscribeDeepLinks() {
+    final deepLinkService = sl.get<DeepLinkService>();
+    _linkSub = deepLinkService.onLinkSpaId().listen((spaId) {
+      if (!mounted) return;
+      if (spaId.isNotEmpty) {
+        Navigator.of(
+          context,
+        ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
+      }
+    });
+  }
 }
 
 class _SuggestedNearbySpas extends StatelessWidget {

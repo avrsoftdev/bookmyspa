@@ -51,5 +51,14 @@
 	<string>This app needs access to location to show nearby spas and services.</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7682628416837305~8511736135</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>bookmyspa</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

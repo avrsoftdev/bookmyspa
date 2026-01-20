@@ -336,11 +336,7 @@ class ProfileScreen extends StatelessWidget {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.dark_mode_rounded,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
+                child: Icon(Icons.dark_mode_rounded, color: AppColors.primary, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
