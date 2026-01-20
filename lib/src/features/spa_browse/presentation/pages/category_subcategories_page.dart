@@ -12,22 +12,31 @@ class CategorySubcategoriesPage extends StatelessWidget {
   final String category;
   const CategorySubcategoriesPage({super.key, required this.category});
 
-  static const Map<String, Map<String, String>> _subDescriptions = {
+  static const Map<String, Map<String, String>> subDescriptions = {
     'Massage': {
-      'Swedish Massage': 'Gentle full‑body massage to relax muscles and improve circulation.',
-      'Deep Tissue Massage': 'Firm pressure targeting deep muscle layers to relieve chronic tension.',
-      'Aromatherapy Massage': 'Massage with essential oils to calm, energize, or uplift.',
-      'Hot Stone Massage': 'Warm stones and gliding strokes to melt muscle stiffness.',
-      'Thai Massage': 'Stretch‑based, floor massage to improve flexibility and energy flow.',
-      'Reflexology': 'Pressure on feet/hands to stimulate reflex points and promote balance.',
-      'Sports Massage': 'Performance‑focused massage aiding recovery and mobility.',
-      'Head–Neck–Shoulder Massage': 'Targets upper body tension and stress headaches.',
+      'Swedish Massage':
+          'Gentle full‑body massage to relax muscles and improve circulation.',
+      'Deep Tissue Massage':
+          'Firm pressure targeting deep muscle layers to relieve chronic tension.',
+      'Aromatherapy Massage':
+          'Massage with essential oils to calm, energize, or uplift.',
+      'Hot Stone Massage':
+          'Warm stones and gliding strokes to melt muscle stiffness.',
+      'Thai Massage':
+          'Stretch‑based, floor massage to improve flexibility and energy flow.',
+      'Reflexology':
+          'Pressure on feet/hands to stimulate reflex points and promote balance.',
+      'Sports Massage':
+          'Performance‑focused massage aiding recovery and mobility.',
+      'Head–Neck–Shoulder Massage':
+          'Targets upper body tension and stress headaches.',
       'Full Body Massage': 'From head to toe relaxation and muscle easing.',
       'Couple Massage': 'Side‑by‑side massages tailored for two.',
     },
     'Pedicure': {
       'Classic Pedicure': 'Basic grooming with soak, trim, buff, and polish.',
-      'Spa Pedicure': 'Enhanced pedicure with scrub, mask, and extended massage.',
+      'Spa Pedicure':
+          'Enhanced pedicure with scrub, mask, and extended massage.',
       'Gel Pedicure': 'Long‑lasting gel polish cured for chip‑free shine.',
       'French Pedicure': 'Natural look with white tips and sheer base.',
       'Paraffin Pedicure': 'Warm wax softens skin and deeply moisturizes feet.',
@@ -47,7 +56,8 @@ class CategorySubcategoriesPage extends StatelessWidget {
     'Skin Care': {
       'Clean-Up': 'Quick cleanse, exfoliation, and mask for refreshed skin.',
       'Facial': 'Customized deep treatment for glow and hydration.',
-      'Anti-Aging Treatment': 'Targets fine lines and firmness with active ingredients.',
+      'Anti-Aging Treatment':
+          'Targets fine lines and firmness with active ingredients.',
       'Acne Treatment': 'Clarifying care to calm breakouts and congestion.',
       'Skin Brightening': 'Evens tone and reduces dullness for radiance.',
       'Hydrafacial': 'Vortex cleansing and infusion for plump, clean skin.',
@@ -65,7 +75,8 @@ class CategorySubcategoriesPage extends StatelessWidget {
     },
     'Therapy': {
       'Body Therapy': 'Whole‑body restorative treatments to balance and relax.',
-      'Aroma Therapy': 'Scent‑driven treatments to influence mood and well‑being.',
+      'Aroma Therapy':
+          'Scent‑driven treatments to influence mood and well‑being.',
       'Relaxation Therapy': 'Calming methods to reduce stress and anxiety.',
       'Stress Relief Therapy': 'Focus on tension release and mental ease.',
       'Pain Relief Therapy': 'Targeted techniques to alleviate discomfort.',
@@ -112,7 +123,7 @@ class CategorySubcategoriesPage extends StatelessWidget {
   };
 
   static String _getDescription(String category, String sub) {
-    final cat = _subDescriptions[category];
+    final cat = subDescriptions[category];
     final d = cat?[sub];
     return d ?? 'Brief description coming soon.';
   }
@@ -221,7 +232,9 @@ class CategorySubcategoriesPage extends StatelessWidget {
             fontSize: 18.sp,
           ),
         ),
-        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -230,18 +243,21 @@ class CategorySubcategoriesPage extends StatelessWidget {
             ? Center(
                 child: Text(
                   'No subcategories for $category',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 14.sp),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 14.sp,
+                  ),
                 ),
               )
-            : ListView.separated
-              (
+            : ListView.separated(
                 shrinkWrap: true,
                 itemCount: subs.length,
                 separatorBuilder: (_, __) => SizedBox(height: 12.h),
                 itemBuilder: (context, i) {
                   final name = subs[i];
-                  return InkWell
-                  (
+                  return InkWell(
                     onTap: () {
                       Navigator.push(
                         context,
@@ -274,7 +290,9 @@ class CategorySubcategoriesPage extends StatelessWidget {
                             height: 34.h,
                             width: 34.h,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.15),
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: Theme.of(context).colorScheme.primary,
@@ -312,14 +330,18 @@ class CategorySubcategoriesPage extends StatelessWidget {
                               showDialog(
                                 context: context,
                                 builder: (_) => AlertDialog(
-                                  backgroundColor: Theme.of(context).colorScheme.surface,
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surface,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14.r),
                                   ),
                                   title: Text(
                                     name,
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -327,17 +349,24 @@ class CategorySubcategoriesPage extends StatelessWidget {
                                   content: Text(
                                     desc,
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.7),
                                       fontSize: 13.sp,
                                       height: 1.4,
                                     ),
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
                                       child: Text(
                                         'Close',
-                                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
                                       ),
                                     ),
                                   ],

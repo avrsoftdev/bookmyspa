@@ -117,7 +117,9 @@ class _HomePageState extends State<HomePage> {
                   focusNode: _searchFocus,
                   onChanged: _recomputeSuggestions,
                 ),
-                if (_suggestions.isNotEmpty && _searchController.text.trim().isNotEmpty && _searchFocus.hasFocus)
+                if (_suggestions.isNotEmpty &&
+                    _searchController.text.trim().isNotEmpty &&
+                    _searchFocus.hasFocus)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Container(
@@ -129,9 +131,7 @@ class _HomePageState extends State<HomePage> {
                           width: 1.2,
                         ),
                       ),
-                      constraints: BoxConstraints(
-                        maxHeight: 240.h,
-                      ),
+                      constraints: BoxConstraints(maxHeight: 240.h),
                       child: ListView.separated(
                         shrinkWrap: true,
                         physics: const BouncingScrollPhysics(),
@@ -141,23 +141,45 @@ class _HomePageState extends State<HomePage> {
                           final s = _suggestions[index];
                           return ListTile(
                             leading: Icon(
-                              s.type == _SuggestionType.spa ? Icons.store_rounded : Icons.category_rounded,
+                              s.type == _SuggestionType.spa
+                                  ? Icons.store_rounded
+                                  : (s.type == _SuggestionType.subcategory
+                                        ? Icons.subdirectory_arrow_right_rounded
+                                        : Icons.category_rounded),
                               color: Theme.of(context).colorScheme.primary,
                             ),
                             title: Text(
                               s.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            subtitle: s.subtitle != null ? Text(s.subtitle!) : null,
+                            subtitle: s.subtitle != null
+                                ? Text(s.subtitle!)
+                                : null,
                             onTap: () {
-                              if (s.type == _SuggestionType.spa && s.spaId != null) {
-                                Navigator.of(context).pushNamed('/spa-detail', arguments: SpaDetailArgs(s.spaId!));
+                              if (s.type == _SuggestionType.spa &&
+                                  s.spaId != null) {
+                                Navigator.of(context).pushNamed(
+                                  '/spa-detail',
+                                  arguments: SpaDetailArgs(s.spaId!),
+                                );
                               } else if (s.type == _SuggestionType.service) {
                                 Navigator.of(context).pushNamed(
                                   '/category-subcategories',
                                   arguments: CategorySubcategoriesArgs(s.title),
+                                );
+                              } else if (s.type ==
+                                      _SuggestionType.subcategory &&
+                                  s.parentCategory != null) {
+                                Navigator.of(context).pushNamed(
+                                  '/subcategory-spas',
+                                  arguments: {
+                                    'category': s.parentCategory,
+                                    'subcategory': s.title,
+                                  },
                                 );
                               }
                             },
@@ -280,15 +302,17 @@ class _SearchSuggestion {
   final String title;
   final String? subtitle;
   final String? spaId;
+  final String? parentCategory;
   const _SearchSuggestion({
     required this.type,
     required this.title,
     this.subtitle,
     this.spaId,
+    this.parentCategory,
   });
 }
 
-enum _SuggestionType { spa, service }
+enum _SuggestionType { spa, service, subcategory }
 
 extension on _HomePageState {
   void _recomputeSuggestions(String query) {
@@ -298,27 +322,60 @@ extension on _HomePageState {
       if (mounted) setState(() {});
       return;
     }
-    final spaMatches = _allSpas.where((s) {
-      final name = s.businessName.trim().toLowerCase();
-      final city = s.city.trim().toLowerCase();
-      final services = s.services.map((e) => e.trim().toLowerCase()).toList();
-      return name.contains(q) || city.contains(q) || services.any((e) => e.contains(q));
-    }).map((s) {
-      final subtitle = s.city.isNotEmpty ? s.city : null;
-      return _SearchSuggestion(type: _SuggestionType.spa, title: s.businessName, subtitle: subtitle, spaId: s.id);
-    }).take(6).toList();
+    final spaMatches = _allSpas
+        .where((s) {
+          final name = s.businessName.trim().toLowerCase();
+          final city = s.city.trim().toLowerCase();
+          final services = s.services
+              .map((e) => e.trim().toLowerCase())
+              .toList();
+          return name.contains(q) ||
+              city.contains(q) ||
+              services.any((e) => e.contains(q));
+        })
+        .map((s) {
+          final subtitle = s.city.isNotEmpty ? s.city : null;
+          return _SearchSuggestion(
+            type: _SuggestionType.spa,
+            title: s.businessName,
+            subtitle: subtitle,
+            spaId: s.id,
+          );
+        })
+        .take(6)
+        .toList();
 
     final serviceLabels = _categories.map((e) => e['label']!).toList();
-    final serviceMatches = serviceLabels.where((label) => label.trim().toLowerCase().contains(q)).map((label) {
-      return _SearchSuggestion(type: _SuggestionType.service, title: label);
-    }).take(6).toList();
+    final serviceMatches = serviceLabels
+        .where((label) => label.trim().toLowerCase().contains(q))
+        .map((label) {
+          return _SearchSuggestion(type: _SuggestionType.service, title: label);
+        })
+        .take(6)
+        .toList();
+
+    final subcategoryMatches = <_SearchSuggestion>[];
+    CategorySubcategoriesPage.subDescriptions.forEach((category, subMap) {
+      for (final sub in subMap.keys) {
+        if (sub.trim().toLowerCase().contains(q)) {
+          subcategoryMatches.add(
+            _SearchSuggestion(
+              type: _SuggestionType.subcategory,
+              title: sub,
+              parentCategory: category,
+              subtitle: 'in $category',
+            ),
+          );
+        }
+      }
+    });
 
     final result = <_SearchSuggestion>[];
-    result.addAll(spaMatches.take(6));
-    if (result.length < 6) {
-      result.addAll(serviceMatches.take(6 - result.length));
-    }
-    _suggestions = result;
+    result.addAll(spaMatches.take(4));
+    result.addAll(serviceMatches.take(2));
+    result.addAll(subcategoryMatches.take(4));
+
+    _suggestions = result.take(10).toList();
     if (mounted) setState(() {});
   }
 }
