@@ -1,16 +1,17 @@
-// lib/common/widgets/spa_search_field.dart
 import 'package:flutter/material.dart';
 
 class SpaSearchField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
 
-  const SpaSearchField({super.key, required this.controller, this.onChanged});
+  const SpaSearchField({super.key, required this.controller, this.onChanged, this.focusNode});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: 'Search Spa and Services',

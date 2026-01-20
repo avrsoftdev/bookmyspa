@@ -34,6 +34,10 @@ class _HomePageState extends State<HomePage> {
   String? _overriddenAddress;
   final TextEditingController _searchController = TextEditingController();
   StreamSubscription<String>? _linkSub;
+  final FocusNode _searchFocus = FocusNode();
+  List<SpaEntity> _allSpas = const [];
+  StreamSubscription<List<SpaEntity>>? _spasSub;
+  List<_SearchSuggestion> _suggestions = const [];
 
   // Category data using your Images class
   final List<Map<String, String>> _categories = [
@@ -60,13 +64,21 @@ class _HomePageState extends State<HomePage> {
       _locationBloc.getCurrentLocation();
       _handleInitialDeepLink();
       _subscribeDeepLinks();
+      final useCase = sl.get<StreamAllApprovedSpasUseCase>();
+      _spasSub = useCase().listen((spas) {
+        _allSpas = spas;
+        _recomputeSuggestions(_searchController.text);
+        if (mounted) setState(() {});
+      });
     });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocus.dispose();
     _linkSub?.cancel();
+    _spasSub?.cancel();
     super.dispose();
   }
 
@@ -100,7 +112,60 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SpaSearchField(controller: _searchController),
+                SpaSearchField(
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  onChanged: _recomputeSuggestions,
+                ),
+                if (_suggestions.isNotEmpty && _searchController.text.trim().isNotEmpty && _searchFocus.hasFocus)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                      constraints: BoxConstraints(
+                        maxHeight: 240.h,
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _suggestions.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final s = _suggestions[index];
+                          return ListTile(
+                            leading: Icon(
+                              s.type == _SuggestionType.spa ? Icons.store_rounded : Icons.category_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: Text(
+                              s.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: s.subtitle != null ? Text(s.subtitle!) : null,
+                            onTap: () {
+                              if (s.type == _SuggestionType.spa && s.spaId != null) {
+                                Navigator.of(context).pushNamed('/spa-detail', arguments: SpaDetailArgs(s.spaId!));
+                              } else if (s.type == _SuggestionType.service) {
+                                Navigator.of(context).pushNamed(
+                                  '/category-subcategories',
+                                  arguments: CategorySubcategoriesArgs(s.title),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 20),
                 _buildCategoryGrid(), // 👈 icons just below search bar
                 const SizedBox(height: 20),
@@ -207,6 +272,54 @@ class _HomePageState extends State<HomePage> {
         ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
       }
     });
+  }
+}
+
+class _SearchSuggestion {
+  final _SuggestionType type;
+  final String title;
+  final String? subtitle;
+  final String? spaId;
+  const _SearchSuggestion({
+    required this.type,
+    required this.title,
+    this.subtitle,
+    this.spaId,
+  });
+}
+
+enum _SuggestionType { spa, service }
+
+extension on _HomePageState {
+  void _recomputeSuggestions(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) {
+      _suggestions = const [];
+      if (mounted) setState(() {});
+      return;
+    }
+    final spaMatches = _allSpas.where((s) {
+      final name = s.businessName.trim().toLowerCase();
+      final city = s.city.trim().toLowerCase();
+      final services = s.services.map((e) => e.trim().toLowerCase()).toList();
+      return name.contains(q) || city.contains(q) || services.any((e) => e.contains(q));
+    }).map((s) {
+      final subtitle = s.city.isNotEmpty ? s.city : null;
+      return _SearchSuggestion(type: _SuggestionType.spa, title: s.businessName, subtitle: subtitle, spaId: s.id);
+    }).take(6).toList();
+
+    final serviceLabels = _categories.map((e) => e['label']!).toList();
+    final serviceMatches = serviceLabels.where((label) => label.trim().toLowerCase().contains(q)).map((label) {
+      return _SearchSuggestion(type: _SuggestionType.service, title: label);
+    }).take(6).toList();
+
+    final result = <_SearchSuggestion>[];
+    result.addAll(spaMatches.take(6));
+    if (result.length < 6) {
+      result.addAll(serviceMatches.take(6 - result.length));
+    }
+    _suggestions = result;
+    if (mounted) setState(() {});
   }
 }
 
