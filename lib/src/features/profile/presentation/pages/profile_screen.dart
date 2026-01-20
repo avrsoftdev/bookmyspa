@@ -181,7 +181,9 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.receipt_long_rounded,
                     title: 'My Bookings',
                     subtitle: 'View and manage your spa appointments',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/home', arguments: 1);
+                    },
                   ),
                   _buildMenuItem(
                     context,
@@ -334,7 +336,11 @@ class ProfileScreen extends StatelessWidget {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.dark_mode_rounded, color: AppColors.primary, size: 28),
+                child: Icon(
+                  Icons.dark_mode_rounded,
+                  color: AppColors.primary,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
