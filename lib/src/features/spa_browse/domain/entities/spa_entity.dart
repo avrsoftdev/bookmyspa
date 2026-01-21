@@ -81,6 +81,9 @@ class SpaEntity {
   final DateTime? publishedAt;
   final double? rating;
   final Map<String, ServiceDetail> serviceDetails;
+  final String? openingTime;
+  final String? closingTime;
+  final int? maxBookingsPerHour;
 
   const SpaEntity({
     required this.id,
@@ -98,6 +101,9 @@ class SpaEntity {
     this.publishedAt,
     this.rating,
     this.serviceDetails = const {},
+    this.openingTime,
+    this.closingTime,
+    this.maxBookingsPerHour,
   });
 
   factory SpaEntity.fromMap(String id, Map<String, dynamic> map) {
@@ -142,6 +148,11 @@ class SpaEntity {
           : null,
       rating: _parseRating(map['rating']) ?? _parseRating(map['averageRating']),
       serviceDetails: parsedDetails,
+      openingTime: map['openingTime']?.toString(),
+      closingTime: map['closingTime']?.toString(),
+      maxBookingsPerHour: int.tryParse(
+        map['maxBookingsPerHour']?.toString() ?? '',
+      ),
     );
   }
 

@@ -46,6 +46,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
   TimeOfDay? _closingTime;
   final _weeklyOff = TextEditingController();
   final _numStaff = TextEditingController();
+  final _maxBookingsPerHour = TextEditingController();
 
   final Set<String> _selectedServices = {};
   final List<String> _serviceOptions = const [
@@ -276,6 +277,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
       _weeklyOff,
       _numStaff,
       _description,
+      _maxBookingsPerHour,
     ])
       c.dispose();
     for (var row in _pricingRows) {
@@ -413,6 +415,7 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
 
       'openingTime': _openingTime?.format(context),
       'closingTime': _closingTime?.format(context),
+      'maxBookingsPerHour': int.tryParse(_maxBookingsPerHour.text.trim()),
       'weeklyOff': _weeklyOff.text.trim(),
       'numStaff': _numStaff.text.trim(),
 
@@ -641,6 +644,13 @@ class _RegisterYourSpaPageState extends State<RegisterYourSpaPage> {
                         ),
                       ),
                     ],
+                  ),
+                  SizedBox(height: 12.h),
+                  _inputField(
+                    _maxBookingsPerHour,
+                    "Max Bookings Per Hour *",
+                    keyboard: TextInputType.number,
+                    hint: "e.g., 5",
                   ),
                   Row(
                     children: [

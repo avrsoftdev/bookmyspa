@@ -20,7 +20,9 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case '/home':
         final initialIndex = (settings.arguments as int?) ?? 0;
-        return MaterialPageRoute(builder: (_) => HomePage(initialIndex: initialIndex));
+        return MaterialPageRoute(
+          builder: (_) => HomePage(initialIndex: initialIndex),
+        );
       case '/debug-app-check':
         return MaterialPageRoute(builder: (_) => const AppCheckDebugPage());
       case '/admin-web':
@@ -77,7 +79,10 @@ class AppRouter {
         final spaId = args?.spaId ?? '';
         return MaterialPageRoute(builder: (_) => SpaDetailPage(spaId: spaId));
       case '/order-summary':
-        return MaterialPageRoute(builder: (_) => const OrderSummaryPage());
+        final spaId = (settings.arguments as String?) ?? '';
+        return MaterialPageRoute(
+          builder: (_) => OrderSummaryPage(spaId: spaId),
+        );
       default:
         return MaterialPageRoute(builder: (_) => const Scaffold());
     }

@@ -75,6 +75,11 @@ class SpaRepositoryImpl implements SpaRepository {
               _parseRating(data['rating']) ??
               _parseRating(data['averageRating']),
           serviceDetails: parsedDetails,
+          openingTime: data['openingTime']?.toString(),
+          closingTime: data['closingTime']?.toString(),
+          maxBookingsPerHour: int.tryParse(
+            data['maxBookingsPerHour']?.toString() ?? '',
+          ),
         );
       }).toList();
     });
@@ -127,6 +132,11 @@ class SpaRepositoryImpl implements SpaRepository {
         rating:
             _parseRating(data['rating']) ?? _parseRating(data['averageRating']),
         serviceDetails: parsedDetails,
+        openingTime: data['openingTime']?.toString(),
+        closingTime: data['closingTime']?.toString(),
+        maxBookingsPerHour: int.tryParse(
+          data['maxBookingsPerHour']?.toString() ?? '',
+        ),
       );
     });
   }
@@ -183,6 +193,11 @@ class SpaRepositoryImpl implements SpaRepository {
               _parseRating(data['rating']) ??
               _parseRating(data['averageRating']),
           serviceDetails: parsedDetails,
+          openingTime: data['openingTime']?.toString(),
+          closingTime: data['closingTime']?.toString(),
+          maxBookingsPerHour: int.tryParse(
+            data['maxBookingsPerHour']?.toString() ?? '',
+          ),
         );
       }).toList();
     });

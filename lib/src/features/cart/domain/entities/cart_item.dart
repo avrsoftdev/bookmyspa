@@ -1,11 +1,13 @@
 class CartItem {
   final String serviceId;
+  final String spaId;
   final String serviceName;
   final double price;
   final int quantity;
 
   const CartItem({
     required this.serviceId,
+    required this.spaId,
     required this.serviceName,
     required this.price,
     required this.quantity,
@@ -13,12 +15,14 @@ class CartItem {
 
   CartItem copyWith({
     String? serviceId,
+    String? spaId,
     String? serviceName,
     double? price,
     int? quantity,
   }) {
     return CartItem(
       serviceId: serviceId ?? this.serviceId,
+      spaId: spaId ?? this.spaId,
       serviceName: serviceName ?? this.serviceName,
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,

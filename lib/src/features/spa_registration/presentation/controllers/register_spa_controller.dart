@@ -33,6 +33,7 @@ class RegisterSpaController extends ChangeNotifier {
 
   final TextEditingController weeklyOff = TextEditingController();
   final TextEditingController numStaff = TextEditingController();
+  final TextEditingController maxBookingsPerHour = TextEditingController();
 
   // State variables
   String? businessType;

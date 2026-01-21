@@ -1,5 +1,6 @@
 class Booking {
   final String id;
+  final String spaId;
   final String serviceId;
   final String serviceName;
   final int quantity;
@@ -10,6 +11,7 @@ class Booking {
 
   const Booking({
     required this.id,
+    required this.spaId,
     required this.serviceId,
     required this.serviceName,
     required this.quantity,

@@ -12,6 +12,7 @@ import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../cart/presentation/widgets/cart_summary_bar.dart';
 import '../../../cart/presentation/widgets/quantity_selector.dart';
 import '../../../cart/domain/entities/cart_item.dart';
+
 //hd
 class SpaServicesArgs {
   final String spaId;
@@ -41,7 +42,9 @@ class SpaServicesPage extends StatelessWidget {
           'Services & Pricing',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
-        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
       ),
 
       body: StreamBuilder<SpaEntity?>(
@@ -49,7 +52,9 @@ class SpaServicesPage extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
             );
           }
 
@@ -58,7 +63,9 @@ class SpaServicesPage extends StatelessWidget {
             return Center(
               child: Text(
                 "Spa not found",
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             );
           }
@@ -89,7 +96,9 @@ class SpaServicesPage extends StatelessWidget {
                     child: Text(
                       "No pricing information available",
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 14.sp,
                       ),
                     ),
@@ -117,6 +126,7 @@ class SpaServicesPage extends StatelessWidget {
                       return _ServicePricingCard(
                         serviceName: "$serviceName • $cardName",
                         price: price.toString(),
+                        spaId: spaId,
                       );
                     });
                   });
@@ -127,7 +137,7 @@ class SpaServicesPage extends StatelessWidget {
       ),
       bottomNavigationBar: CartSummaryBar(
         onBuyNow: () {
-          Navigator.pushNamed(context, '/order-summary');
+          Navigator.pushNamed(context, '/order-summary', arguments: spaId);
         },
       ),
     );
@@ -192,7 +202,10 @@ class _SpaHeaderCardState extends State<_SpaHeaderCard> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(18.r),
-          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.4),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.4,
+          ),
         ),
         padding: EdgeInsets.all(16.w),
         child: Row(
@@ -228,12 +241,16 @@ class _SpaHeaderCardState extends State<_SpaHeaderCard> {
                       SizedBox(width: 6.w),
                       Expanded(
                         child: Text(
-                          spa.fullAddress.isNotEmpty ? spa.fullAddress : spa.city,
+                          spa.fullAddress.isNotEmpty
+                              ? spa.fullAddress
+                              : spa.city,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
                           ),
                         ),
                       ),
@@ -315,7 +332,9 @@ class _SpaHeaderCardState extends State<_SpaHeaderCard> {
                     decoration: BoxDecoration(
                       color: active
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(3.r),
                     ),
                   );
@@ -335,8 +354,13 @@ class _SpaHeaderCardState extends State<_SpaHeaderCard> {
 class _ServicePricingCard extends StatelessWidget {
   final String serviceName;
   final String price;
+  final String spaId;
 
-  const _ServicePricingCard({required this.serviceName, required this.price});
+  const _ServicePricingCard({
+    required this.serviceName,
+    required this.price,
+    required this.spaId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -349,6 +373,7 @@ class _ServicePricingCard extends StatelessWidget {
           (item) => item.serviceId == serviceId,
           orElse: () => CartItem(
             serviceId: serviceId,
+            spaId: spaId,
             serviceName: serviceName,
             price: priceValue,
             quantity: 0,
@@ -361,7 +386,10 @@ class _ServicePricingCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.2),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.2,
+            ),
           ),
           child: Column(
             children: [
@@ -400,6 +428,7 @@ class _ServicePricingCard extends StatelessWidget {
                           AddToCart(
                             CartItem(
                               serviceId: serviceId,
+                              spaId: spaId,
                               serviceName: serviceName,
                               price: priceValue,
                               quantity: 1,

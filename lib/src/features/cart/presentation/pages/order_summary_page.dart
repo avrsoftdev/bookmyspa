@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart'; // For date formatting
 import '../bloc/cart_bloc.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
 import '../../../bookings/presentation/controllers/bookings_controller.dart';
 import '../../../bookings/domain/entities/booking.dart';
+import '../../../spa_browse/domain/entities/spa_entity.dart';
+import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 
 class OrderSummaryPage extends StatefulWidget {
-  const OrderSummaryPage({super.key});
+  final String spaId;
+  const OrderSummaryPage({super.key, required this.spaId});
 
   @override
   State<OrderSummaryPage> createState() => _OrderSummaryPageState();
@@ -18,20 +22,6 @@ class OrderSummaryPage extends StatefulWidget {
 class _OrderSummaryPageState extends State<OrderSummaryPage> {
   DateTime? selectedDate;
   String? selectedSlot;
-
-  List<String> get timeSlots => [
-        '10:00 AM',
-        '11:00 AM',
-        '12:00 PM',
-        '1:00 PM',
-        '2:00 PM',
-        '3:00 PM',
-        '4:00 PM',
-        '5:00 PM',
-        '6:00 PM',
-        '7:00 PM',
-        '8:00 PM',
-      ];
 
   Future<void> pickDate(BuildContext context) async {
     final now = DateTime.now();
@@ -45,19 +35,124 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
     if (picked != null) {
       setState(() {
         selectedDate = picked;
+        selectedSlot = null; // Reset slot when date changes
       });
     }
   }
 
   String formatSelectedDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year.toString();
-    return '$day/$month/$year';
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  // Helper to parse time strings (supports "10:00 AM" and "14:00")
+  TimeOfDay? _parseTime(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return null;
+    try {
+      // sanitize spaces (e.g. non-breaking spaces)
+      final cleaned = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+      // Try standard "10:00 AM" / "10:00 PM"
+      if (cleaned.toUpperCase().contains('AM') ||
+          cleaned.toUpperCase().contains('PM')) {
+        try {
+          final dt = DateFormat('h:mm a').parse(cleaned);
+          return TimeOfDay.fromDateTime(dt);
+        } catch (_) {
+          // Fallback to DateFormat.jm() if strict parsing fails
+          final dt = DateFormat.jm().parse(cleaned);
+          return TimeOfDay.fromDateTime(dt);
+        }
+      }
+
+      // Try 24-hour format "HH:mm"
+      if (cleaned.contains(':')) {
+        final parts = cleaned.split(':');
+        final hour = int.parse(parts[0].trim());
+        final minutePart = parts[1].trim();
+        // Remove any non-digit suffix just in case
+        final minute = int.parse(minutePart.replaceAll(RegExp(r'[^\d]'), ''));
+        return TimeOfDay(hour: hour, minute: minute);
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  List<String> _generateTimeSlots(SpaEntity spa) {
+    final start = _parseTime(spa.openingTime);
+    final end = _parseTime(spa.closingTime);
+
+    if (start == null || end == null) return [];
+
+    final slots = <String>[];
+    // Use an arbitrary date to handle time calculations
+    var current = DateTime(2024, 1, 1, start.hour, start.minute);
+    var endTime = DateTime(2024, 1, 1, end.hour, end.minute);
+
+    // Handle overnight case (e.g. 10 PM to 2 AM)
+    if (endTime.isBefore(current)) {
+      endTime = endTime.add(const Duration(days: 1));
+    }
+
+    while (current.isBefore(endTime)) {
+      final next = current.add(const Duration(hours: 1));
+      if (next.isAfter(endTime)) break;
+
+      // Force consistent format "10:00 AM"
+      final startStr = DateFormat('h:mm a').format(current);
+      final endStr = DateFormat('h:mm a').format(next);
+      slots.add("$startStr – $endStr");
+
+      current = next;
+    }
+    return slots;
+  }
+
+  bool _isSlotDisabled(String slot, SpaEntity spa) {
+    if (selectedDate == null) return true; // Must select date first
+    if (spa.maxBookingsPerHour == null) return false; // No limit
+
+    // Check if slot is in the past for today
+    if (selectedDate != null) {
+      final now = DateTime.now();
+      final isToday =
+          selectedDate!.year == now.year &&
+          selectedDate!.month == now.month &&
+          selectedDate!.day == now.day;
+      if (isToday) {
+        final slotStartStr = slot.split('–').first.trim();
+        final slotTime = _parseTime(slotStartStr);
+        if (slotTime != null) {
+          final slotDt = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            slotTime.hour,
+            slotTime.minute,
+          );
+          if (slotDt.isBefore(now)) return true;
+        }
+      }
+    }
+
+    // Check booking limit
+    // We access the controller via get_it or context if provided
+    // Here we use sl.get based on previous code usage
+    final controller = sl.get<BookingsController>();
+    // Note: getBookingCount needs to notify listeners to trigger rebuild if we want real-time updates.
+    // Ideally this widget should listen to BookingsController.
+    // For now, we assume static check at build time.
+    final count = controller.getBookingCount(spa.id, selectedDate!, slot);
+    return count >= spa.maxBookingsPerHour!;
   }
 
   @override
   Widget build(BuildContext context) {
+    // spaId is required in widget constructor, so it's guaranteed to be non-null
+    final useCase = sl.get<StreamSpaByIdUseCase>();
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
@@ -69,77 +164,105 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: BlocBuilder<CartBloc, CartState>(
-        builder: (context, cartState) {
-          if (cartState.items.isEmpty) {
+      body: StreamBuilder<SpaEntity?>(
+        stream: useCase(widget.spaId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 80.sp,
-                    color: Colors.grey[600],
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Your cart is empty',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Add some services to see your order summary',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14.sp),
-                  ),
-                ],
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+          final spa = snapshot.data;
+          if (spa == null) {
+            return const Center(
+              child: Text(
+                "Spa not found",
+                style: TextStyle(color: Colors.white),
               ),
             );
           }
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.all(16.w),
-                  children: [
-                    _buildSectionHeader('Select Date & Time'),
-                    SizedBox(height: 12.h),
-                    _BookingScheduleCard(
-                      selectedDate: selectedDate,
-                      selectedSlot: selectedSlot,
-                      timeSlots: timeSlots,
-                      onSelectDate: () => pickDate(context),
-                      onSelectSlot: (slot) {
-                        setState(() {
-                          selectedSlot = slot;
-                        });
-                      },
-                      formatSelectedDate: formatSelectedDate,
+          final timeSlots = _generateTimeSlots(spa);
+
+          return BlocBuilder<CartBloc, CartState>(
+            builder: (context, cartState) {
+              if (cartState.items.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 80.sp,
+                        color: Colors.grey[600],
+                      ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Your cart is empty',
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.all(16.w),
+                      children: [
+                        _buildSectionHeader('Select Date & Time'),
+                        SizedBox(height: 12.h),
+                        // We need to listen to BookingsController for updates
+                        AnimatedBuilder(
+                          animation: sl.get<BookingsController>(),
+                          builder: (context, _) {
+                            return _BookingScheduleCard(
+                              selectedDate: selectedDate,
+                              selectedSlot: selectedSlot,
+                              timeSlots: timeSlots,
+                              onSelectDate: () => pickDate(context),
+                              onSelectSlot: (slot) {
+                                if (!_isSlotDisabled(slot, spa)) {
+                                  setState(() {
+                                    selectedSlot = slot;
+                                  });
+                                }
+                              },
+                              formatSelectedDate: formatSelectedDate,
+                              isSlotDisabled: (slot) =>
+                                  _isSlotDisabled(slot, spa),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 24.h),
+                        _buildSectionHeader('Order Items'),
+                        SizedBox(height: 12.h),
+                        ...cartState.items.map(
+                          (item) => _OrderItemCard(item: item),
+                        ),
+                        SizedBox(height: 24.h),
+                        _buildSectionHeader('Order Summary'),
+                        SizedBox(height: 12.h),
+                        _OrderSummaryCard(cartState: cartState),
+                      ],
                     ),
-                    SizedBox(height: 24.h),
-                    _buildSectionHeader('Order Items'),
-                    SizedBox(height: 12.h),
-                    ...cartState.items.map(
-                      (item) => _OrderItemCard(item: item),
-                    ),
-                    SizedBox(height: 24.h),
-                    _buildSectionHeader('Order Summary'),
-                    SizedBox(height: 12.h),
-                    _OrderSummaryCard(cartState: cartState),
-                  ],
-                ),
-              ),
-              _ProceedToPayButton(
-                totalAmount: cartState.totalAmount,
-                selectedDate: selectedDate,
-                selectedSlot: selectedSlot,
-                formatSelectedDate: formatSelectedDate,
-              ),
-            ],
+                  ),
+                  _ProceedToPayButton(
+                    totalAmount: cartState.totalAmount,
+                    selectedDate: selectedDate,
+                    selectedSlot: selectedSlot,
+                    formatSelectedDate: formatSelectedDate,
+                    spaId: widget.spaId,
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -175,7 +298,6 @@ class _OrderItemCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Service Icon
           Container(
             width: 50.w,
             height: 50.w,
@@ -189,10 +311,7 @@ class _OrderItemCard extends StatelessWidget {
               size: 24.sp,
             ),
           ),
-
           SizedBox(width: 12.w),
-
-          // Service Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,8 +337,6 @@ class _OrderItemCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Total Price
           Text(
             '₹${item.totalPrice.toStringAsFixed(0)}',
             style: TextStyle(
@@ -300,17 +417,19 @@ class _ProceedToPayButton extends StatelessWidget {
   final DateTime? selectedDate;
   final String? selectedSlot;
   final String Function(DateTime) formatSelectedDate;
+  final String spaId;
 
   const _ProceedToPayButton({
     required this.totalAmount,
     required this.selectedDate,
     required this.selectedSlot,
     required this.formatSelectedDate,
+    required this.spaId,
   });
 
   @override
   Widget build(BuildContext context) {
-    final totalWithTax = totalAmount * 1.18; // Add 18% GST
+    final totalWithTax = totalAmount * 1.18;
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -399,7 +518,8 @@ class _ProceedToPayButton extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-              if (selectedDate != null && selectedSlot != null) SizedBox(height: 8.h),
+              if (selectedDate != null && selectedSlot != null)
+                SizedBox(height: 8.h),
               Text(
                 'Payment integration will be implemented here',
                 style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
@@ -424,6 +544,7 @@ class _ProceedToPayButton extends StatelessWidget {
                     .map(
                       (i) => Booking(
                         id: '${DateTime.now().millisecondsSinceEpoch}-${i.serviceId}',
+                        spaId: spaId, // Use the passed spaId
                         serviceId: i.serviceId,
                         serviceName: i.serviceName,
                         quantity: i.quantity,
@@ -467,17 +588,40 @@ class _ProceedToPayButton extends StatelessWidget {
   DateTime _buildScheduledDateTime() {
     final date = selectedDate!;
     final slot = selectedSlot!;
-    final parts = slot.split(' ');
-    final timePart = parts.first;
-    final periodPart = parts.length > 1 ? parts[1].toUpperCase() : 'AM';
-    final timePieces = timePart.split(':');
-    final hour12 = int.tryParse(timePieces[0]) ?? 0;
-    final minute = timePieces.length > 1 ? int.tryParse(timePieces[1]) ?? 0 : 0;
-    int hour = hour12 % 12;
-    if (periodPart == 'PM') {
-      hour += 12;
+    // slot is "10:00 AM – 11:00 AM"
+    // We parse the first part. The separator used is '–' (en-dash).
+    final parts = slot.split('–');
+    var startStr = parts.first.trim();
+
+    // Sanitize spaces (replace non-breaking space \u00A0 with normal space)
+    startStr = startStr.replaceAll(RegExp(r'\s+'), ' ');
+
+    try {
+      // Use the same format as used in generation: DateFormat('h:mm a')
+      final dateFormat = DateFormat('h:mm a');
+      final dt = dateFormat.parse(startStr);
+      return DateTime(date.year, date.month, date.day, dt.hour, dt.minute);
+    } catch (e) {
+      // Fallback: try DateFormat.jm() or just rethrow
+      try {
+        final dt = DateFormat.jm().parse(startStr);
+        return DateTime(date.year, date.month, date.day, dt.hour, dt.minute);
+      } catch (_) {
+        // Last resort: simple manual parse if format is "HH:mm" or similar
+        if (startStr.contains(':')) {
+          final p = startStr.split(':');
+          final h = int.tryParse(p[0].trim()) ?? 0;
+          final mStr = p[1].trim().split(' ').first;
+          final m = int.tryParse(mStr) ?? 0;
+          // naive AM/PM handling if parse failed
+          var hour = h;
+          if (startStr.toUpperCase().contains('PM') && hour < 12) hour += 12;
+          if (startStr.toUpperCase().contains('AM') && hour == 12) hour = 0;
+          return DateTime(date.year, date.month, date.day, hour, m);
+        }
+        throw FormatException("Invalid time format: $startStr");
+      }
     }
-    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 }
 
@@ -488,6 +632,7 @@ class _BookingScheduleCard extends StatelessWidget {
   final VoidCallback onSelectDate;
   final void Function(String) onSelectSlot;
   final String Function(DateTime) formatSelectedDate;
+  final bool Function(String) isSlotDisabled;
 
   const _BookingScheduleCard({
     required this.selectedDate,
@@ -496,6 +641,7 @@ class _BookingScheduleCard extends StatelessWidget {
     required this.onSelectDate,
     required this.onSelectSlot,
     required this.formatSelectedDate,
+    required this.isSlotDisabled,
   });
 
   @override
@@ -524,7 +670,9 @@ class _BookingScheduleCard extends StatelessWidget {
               TextButton(
                 onPressed: onSelectDate,
                 child: Text(
-                  selectedDate != null ? formatSelectedDate(selectedDate!) : 'Select Date',
+                  selectedDate != null
+                      ? formatSelectedDate(selectedDate!)
+                      : 'Select Date',
                   style: TextStyle(
                     color: AppColors.primary,
                     fontSize: 14.sp,
@@ -544,34 +692,49 @@ class _BookingScheduleCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 8.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: timeSlots.map((slot) {
-              final isSelected = slot == selectedSlot;
-              return ChoiceChip(
-                label: Text(
-                  slot,
-                  style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
+          if (timeSlots.isEmpty)
+            Text(
+              "No slots available",
+              style: TextStyle(color: Colors.grey[500], fontSize: 12.sp),
+            )
+          else
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 8.h,
+              children: timeSlots.map((slot) {
+                final isSelected = slot == selectedSlot;
+                final isDisabled = isSlotDisabled(slot);
+
+                return ChoiceChip(
+                  label: Text(
+                    slot,
+                    style: TextStyle(
+                      color: isDisabled
+                          ? Colors.grey[600]
+                          : (isSelected ? Colors.black : Colors.white),
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                selected: isSelected,
-                onSelected: (_) => onSelectSlot(slot),
-                selectedColor: AppColors.primary,
-                backgroundColor: const Color(0xFF2A2A2A),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.r),
-                  side: BorderSide(
-                    color: isSelected ? AppColors.primary : Colors.grey[700]!,
-                    width: 1,
+                  selected: isSelected,
+                  onSelected: isDisabled ? null : (_) => onSelectSlot(slot),
+                  selectedColor: AppColors.primary,
+                  disabledColor: const Color(0xFF111111),
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.r),
+                    side: BorderSide(
+                      color: isDisabled
+                          ? Colors.transparent
+                          : (isSelected
+                                ? AppColors.primary
+                                : Colors.grey[700]!),
+                      width: 1,
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
