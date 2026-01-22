@@ -1,17 +1,53 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/booking.dart';
+import '../../domain/repositories/bookings_repository.dart';
 
 class BookingsController extends ChangeNotifier {
+  final BookingsRepository _repository;
   final List<Booking> _bookings = [];
+  StreamSubscription? _subscription;
+  String? _currentSpaId;
+
+  BookingsController(this._repository);
 
   List<Booking> get bookings => List.unmodifiable(_bookings);
 
-  void addAll(List<Booking> items) {
-    _bookings.addAll(items);
+  /// Load bookings for a specific spa (real-time)
+  void subscribeToSpa(String spaId) {
+    if (_currentSpaId == spaId) return;
+
+    _subscription?.cancel();
+    _currentSpaId = spaId;
+    _bookings.clear();
     notifyListeners();
+
+    _subscription = _repository.streamBookingsBySpaId(spaId).listen((items) {
+      _bookings.clear();
+      _bookings.addAll(items);
+      notifyListeners();
+    });
+  }
+
+  /// Create new bookings
+  Future<void> addAll(List<Booking> items) async {
+    for (final item in items) {
+      await _repository.createBooking(item);
+    }
+    // No need to manually add to _bookings if we are subscribed,
+    // the stream will update it. But if we are not subscribed, we might want to?
+    // Actually, usually we add bookings and then navigate away, so it's fine.
   }
 
   int getBookingCount(String spaId, DateTime date, String slot) {
+    // Only works effectively if we are subscribed to this spaId
+    if (_currentSpaId != null && _currentSpaId != spaId) {
+      // If asking for a different spa than subscribed, return 0 (or handle error)
+      //Ideally we should manage multiple subscriptions if needed, but for now
+      // OrderSummaryPage focuses on one spa.
+      return 0;
+    }
+
     return _bookings.where((b) {
       if (b.spaId != spaId) return false;
       // Compare dates (ignoring time)
@@ -23,14 +59,7 @@ class BookingsController extends ChangeNotifier {
       if (!sameDate) return false;
 
       // Check slot match
-      // Assuming slot format "10:00 AM" or "10:00 AM - 11:00 AM"
-      // We need to match the start time of the slot with scheduledAt
-      final slotStart = slot
-          .split('–')
-          .first
-          .trim(); // handle "10:00 AM – 11:00 AM"
-      // Convert scheduledAt to string to compare, or parse slotStart
-      // Simpler: Format scheduledAt to "h:mm a" and compare
+      final slotStart = slot.split('–').first.trim();
       final hour = bDate.hour > 12
           ? bDate.hour - 12
           : (bDate.hour == 0 ? 12 : bDate.hour);
@@ -38,8 +67,13 @@ class BookingsController extends ChangeNotifier {
       final ampm = bDate.hour >= 12 ? 'PM' : 'AM';
       final bookingTimeStr = "$hour:$minute $ampm";
 
-      // Handle "10:00 AM" vs "10:00"
       return slotStart.startsWith(bookingTimeStr);
     }).length;
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

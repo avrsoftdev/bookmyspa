@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/di/di.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../bookings/presentation/pages/spa_bookings_page.dart';
 import '../../../spa_registration/presentation/pages/edit_spa_page.dart';
 
 class MyBusinessPage extends StatelessWidget {
@@ -245,42 +246,66 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => EditSpaPage(spaId: spa.id),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppColors.primary),
+                                foregroundColor: AppColors.primary,
+                              ),
+                              icon: const Icon(Icons.edit),
+                              label: const Text('Edit Details'),
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/spa-services',
+                                  arguments: SpaServicesArgs(spa.id),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                              icon: const Icon(Icons.visibility),
+                              label: const Text('View Services'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => EditSpaPage(spaId: spa.id),
+                                builder: (_) => SpaBookingsPage(spaId: spa.id),
                               ),
                             );
                           },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.primary),
-                            foregroundColor: AppColors.primary,
-                          ),
-                          icon: const Icon(Icons.edit),
-                          label: const Text('Edit Details'),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/spa-services',
-                              arguments: SpaServicesArgs(spa.id),
-                            );
-                          },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
                           ),
-                          icon: const Icon(Icons.visibility),
-                          label: const Text('View Services'),
+                          icon: const Icon(Icons.calendar_month),
+                          label: const Text('View Customer Bookings'),
                         ),
                       ),
                     ],

@@ -25,6 +25,8 @@ import '../../features/spa_browse/domain/usecases/dislike_review_usecase.dart';
 import '../../features/spa_browse/presentation/controllers/favorites_controller.dart';
 import '../../features/cart/presentation/bloc/cart_bloc.dart';
 import '../../features/bookings/presentation/controllers/bookings_controller.dart';
+import '../../features/bookings/domain/repositories/bookings_repository.dart';
+import '../../features/bookings/data/repositories/bookings_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/theme_cubit.dart';
 import '../services/admob_service.dart';
@@ -105,7 +107,11 @@ Future<void> initDependencies() async {
   // Cart
   sl.register<CartBloc>(CartBloc());
 
-  sl.register<BookingsController>(BookingsController());
+  // Bookings
+  sl.register<BookingsRepository>(
+    BookingsRepositoryImpl(FirebaseFirestore.instance),
+  );
+  sl.register<BookingsController>(BookingsController(sl.get()));
 
   final prefs = await SharedPreferences.getInstance();
   sl.register<SharedPreferences>(prefs);

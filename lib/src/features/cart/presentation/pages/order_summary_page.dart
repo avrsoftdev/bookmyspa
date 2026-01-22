@@ -1,3 +1,4 @@
+import 'package:bookmyspa/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,7 +15,6 @@ import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 class OrderSummaryPage extends StatefulWidget {
   final String spaId;
   const OrderSummaryPage({super.key, required this.spaId});
-
   @override
   State<OrderSummaryPage> createState() => _OrderSummaryPageState();
 }
@@ -22,6 +22,13 @@ class OrderSummaryPage extends StatefulWidget {
 class _OrderSummaryPageState extends State<OrderSummaryPage> {
   DateTime? selectedDate;
   String? selectedSlot;
+
+  @override
+  void initState() {
+    super.initState();
+    // Subscribe to real-time bookings for this spa
+    sl.get<BookingsController>().subscribeToSpa(widget.spaId);
+  }
 
   Future<void> pickDate(BuildContext context) async {
     final now = DateTime.now();
@@ -472,10 +479,10 @@ class _ProceedToPayButton extends StatelessWidget {
     );
   }
 
-  void _showPaymentDialog(BuildContext context, double amount) {
+  void _showPaymentDialog(BuildContext outerContext, double amount) {
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
+      context: outerContext,
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
           shape: RoundedRectangleBorder(
@@ -529,46 +536,75 @@ class _ProceedToPayButton extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
                 'Cancel',
                 style: TextStyle(color: Colors.grey[400], fontSize: 16.sp),
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                final items = context.read<CartBloc>().state.items;
-                final scheduledAt = _buildScheduledDateTime();
-                final bookings = items
-                    .map(
-                      (i) => Booking(
-                        id: '${DateTime.now().millisecondsSinceEpoch}-${i.serviceId}',
-                        spaId: spaId, // Use the passed spaId
-                        serviceId: i.serviceId,
-                        serviceName: i.serviceName,
-                        quantity: i.quantity,
-                        unitPrice: i.price,
-                        totalPrice: i.totalPrice,
-                        scheduledAt: scheduledAt,
-                        createdAt: DateTime.now(),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                try {
+                  final authController = sl.get<AuthController>();
+                  final user = authController.currentUser;
+                  final userId =
+                      user?.id ??
+                      'guest_${DateTime.now().millisecondsSinceEpoch}';
+                  final userName = user?.name ?? 'Guest';
+                  final userEmail = user?.email;
+
+                  final items = outerContext.read<CartBloc>().state.items;
+                  final scheduledAt = _buildScheduledDateTime();
+                  final bookings = items
+                      .map(
+                        (i) => Booking(
+                          id: '${DateTime.now().millisecondsSinceEpoch}-${i.serviceId}',
+                          spaId: spaId,
+                          serviceId: i.serviceId,
+                          serviceName: i.serviceName,
+                          quantity: i.quantity,
+                          unitPrice: i.price,
+                          totalPrice: i.totalPrice,
+                          scheduledAt: scheduledAt,
+                          createdAt: DateTime.now(),
+                          userId: userId,
+                          userName: userName,
+                          userEmail: userEmail,
+                        ),
+                      )
+                      .toList();
+
+                  await sl.get<BookingsController>().addAll(bookings);
+
+                  if (outerContext.mounted) {
+                    outerContext.read<CartBloc>().add(ClearCart());
+                    ScaffoldMessenger.of(outerContext).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'Payment successful! Booking created.',
+                        ),
+                        backgroundColor: AppColors.primary,
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    )
-                    .toList();
-                sl.get<BookingsController>().addAll(bookings);
-                context.read<CartBloc>().add(ClearCart());
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Payment successful! Booking created.'),
-                    backgroundColor: AppColors.primary,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/home',
-                  (route) => false,
-                  arguments: 1,
-                );
+                    );
+                    Navigator.of(outerContext).pushNamedAndRemoveUntil(
+                      '/home',
+                      (route) => false,
+                      arguments: 1,
+                    );
+                  }
+                } catch (e) {
+                  if (outerContext.mounted) {
+                    ScaffoldMessenger.of(outerContext).showSnackBar(
+                      SnackBar(
+                        content: Text('Payment failed: $e'),
+                        backgroundColor: Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
