@@ -101,109 +101,126 @@ class _HomePageState extends State<HomePage> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: 120,
-            ),
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SpaSearchField(
-                  controller: _searchController,
-                  focusNode: _searchFocus,
-                  onChanged: _recomputeSuggestions,
-                ),
-                if (_suggestions.isNotEmpty &&
-                    _searchController.text.trim().isNotEmpty &&
-                    _searchFocus.hasFocus)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 1.2,
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SpaSearchField(
+                      controller: _searchController,
+                      focusNode: _searchFocus,
+                      onChanged: _recomputeSuggestions,
+                    ),
+                    if (_suggestions.isNotEmpty &&
+                        _searchController.text.trim().isNotEmpty &&
+                        _searchFocus.hasFocus)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 1.2,
+                            ),
+                          ),
+                          constraints: BoxConstraints(maxHeight: 240.h),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: _suggestions.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final s = _suggestions[index];
+                              return ListTile(
+                                leading: Icon(
+                                  s.type == _SuggestionType.spa
+                                      ? Icons.store_rounded
+                                      : (s.type == _SuggestionType.subcategory
+                                          ? Icons
+                                              .subdirectory_arrow_right_rounded
+                                          : Icons.category_rounded),
+                                  color:
+                                      Theme.of(context).colorScheme.primary,
+                                ),
+                                title: Text(
+                                  s.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle:
+                                    s.subtitle != null ? Text(s.subtitle!) : null,
+                                onTap: () {
+                                  if (s.type == _SuggestionType.spa &&
+                                      s.spaId != null) {
+                                    Navigator.of(context).pushNamed(
+                                      '/spa-detail',
+                                      arguments: SpaDetailArgs(s.spaId!),
+                                    );
+                                  } else if (s.type ==
+                                      _SuggestionType.service) {
+                                    Navigator.of(context).pushNamed(
+                                      '/category-subcategories',
+                                      arguments:
+                                          CategorySubcategoriesArgs(s.title),
+                                    );
+                                  } else if (s.type ==
+                                          _SuggestionType.subcategory &&
+                                      s.parentCategory != null) {
+                                    Navigator.of(context).pushNamed(
+                                      '/subcategory-spas',
+                                      arguments: {
+                                        'category': s.parentCategory,
+                                        'subcategory': s.title,
+                                      },
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                      constraints: BoxConstraints(maxHeight: 240.h),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: _suggestions.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final s = _suggestions[index];
-                          return ListTile(
-                            leading: Icon(
-                              s.type == _SuggestionType.spa
-                                  ? Icons.store_rounded
-                                  : (s.type == _SuggestionType.subcategory
-                                        ? Icons.subdirectory_arrow_right_rounded
-                                        : Icons.category_rounded),
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            title: Text(
-                              s.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: s.subtitle != null
-                                ? Text(s.subtitle!)
-                                : null,
-                            onTap: () {
-                              if (s.type == _SuggestionType.spa &&
-                                  s.spaId != null) {
-                                Navigator.of(context).pushNamed(
-                                  '/spa-detail',
-                                  arguments: SpaDetailArgs(s.spaId!),
-                                );
-                              } else if (s.type == _SuggestionType.service) {
-                                Navigator.of(context).pushNamed(
-                                  '/category-subcategories',
-                                  arguments: CategorySubcategoriesArgs(s.title),
-                                );
-                              } else if (s.type ==
-                                      _SuggestionType.subcategory &&
-                                  s.parentCategory != null) {
-                                Navigator.of(context).pushNamed(
-                                  '/subcategory-spas',
-                                  arguments: {
-                                    'category': s.parentCategory,
-                                    'subcategory': s.title,
-                                  },
-                                );
-                              }
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 20),
-                _buildCategoryGrid(), // 👈 icons just below search bar
-                const SizedBox(height: 20),
-                AdMobBannerWidget(
-                  adUnitId: kDebugMode
-                      ? 'ca-app-pub-3940256099942544/6300978111'
-                      : 'ca-app-pub-7682628416837305/4512781378',
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _SuggestedNearbySpas(locationBloc: _locationBloc),
-                const SizedBox(height: 8),
-                const _TopListedSpas(),
-                const SizedBox(height: 16),
-                const _BrandingFooter(),
-              ],
-            ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: 120,
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildCategoryGrid(),
+                      const SizedBox(height: 20),
+                      AdMobBannerWidget(
+                        adUnitId: kDebugMode
+                            ? 'ca-app-pub-3940256099942544/6300978111'
+                            : 'ca-app-pub-7682628416837305/4512781378',
+                      ),
+                      const SizedBox(height: 16),
+                      _SuggestedNearbySpas(locationBloc: _locationBloc),
+                      const SizedBox(height: 8),
+                      const _TopListedSpas(),
+                      const SizedBox(height: 16),
+                      const _BrandingFooter(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const MyBookingsPage(),
           const FavoritesPage(),
