@@ -2,18 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../firebase_options.dart';
 import 'app.dart';
 import 'core/di/di.dart';
 import 'core/services/admob_service.dart';
+import 'core/services/fcm_service.dart';
+import 'core/services/local_notifications_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+}
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase first
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Initialize Firebase App Check and await activation so that any
   // subsequent Firebase requests (Storage, Firestore, etc.) have a
@@ -45,8 +53,22 @@ Future<void> bootstrap() async {
     debugPrint('AppCheck: activation failed: $e');
     debugPrint(st.toString());
   }
-  
+
   await initDependencies();
+  try {
+    await sl.get<FcmService>().requestPermissions();
+  } catch (_) {}
+  try {
+    await sl.get<LocalNotificationsService>().initialize();
+  } catch (_) {}
+  try {
+    await Permission.notification.request();
+  } catch (_) {}
+  try {
+    FirebaseMessaging.onMessage.listen((message) async {
+      await sl.get<LocalNotificationsService>().showRemoteMessage(message);
+    });
+  } catch (_) {}
   try {
     await sl.get<AdMobService>().initialize();
   } catch (_) {}

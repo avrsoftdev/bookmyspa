@@ -35,6 +35,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
 import '../services/share_service.dart';
 import '../services/deep_link_service.dart';
+import '../services/fcm_service.dart';
+import '../services/local_notifications_service.dart';
 
 // Simple service locator
 class ServiceLocator {
@@ -119,6 +121,8 @@ Future<void> initDependencies() async {
   await themeCubit.load();
   sl.register<ThemeCubit>(themeCubit);
   sl.register<AdMobService>(AdMobService(FirebaseFirestore.instance));
+  sl.register<FcmService>(FcmService(FirebaseFirestore.instance));
+  sl.register<LocalNotificationsService>(LocalNotificationsService());
 
   // Google Places
   try {

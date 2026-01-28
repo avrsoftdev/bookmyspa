@@ -3,6 +3,8 @@ import '../../domain/entities/user.dart';
 import '../../domain/usecases/login.dart';
 import '../../domain/usecases/logout.dart';
 import '../../domain/usecases/check_auth_status.dart';
+import '../../../../core/di/di.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class AuthController extends ChangeNotifier {
   final LoginUseCase loginUseCase;
@@ -30,6 +32,9 @@ class AuthController extends ChangeNotifier {
     try {
       final user = await loginUseCase(email: email, password: password);
       currentUser = user;
+      try {
+        await sl.get<FcmService>().registerCurrentUserToken();
+      } catch (_) {}
       _setError(null);
     } catch (e) {
       _setError(e.toString().replaceFirst('Exception: ', ''));
@@ -45,6 +50,9 @@ class AuthController extends ChangeNotifier {
       // This calls your LoginUseCase().signInWithGoogle()
       final user = await loginUseCase.signInWithGoogle();
       currentUser = user;
+      try {
+        await sl.get<FcmService>().registerCurrentUserToken();
+      } catch (_) {}
       _setError(null);
     } catch (e) {
       String message = e.toString();
@@ -69,6 +77,9 @@ class AuthController extends ChangeNotifier {
     await _setLoading(true);
     try {
       currentUser = await checkAuthStatusUseCase();
+      try {
+        await sl.get<FcmService>().registerCurrentUserToken();
+      } catch (_) {}
       _setError(null);
     } catch (e) {
       _setError(null); // Don't show error on startup

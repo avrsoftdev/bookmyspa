@@ -17,13 +17,18 @@ import '../../../../core/widgets/admob_banner_widget.dart';
 import '../../../spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_all_approved_spas_usecase.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../spa_browse/domain/usecases/stream_spas_by_owner_usecase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import '../../../../core/services/deep_link_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import '../../../../core/services/local_notifications_service.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
   const HomePage({super.key, this.initialIndex = 0});
-
+//pratham chitar
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -37,7 +42,11 @@ class _HomePageState extends State<HomePage> {
   final FocusNode _searchFocus = FocusNode();
   List<SpaEntity> _allSpas = const [];
   StreamSubscription<List<SpaEntity>>? _spasSub;
+  StreamSubscription<List<SpaEntity>>? _ownedSpasSub;
   List<_SearchSuggestion> _suggestions = const [];
+  Set<String> _approvedNotified = {};
+  StreamSubscription<RemoteMessage>? _msgOpenSub;
+  StreamSubscription<String>? _localNotifTapSub;
 
   // Category data using your Images class
   final List<Map<String, String>> _categories = [
@@ -64,12 +73,50 @@ class _HomePageState extends State<HomePage> {
       _locationBloc.getCurrentLocation();
       _handleInitialDeepLink();
       _subscribeDeepLinks();
+      _subscribeFcmOpenEvents();
+      _handleInitialFcmMessage();
+      _subscribeLocalNotificationTaps();
       final useCase = sl.get<StreamAllApprovedSpasUseCase>();
       _spasSub = useCase().listen((spas) {
         _allSpas = spas;
         _recomputeSuggestions(_searchController.text);
         if (mounted) setState(() {});
       });
+      final prefs = sl.get<SharedPreferences>();
+      _approvedNotified =
+          (prefs.getStringList('approvedNotifiedSpaIds') ?? const []).toSet();
+      final auth = sl.get<AuthController>();
+      final uid = auth.currentUser?.id;
+      if (uid != null && uid.isNotEmpty) {
+        final byOwner = sl.get<StreamSpasByOwnerUseCase>();
+        _ownedSpasSub = byOwner(uid).listen((spas) async {
+          for (final spa in spas) {
+            if (spa.status == 'approved' &&
+                !_approvedNotified.contains(spa.id)) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Congratulations!, Your Business is now listed',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: Colors.green.shade700,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              }
+              _approvedNotified.add(spa.id);
+              await prefs.setStringList(
+                'approvedNotifiedSpaIds',
+                _approvedNotified.toList(),
+              );
+            }
+          }
+        });
+      }
     });
   }
 
@@ -79,6 +126,9 @@ class _HomePageState extends State<HomePage> {
     _searchFocus.dispose();
     _linkSub?.cancel();
     _spasSub?.cancel();
+    _msgOpenSub?.cancel();
+    _localNotifTapSub?.cancel();
+    _ownedSpasSub?.cancel();
     super.dispose();
   }
 
@@ -141,11 +191,10 @@ class _HomePageState extends State<HomePage> {
                                   s.type == _SuggestionType.spa
                                       ? Icons.store_rounded
                                       : (s.type == _SuggestionType.subcategory
-                                          ? Icons
-                                              .subdirectory_arrow_right_rounded
-                                          : Icons.category_rounded),
-                                  color:
-                                      Theme.of(context).colorScheme.primary,
+                                            ? Icons
+                                                  .subdirectory_arrow_right_rounded
+                                            : Icons.category_rounded),
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 title: Text(
                                   s.title,
@@ -155,8 +204,9 @@ class _HomePageState extends State<HomePage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                subtitle:
-                                    s.subtitle != null ? Text(s.subtitle!) : null,
+                                subtitle: s.subtitle != null
+                                    ? Text(s.subtitle!)
+                                    : null,
                                 onTap: () {
                                   if (s.type == _SuggestionType.spa &&
                                       s.spaId != null) {
@@ -168,8 +218,9 @@ class _HomePageState extends State<HomePage> {
                                       _SuggestionType.service) {
                                     Navigator.of(context).pushNamed(
                                       '/category-subcategories',
-                                      arguments:
-                                          CategorySubcategoriesArgs(s.title),
+                                      arguments: CategorySubcategoriesArgs(
+                                        s.title,
+                                      ),
                                     );
                                   } else if (s.type ==
                                           _SuggestionType.subcategory &&
@@ -304,6 +355,41 @@ class _HomePageState extends State<HomePage> {
   void _subscribeDeepLinks() {
     final deepLinkService = sl.get<DeepLinkService>();
     _linkSub = deepLinkService.onLinkSpaId().listen((spaId) {
+      if (!mounted) return;
+      if (spaId.isNotEmpty) {
+        Navigator.of(
+          context,
+        ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
+      }
+    });
+  }
+
+  void _subscribeFcmOpenEvents() {
+    _msgOpenSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final spaId = message.data['spaId']?.toString() ?? '';
+      if (!mounted) return;
+      if (spaId.isNotEmpty) {
+        Navigator.of(
+          context,
+        ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
+      }
+    });
+  }
+
+  Future<void> _handleInitialFcmMessage() async {
+    final message = await FirebaseMessaging.instance.getInitialMessage();
+    final spaId = message?.data['spaId']?.toString() ?? '';
+    if (!mounted) return;
+    if (spaId.isNotEmpty) {
+      Navigator.of(
+        context,
+      ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
+    }
+  }
+
+  void _subscribeLocalNotificationTaps() {
+    final local = sl.get<LocalNotificationsService>();
+    _localNotifTapSub = local.onTapSpaId().listen((spaId) {
       if (!mounted) return;
       if (spaId.isNotEmpty) {
         Navigator.of(
