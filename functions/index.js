@@ -174,3 +174,62 @@ exports.onSpaSubmitted = onDocumentCreated("spas/{spaId}", async (event) => {
     console.error("FCM send error", e);
   }
 });
+
+exports.onBookingCreated = onDocumentCreated("bookings/{bookingId}", async (event) => {
+  const booking = event.data?.data() || {};
+  const spaId = booking.spaId;
+  if (!spaId) return;
+  const spaDoc = await admin.firestore().collection("spas").doc(spaId).get();
+  const spa = spaDoc.data() || {};
+  const ownerUid = spa.ownerUid;
+  if (!ownerUid) return;
+  const userDoc = await admin.firestore().collection("users").doc(ownerUid).get();
+  const data = userDoc.data() || {};
+  const tokens = Array.isArray(data.fcmTokens) ? data.fcmTokens.filter(Boolean) : [];
+  if (!tokens.length) return;
+  const message = {
+    notification: {
+      title: "New booking received!",
+      body: "Tap to view details."
+    },
+    data: {
+      type: "booking",
+      spaId,
+      bookingId: event.params.bookingId
+    }
+  };
+  try {
+    const res = await admin.messaging().sendEachForMulticast({
+      tokens,
+      notification: message.notification,
+      data: message.data
+    });
+    await admin.firestore().collection("notifications").add({
+      userId: ownerUid,
+      spaId,
+      bookingId: event.params.bookingId,
+      type: "booking",
+      title: message.notification.title,
+      body: message.notification.body,
+      ts: new Date().toISOString(),
+      read: false
+    });
+    const failed = res.responses.filter((r) => !r.success);
+    if (failed.length) {
+      const invalidTokens = failed
+        .map((r, i) => ({ r, token: tokens[i] }))
+        .filter((x) => {
+          const code = x.r.error && x.r.error.code;
+          return code === "messaging/registration-token-not-registered" || code === "messaging/invalid-argument";
+        })
+        .map((x) => x.token);
+      if (invalidTokens.length) {
+        await admin.firestore().collection("users").doc(ownerUid).update({
+          fcmTokens: admin.firestore.FieldValue.arrayRemove(...invalidTokens)
+        });
+      }
+    }
+  } catch (e) {
+    console.error("FCM send error", e);
+  }
+});
