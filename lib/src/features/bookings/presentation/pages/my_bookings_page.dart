@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/di/di.dart';
 import '../controllers/bookings_controller.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({super.key});
@@ -17,6 +18,11 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     super.initState();
     controller = sl.get<BookingsController>();
     controller.addListener(_onChanged);
+    final auth = sl.get<AuthController>();
+    final uid = auth.currentUser?.id;
+    if (uid != null && uid.isNotEmpty) {
+      controller.subscribeToUser(uid);
+    }
   }
 
   @override

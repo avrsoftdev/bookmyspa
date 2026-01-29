@@ -8,6 +8,7 @@ class BookingsController extends ChangeNotifier {
   final List<Booking> _bookings = [];
   StreamSubscription? _subscription;
   String? _currentSpaId;
+  String? _currentUserId;
 
   BookingsController(this._repository);
 
@@ -37,6 +38,23 @@ class BookingsController extends ChangeNotifier {
     // No need to manually add to _bookings if we are subscribed,
     // the stream will update it. But if we are not subscribed, we might want to?
     // Actually, usually we add bookings and then navigate away, so it's fine.
+  }
+
+  /// Load bookings for a specific user (real-time)
+  void subscribeToUser(String userId) {
+    if (_currentUserId == userId) return;
+    _subscription?.cancel();
+    _currentUserId = userId;
+    _currentSpaId = null;
+    _bookings.clear();
+    notifyListeners();
+    _subscription =
+        _repository.streamBookingsByUserId(userId).listen((items) {
+      _bookings
+        ..clear()
+        ..addAll(items);
+      notifyListeners();
+    });
   }
 
   int getBookingCount(String spaId, DateTime date, String slot) {
