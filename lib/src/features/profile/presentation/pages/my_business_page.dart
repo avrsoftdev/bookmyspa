@@ -318,6 +318,12 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
 
 class _StatusChip extends StatelessWidget {
