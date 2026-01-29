@@ -65,10 +65,9 @@ class FavoritesPage extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: ListView.separated(
+                child: ListView.builder(
                   padding: EdgeInsets.all(16.w),
                   itemCount: ids.length,
-                  separatorBuilder: (context, index) => SizedBox(height: 14.h),
                   itemBuilder: (context, index) {
                     final id = ids[index];
                     return StreamBuilder<SpaEntity?>(
@@ -76,15 +75,20 @@ class FavoritesPage extends StatelessWidget {
                       builder: (context, snap) {
                         final spa = snap.data;
                         if (snap.connectionState == ConnectionState.waiting) {
-                          return _LoadingCard();
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 14.h),
+                            child: _LoadingCard(),
+                          );
                         }
                         if (spa == null) {
-                          return _UnavailableCard();
+                          return const SizedBox.shrink();
                         }
                         final imageUrl = spa.photos.isNotEmpty
                             ? spa.photos.first
                             : null;
-                        return Container(
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 14.h),
+                          child: Container(
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(20.r),
@@ -266,6 +270,7 @@ class FavoritesPage extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          ),
                           ),
                         );
                       },

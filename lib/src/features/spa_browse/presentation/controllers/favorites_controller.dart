@@ -43,8 +43,24 @@ class FavoritesController extends ChangeNotifier {
   Stream<List<String>> favoriteSpaIdsStream() {
     final col = _favCol;
     if (col == null) return Stream<List<String>>.value(const []);
-    return col.orderBy('createdAt', descending: true).snapshots().map((snap) {
-      return snap.docs.map((d) => d.id).toList();
+    return col
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .asyncMap((snap) async {
+      final ids = <String>[];
+      for (final d in snap.docs) {
+        final spaId = d.id;
+        final spaDoc =
+            await firestore.collection('spas').doc(spaId).get();
+        if (spaDoc.exists) {
+          ids.add(spaId);
+        } else {
+          try {
+            await d.reference.delete();
+          } catch (_) {}
+        }
+      }
+      return ids;
     });
   }
 }
