@@ -17,11 +17,15 @@ class LocationAppBarTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('BookMySpa', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const Text(
+          'Spaxify',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
         ListenableBuilder(
           listenable: locationBloc,
           builder: (context, _) {
-            final address = overriddenAddress ??
+            final address =
+                overriddenAddress ??
                 locationBloc.state.location?.address ??
                 'Select Location';
             return Text(

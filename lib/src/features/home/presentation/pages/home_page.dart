@@ -780,7 +780,7 @@ class _BrandingFooter extends StatelessWidget {
       padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
       child: Center(
         child: Text(
-          'BookMySpa by AVR Softwares',
+          'Spaxify by AVR Softdev',
           style: TextStyle(
             fontSize: 12.sp,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),

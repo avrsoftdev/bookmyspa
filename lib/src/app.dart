@@ -25,7 +25,7 @@ class App extends StatelessWidget {
           child: BlocBuilder<ThemeCubit, ThemeMode>(
             builder: (context, themeMode) {
               return MaterialApp(
-                title: 'BookMySpa',
+                title: 'Spaxify',
                 debugShowCheckedModeBanner: false,
                 theme: AppTheme.light,
                 darkTheme: AppTheme.dark,
