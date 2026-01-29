@@ -30,6 +30,15 @@ exports.onSpaApproved = onDocumentUpdated("spas/{spaId}", async (event) => {
       notification: message.notification,
       data: message.data
     });
+    await admin.firestore().collection("notifications").add({
+      userId: ownerUid,
+      spaId: event.params.spaId,
+      type: "approved",
+      title: message.notification.title,
+      body: message.notification.body,
+      ts: new Date().toISOString(),
+      read: false
+    });
     const failed = res.responses.filter((r) => !r.success);
     if (failed.length) {
       const invalidTokens = failed
@@ -83,6 +92,16 @@ exports.onSpaRejected = onDocumentUpdated("spas/{spaId}", async (event) => {
       notification: message.notification,
       data: message.data
     });
+    await admin.firestore().collection("notifications").add({
+      userId: ownerUid,
+      spaId: event.params.spaId,
+      type: "rejected",
+      title: message.notification.title,
+      body: message.notification.body,
+      rejectionReason: reason,
+      ts: new Date().toISOString(),
+      read: false
+    });
     const failed = res.responses.filter((r) => !r.success);
     if (failed.length) {
       const invalidTokens = failed
@@ -126,6 +145,15 @@ exports.onSpaSubmitted = onDocumentCreated("spas/{spaId}", async (event) => {
       tokens,
       notification: message.notification,
       data: message.data
+    });
+    await admin.firestore().collection("notifications").add({
+      userId: ownerUid,
+      spaId: event.params.spaId,
+      type: "submission",
+      title: message.notification.title,
+      body: message.notification.body,
+      ts: new Date().toISOString(),
+      read: false
     });
     const failed = res.responses.filter((r) => !r.success);
     if (failed.length) {

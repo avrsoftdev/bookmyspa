@@ -10,6 +10,7 @@ import '../../features/spa_browse/presentation/pages/subcategory_spa_list_page.d
 import '../../features/spa_browse/presentation/pages/spa_services_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../features/cart/presentation/pages/order_summary_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -83,6 +84,8 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => OrderSummaryPage(spaId: spaId),
         );
+      case '/notifications':
+        return MaterialPageRoute(builder: (_) => const NotificationsPage());
       default:
         return MaterialPageRoute(builder: (_) => const Scaffold());
     }
