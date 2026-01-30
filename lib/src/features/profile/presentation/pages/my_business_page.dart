@@ -19,33 +19,31 @@ class MyBusinessPage extends StatelessWidget {
     final useCase = sl.get<StreamSpasByOwnerUseCase>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        title: const Text('My Business', style: TextStyle(color: Colors.white)),
+        title: const Text('My Business'),
         backgroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: true,
       ),
       body: uid == null
-          ? const Center(
-              child: Text(
-                'Please login to view your business',
-                style: TextStyle(color: Colors.white),
-              ),
-            )
+          ? const Center(child: Text('Please login to view your business'))
           : StreamBuilder<List<SpaEntity>>(
               stream: useCase(uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   );
                 }
                 if (snapshot.hasError) {
                   return Center(
                     child: Text(
                       'Error: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   );
                 }
@@ -58,17 +56,25 @@ class MyBusinessPage extends StatelessWidget {
                         Icon(
                           Icons.store_mall_directory_outlined,
                           size: 64.sp,
-                          color: Colors.grey[300],
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.3),
                         ),
                         SizedBox(height: 12.h),
-                        const Text(
+                        Text(
                           'No businesses found',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                         SizedBox(height: 6.h),
-                        const Text(
+                        Text(
                           'Register your spa from Profile > List Your Spa',
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
+                          ),
                         ),
                       ],
                     ),
@@ -135,7 +141,7 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
         scale: _scaleAnimation,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20.r),
             border: Border.all(color: AppColors.primary, width: 1.5),
           ),
@@ -189,7 +195,7 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -209,7 +215,7 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                             spa.city,
                             style: TextStyle(
                               fontSize: 13.sp,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -222,7 +228,9 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                           Icon(
                             Icons.place_outlined,
                             size: 16.sp,
-                            color: Colors.grey[400],
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
                           ),
                           SizedBox(width: 6.w),
                           Expanded(
@@ -234,7 +242,9 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13.sp,
-                                color: Colors.grey[300],
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
                                 height: 1.4,
                               ),
                             ),
@@ -301,8 +311,12 @@ class _OwnedSpaCardState extends State<_OwnedSpaCard>
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surface,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onSurface,
                           ),
                           icon: const Icon(Icons.calendar_month),
                           label: const Text('View Customer Bookings'),

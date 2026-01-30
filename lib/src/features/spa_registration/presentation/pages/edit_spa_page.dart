@@ -481,10 +481,19 @@ class _EditSpaPageState extends State<EditSpaPage> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            )
           : _error != null
           ? Center(
-              child: Text(_error!, style: const TextStyle(color: Colors.white)),
+              child: Text(
+                _error!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
             )
           : SingleChildScrollView(
               padding: EdgeInsets.all(16.w),
@@ -900,7 +909,7 @@ class _EditSpaPageState extends State<EditSpaPage> {
         style: TextStyle(
           fontSize: 16.sp,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
@@ -912,10 +921,15 @@ class _EditSpaPageState extends State<EditSpaPage> {
     ValueChanged<TimeOfDay> onPicked,
   ) {
     return ListTile(
-      title: Text(label, style: const TextStyle(color: Colors.white70)),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
+      ),
       subtitle: Text(
         value != null ? value.format(context) : 'Not set',
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       ),
       trailing: Icon(Icons.access_time, color: AppColors.primary),
       onTap: () async {
@@ -945,14 +959,18 @@ class _EditSpaPageState extends State<EditSpaPage> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white70),
+        labelStyle: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
         prefixIcon: Icon(icon, color: AppColors.primary),
         filled: true,
-        fillColor: const Color(0xFF1F1F1F),
+        fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: Colors.grey.shade700),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
@@ -960,7 +978,7 @@ class _EditSpaPageState extends State<EditSpaPage> {
         ),
         counterText: '',
       ),
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
     );
   }
 
@@ -974,12 +992,14 @@ class _EditSpaPageState extends State<EditSpaPage> {
       value: value != null && options.contains(value) ? value : null,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
         filled: true,
-        fillColor: const Color(0xFF1F1F1F),
+        fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
       ),
-      dropdownColor: const Color(0xFF1F1F1F),
+      dropdownColor: Theme.of(context).colorScheme.surface,
       items: options
           .map((e) => DropdownMenuItem(value: e, child: Text(e)))
           .toList(),

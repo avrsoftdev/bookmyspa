@@ -64,9 +64,12 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
             '${b.scheduledAt.hour.toString().padLeft(2, '0')}:${b.scheduledAt.minute.toString().padLeft(2, '0')}';
         return Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.deepPurple, width: 1),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1,
+            ),
           ),
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -79,8 +82,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                     const SizedBox(height: 4),
                     Text(
                       b.serviceName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -88,13 +91,18 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                     const SizedBox(height: 6),
                     Text(
                       'Qty: ${b.quantity}',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '₹${b.totalPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        color: Colors.deepPurple,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -103,7 +111,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                     Text(
                       'Slot: $dateText at $timeText',
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 12,
                       ),
                     ),
@@ -112,7 +122,12 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
               ),
               Text(
                 '${b.createdAt.hour.toString().padLeft(2, '0')}:${b.createdAt.minute.toString().padLeft(2, '0')}',
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -135,8 +150,8 @@ class _SpaName extends StatelessWidget {
         final name = snapshot.data?.businessName;
         return Text(
           name ?? 'Loading spa...',
-          style: const TextStyle(
-            color: Colors.deepPurple,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
