@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/di/di.dart';
 import '../controllers/bookings_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../domain/repositories/bookings_repository.dart';
+import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({super.key});
@@ -16,7 +18,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
   @override
   void initState() {
     super.initState();
-    controller = sl.get<BookingsController>();
+    controller = BookingsController(sl.get<BookingsRepository>());
     controller.addListener(_onChanged);
     final auth = sl.get<AuthController>();
     final uid = auth.currentUser?.id;
@@ -28,6 +30,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
   @override
   void dispose() {
     controller.removeListener(_onChanged);
+    controller.dispose();
     super.dispose();
   }
 
@@ -72,6 +75,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _SpaName(spaId: b.spaId),
+                    const SizedBox(height: 4),
                     Text(
                       b.serviceName,
                       style: const TextStyle(
@@ -110,6 +115,30 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                 style: TextStyle(color: Colors.grey[500], fontSize: 12),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SpaName extends StatelessWidget {
+  final String spaId;
+  const _SpaName({required this.spaId});
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = sl.get<StreamSpaByIdUseCase>().call(spaId);
+    return StreamBuilder(
+      stream: stream,
+      builder: (context, snapshot) {
+        final name = snapshot.data?.businessName;
+        return Text(
+          name ?? 'Loading spa...',
+          style: const TextStyle(
+            color: Colors.deepPurple,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
           ),
         );
       },
