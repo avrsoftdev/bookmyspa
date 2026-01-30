@@ -12,6 +12,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../domain/usecases/like_review_usecase.dart';
 import '../../domain/usecases/dislike_review_usecase.dart';
+import '../../domain/usecases/update_review_usecase.dart';
 import 'package:bookmyspa/utils/constants/image.dart';
 import '../../../../core/services/share_service.dart';
 
@@ -319,9 +320,14 @@ class _ReviewsSectionState extends State<ReviewsSection> {
   int _selectedRating = 0;
   final TextEditingController _controller = TextEditingController();
   bool _submitting = false;
+  int _editRating = 0;
+  final TextEditingController _editController = TextEditingController();
+  String? _editReviewId;
+  bool _updating = false;
   @override
   void dispose() {
     _controller.dispose();
+    _editController.dispose();
     super.dispose();
   }
 
@@ -334,96 +340,218 @@ class _ReviewsSectionState extends State<ReviewsSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (auth.isLoggedIn)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Write a review',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Row(
-                children: List.generate(5, (i) {
-                  final idx = i + 1;
-                  final active = idx <= _selectedRating;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedRating = idx;
-                      });
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w),
-                      child: Icon(
-                        active ? Icons.star_rounded : Icons.star_border_rounded,
-                        size: 22.sp,
-                        color: Colors.amber,
+          StreamBuilder<List<ReviewEntity>>(
+            stream: streamUseCase(widget.spaId),
+            builder: (context, snapshot) {
+              final user = auth.currentUser!;
+              final hasMyReview = (snapshot.data ?? const <ReviewEntity>[]).any(
+                (r) => r.userId == user.id,
+              );
+              if (hasMyReview) {
+                final myReview = (snapshot.data ?? const <ReviewEntity>[])
+                    .firstWhere((r) => r.userId == user.id);
+                if (_editReviewId != myReview.id) {
+                  _editReviewId = myReview.id;
+                  _editRating = myReview.rating.round();
+                  _editController.text = myReview.text;
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Edit your review',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                  );
-                }),
-              ),
-              SizedBox(height: 10.h),
-              TextField(
-                controller: _controller,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Share your experience',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: _submitting
-                      ? null
-                      : () async {
-                          if (_selectedRating <= 0) return;
-                          final user = auth.currentUser!;
-                          setState(() {
-                            _submitting = true;
-                          });
-                          try {
-                            await addUseCase(
-                              spaId: widget.spaId,
-                              userId: user.id,
-                              userName: user.name,
-                              rating: _selectedRating.toDouble(),
-                              text: _controller.text.trim(),
-                            );
-                            _controller.clear();
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: List.generate(5, (i) {
+                        final idx = i + 1;
+                        final active = idx <= _editRating;
+                        return GestureDetector(
+                          onTap: () {
                             setState(() {
-                              _selectedRating = 0;
+                              _editRating = idx;
                             });
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() {
-                                _submitting = false;
-                              });
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 2.w),
+                            child: Icon(
+                              active
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              size: 22.sp,
+                              color: Colors.amber,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    SizedBox(height: 10.h),
+                    TextField(
+                      controller: _editController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: 'Update your experience',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton(
+                        onPressed: _updating
+                            ? null
+                            : () async {
+                                if (_editRating <= 0 || _editReviewId == null) {
+                                  return;
+                                }
+                                setState(() {
+                                  _updating = true;
+                                });
+                                try {
+                                  await sl.get<UpdateReviewUseCase>().call(
+                                    spaId: widget.spaId,
+                                    reviewId: _editReviewId!,
+                                    rating: _editRating.toDouble(),
+                                    text: _editController.text.trim(),
+                                  );
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Review updated'),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() {
+                                      _updating = false;
+                                    });
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
+                        ),
+                        child: Text('Update'),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Write a review',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
-                  child: Text('Submit'),
-                ),
-              ),
-            ],
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: List.generate(5, (i) {
+                      final idx = i + 1;
+                      final active = idx <= _selectedRating;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedRating = idx;
+                          });
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 2.w),
+                          child: Icon(
+                            active
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            size: 22.sp,
+                            color: Colors.amber,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  SizedBox(height: 10.h),
+                  TextField(
+                    controller: _controller,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: 'Share your experience',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _submitting
+                          ? null
+                          : () async {
+                              if (_selectedRating <= 0) return;
+                              final user = auth.currentUser!;
+                              setState(() {
+                                _submitting = true;
+                              });
+                              try {
+                                await addUseCase(
+                                  spaId: widget.spaId,
+                                  userId: user.id,
+                                  userName: user.name,
+                                  rating: _selectedRating.toDouble(),
+                                  text: _controller.text.trim(),
+                                );
+                                _controller.clear();
+                                setState(() {
+                                  _selectedRating = 0;
+                                });
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() {
+                                    _submitting = false;
+                                  });
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
+                      ),
+                      child: Text('Submit'),
+                    ),
+                  ),
+                ],
+              );
+            },
           )
         else
           Row(

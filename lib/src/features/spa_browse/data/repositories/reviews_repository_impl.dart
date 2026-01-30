@@ -75,8 +75,12 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     required String text,
   }) async {
     final spaRef = firestore.collection('spas').doc(spaId);
-    final reviewsRef = spaRef.collection('reviews').doc();
+    final reviewsRef = spaRef.collection('reviews').doc(userId);
     await firestore.runTransaction((tx) async {
+      final existing = await tx.get(reviewsRef);
+      if (existing.exists) {
+        throw Exception('You have already submitted a review for this spa');
+      }
       final spaSnap = await tx.get(spaRef);
       final data = spaSnap.data() ?? {};
       final rcRaw = data['ratingCount'];
@@ -185,6 +189,51 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
         'dislikedBy': dislikedBy,
         'likes': likes,
         'dislikes': dislikes,
+      });
+    });
+  }
+
+  @override
+  Future<void> updateReview({
+    required String spaId,
+    required String reviewId,
+    required double rating,
+    required String text,
+  }) async {
+    final spaRef = firestore.collection('spas').doc(spaId);
+    final reviewRef = spaRef.collection('reviews').doc(reviewId);
+    await firestore.runTransaction((tx) async {
+      final reviewSnap = await tx.get(reviewRef);
+      if (!reviewSnap.exists) {
+        throw Exception('Review not found');
+      }
+      final currentData = reviewSnap.data()!;
+      final oldRatingRaw = currentData['rating'];
+      final oldRating = oldRatingRaw is num
+          ? oldRatingRaw.toDouble()
+          : double.tryParse(oldRatingRaw?.toString() ?? '') ?? 0.0;
+
+      final spaSnap = await tx.get(spaRef);
+      final spaData = spaSnap.data() ?? {};
+      final rcRaw = spaData['ratingCount'];
+      final arRaw = spaData['averageRating'];
+      final count = rcRaw is num
+          ? rcRaw.toInt()
+          : int.tryParse(rcRaw?.toString() ?? '') ?? 0;
+      final avg = arRaw is num
+          ? arRaw.toDouble()
+          : double.tryParse(arRaw?.toString() ?? '') ?? 0.0;
+      final denom = count <= 0 ? 1 : count;
+      final newAvg = ((avg * denom) - oldRating + rating) / denom;
+
+      tx.update(reviewRef, {
+        'rating': rating,
+        'text': text,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      tx.update(spaRef, {
+        'averageRating': double.parse(newAvg.toStringAsFixed(2)),
+        'ratingCount': count,
       });
     });
   }

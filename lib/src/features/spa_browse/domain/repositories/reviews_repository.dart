@@ -19,4 +19,10 @@ abstract class ReviewsRepository {
     required String reviewId,
     required String userId,
   });
+  Future<void> updateReview({
+    required String spaId,
+    required String reviewId,
+    required double rating,
+    required String text,
+  });
 }

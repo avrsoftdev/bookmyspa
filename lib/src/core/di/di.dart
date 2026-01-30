@@ -22,6 +22,7 @@ import '../../features/spa_browse/domain/usecases/stream_reviews_by_spa_usecase.
 import '../../features/spa_browse/domain/usecases/add_review_usecase.dart';
 import '../../features/spa_browse/domain/usecases/like_review_usecase.dart';
 import '../../features/spa_browse/domain/usecases/dislike_review_usecase.dart';
+import '../../features/spa_browse/domain/usecases/update_review_usecase.dart';
 import '../../features/spa_browse/presentation/controllers/favorites_controller.dart';
 import '../../features/cart/presentation/bloc/cart_bloc.dart';
 import '../../features/bookings/presentation/controllers/bookings_controller.dart';
@@ -97,6 +98,7 @@ Future<void> initDependencies() async {
   sl.register<AddReviewUseCase>(AddReviewUseCase(sl.get()));
   sl.register<LikeReviewUseCase>(LikeReviewUseCase(sl.get()));
   sl.register<DislikeReviewUseCase>(DislikeReviewUseCase(sl.get()));
+  sl.register<UpdateReviewUseCase>(UpdateReviewUseCase(sl.get()));
 
   // Favorites
   sl.register<FavoritesController>(
