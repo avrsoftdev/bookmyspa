@@ -126,12 +126,12 @@ class _SpaDetailPageState extends State<SpaDetailPage> {
                   ReviewsSection(spaId: spa.id),
                 ],
               ),
-              if ((spa.whatsappNumber ?? '').isNotEmpty)
-                Positioned(
-                  right: 16.w,
-                  bottom: 80.h,
-                  child: _WhatsAppButton(number: spa.whatsappNumber!),
-                ),
+              // if ((spa.whatsappNumber ?? '').isNotEmpty)
+              //   Positioned(
+              //     right: 16.w,
+              //     bottom: 80.h,
+              //     child: _WhatsAppButton(number: spa.whatsappNumber!),
+              //   ),
             ],
           );
         },
