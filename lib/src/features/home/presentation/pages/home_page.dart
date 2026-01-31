@@ -29,12 +29,12 @@ import '../../../../core/services/local_notifications_service.dart';
 class HomePage extends StatefulWidget {
   final int initialIndex;
   const HomePage({super.key, this.initialIndex = 0});
-//pratham chitar
+  //pratham chitar
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int _currentIndex = 0;
   late LocationBloc _locationBloc;
   String? _overriddenAddress;
@@ -68,6 +68,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
     _locationBloc = sl.get<LocationBloc>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -130,7 +131,15 @@ class _HomePageState extends State<HomePage> {
     _msgOpenSub?.cancel();
     _localNotifTapSub?.cancel();
     _ownedSpasSub?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _locationBloc.getCurrentLocation();
+    }
   }
 
   @override

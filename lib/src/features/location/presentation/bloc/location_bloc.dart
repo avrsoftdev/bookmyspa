@@ -33,10 +33,13 @@ class LocationBloc extends ChangeNotifier {
   
   LocationState _state = const LocationState();
   LocationState get state => _state;
+  bool _inProgress = false;
 
   LocationBloc(this._getCurrentLocationUseCase);
 
   Future<void> getCurrentLocation() async {
+    if (_inProgress) return;
+    _inProgress = true;
     _state = _state.copyWith(status: LocationStatus.loading);
     notifyListeners();
 
@@ -54,6 +57,7 @@ class LocationBloc extends ChangeNotifier {
     }
     
     notifyListeners();
+    _inProgress = false;
   }
 
   void resetState() {
