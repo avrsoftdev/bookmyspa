@@ -35,7 +35,15 @@ class NotificationsPage extends StatelessWidget {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
-                final docs = snapshot.data?.docs ?? const [];
+                final allDocs = snapshot.data?.docs ?? const [];
+                final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> uniqueByTx = {};
+                for (final d in allDocs) {
+                  final data = d.data();
+                  final tx = (data['transactionId'] as String?) ?? '';
+                  final key = tx.isNotEmpty ? tx : d.id;
+                  uniqueByTx.putIfAbsent(key, () => d);
+                }
+                final docs = uniqueByTx.values.toList();
                 if (docs.isEmpty) {
                   return Center(
                     child: Column(
