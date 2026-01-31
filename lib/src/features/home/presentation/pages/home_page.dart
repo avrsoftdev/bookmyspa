@@ -14,6 +14,7 @@ import '../../../location/presentation/bloc/location_bloc.dart';
 import '../../../../core/di/di.dart';
 // TODO: change this import to the actual path of your Images class
 import '../../../../core/widgets/admob_banner_widget.dart';
+import '../../../../core/widgets/permission_banner_widget.dart';
 import '../../../spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_all_approved_spas_usecase.dart';
@@ -155,6 +156,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           Column(
             children: [
+              const PermissionBannerWidget(),
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
                 child: Column(
