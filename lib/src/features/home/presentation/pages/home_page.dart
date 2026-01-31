@@ -95,21 +95,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           for (final spa in spas) {
             if (spa.status == 'approved' &&
                 !_approvedNotified.contains(spa.id)) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'Congratulations!, Your Business is now listed',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    backgroundColor: Colors.green.shade700,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-              }
               _approvedNotified.add(spa.id);
               await prefs.setStringList(
                 'approvedNotifiedSpaIds',
