@@ -1,5 +1,6 @@
 class Booking {
   final String id;
+  final String transactionId;
   final String spaId;
   final String serviceId;
   final String serviceName;
@@ -17,6 +18,7 @@ class Booking {
 
   const Booking({
     required this.id,
+    required this.transactionId,
     required this.spaId,
     required this.serviceId,
     required this.serviceName,
@@ -34,6 +36,7 @@ class Booking {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'transactionId': transactionId,
       'spaId': spaId,
       'serviceId': serviceId,
       'serviceName': serviceName,
@@ -52,6 +55,7 @@ class Booking {
   factory Booking.fromMap(Map<String, dynamic> map) {
     return Booking(
       id: map['id'] ?? '',
+      transactionId: map['transactionId'] ?? '',
       spaId: map['spaId'] ?? '',
       serviceId: map['serviceId'] ?? '',
       serviceName: map['serviceName'] ?? '',

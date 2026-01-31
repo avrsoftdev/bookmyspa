@@ -62,13 +62,26 @@ class _SpaBookingsPageState extends State<SpaBookingsPage> {
             );
           }
 
+          // Group by transactionId
+          final Map<String, List<Booking>> groups = {};
+          for (final b in bookings) {
+            final key = (b.transactionId).toString().isNotEmpty ? b.transactionId : b.id;
+            groups.putIfAbsent(key, () => []).add(b);
+          }
+          final grouped = groups.values.toList()
+            ..sort((a, b) {
+              final ad = a.first.scheduledAt;
+              final bd = b.first.scheduledAt;
+              return bd.compareTo(ad);
+            });
+
           return ListView.separated(
             padding: EdgeInsets.all(16.w),
-            itemCount: bookings.length,
+            itemCount: grouped.length,
             separatorBuilder: (_, __) => SizedBox(height: 12.h),
             itemBuilder: (context, index) {
-              final booking = bookings[index];
-              return _BookingCard(booking: booking);
+              final tx = grouped[index];
+              return _TransactionCard(bookings: tx);
             },
           );
         },
@@ -77,15 +90,17 @@ class _SpaBookingsPageState extends State<SpaBookingsPage> {
   }
 }
 
-class _BookingCard extends StatelessWidget {
-  final Booking booking;
+class _TransactionCard extends StatelessWidget {
+  final List<Booking> bookings;
 
-  const _BookingCard({required this.booking});
+  const _TransactionCard({required this.bookings});
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMM d, yyyy');
     final timeFormat = DateFormat('h:mm a');
+    final first = bookings.first;
+    final total = bookings.fold<double>(0.0, (sum, b) => sum + b.totalPrice);
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -103,100 +118,125 @@ class _BookingCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  booking.userName,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        title: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    first.userName,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  timeFormat.format(booking.scheduledAt),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_month_outlined,
+                        size: 16.sp,
+                        color: Colors.grey[500],
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        '${dateFormat.format(first.scheduledAt)} • ${timeFormat.format(first.scheduledAt)}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-          if (booking.userEmail != null) ...[
-            SizedBox(height: 4.h),
+            ),
             Text(
-              booking.userEmail!,
+              '₹${total.toStringAsFixed(0)}',
               style: TextStyle(
-                fontSize: 12.sp,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
-          SizedBox(height: 12.h),
+        ),
+        children: [
           Divider(height: 1, color: Colors.grey[200]),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Icon(
-                Icons.spa_outlined,
-                size: 16.sp,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  booking.serviceName,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              Text(
-                '₹${booking.totalPrice.toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
           SizedBox(height: 8.h),
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_month_outlined,
-                size: 16.sp,
-                color: Colors.grey[500],
+          ...bookings.map((b) {
+            final parsed = _parseServiceName(b.serviceName);
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 6.h),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.spa_outlined,
+                    size: 16.sp,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          parsed.service,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Subcategory: ${parsed.subcategory} • Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '₹${b.totalPrice.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 8.w),
-              Text(
-                dateFormat.format(booking.scheduledAt),
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
+            );
+          }),
+          SizedBox(height: 6.h),
         ],
       ),
     );
   }
+
+  _ParsedService _parseServiceName(String name) {
+    // Expected: "Service • Subcategory — Label"
+    final parts = name.split(' • ');
+    final service = parts.isNotEmpty ? parts.first : name;
+    final rest = parts.length > 1 ? parts[1] : '';
+    final subParts = rest.split(' — ');
+    final sub = subParts.isNotEmpty ? subParts.first : '';
+    final label = subParts.length > 1 ? subParts[1] : '';
+    return _ParsedService(service: service, subcategory: sub, durationLabel: label);
+  }
+}
+
+class _ParsedService {
+  final String service;
+  final String subcategory;
+  final String durationLabel;
+  _ParsedService({required this.service, required this.subcategory, required this.durationLabel});
 }

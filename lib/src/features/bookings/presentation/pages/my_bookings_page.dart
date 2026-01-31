@@ -4,6 +4,7 @@ import '../controllers/bookings_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/repositories/bookings_repository.dart';
 import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
+import '../../domain/entities/booking.dart';
 
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({super.key});
@@ -52,86 +53,24 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       );
     }
 
+    // Group by transactionId
+    final Map<String, List<Booking>> groups = {};
+    for (final b in controller.bookings) {
+      final key = (b.transactionId).toString().isNotEmpty
+          ? b.transactionId
+          : b.id;
+      groups.putIfAbsent(key, () => []).add(b);
+    }
+    final grouped = groups.values.toList()
+      ..sort((a, b) => b.first.scheduledAt.compareTo(a.first.scheduledAt));
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: controller.bookings.length,
+      itemCount: grouped.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final b = controller.bookings[index];
-        final dateText =
-            '${b.scheduledAt.day.toString().padLeft(2, '0')}/${b.scheduledAt.month.toString().padLeft(2, '0')}/${b.scheduledAt.year}';
-        final timeText =
-            '${b.scheduledAt.hour.toString().padLeft(2, '0')}:${b.scheduledAt.minute.toString().padLeft(2, '0')}';
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary,
-              width: 1,
-            ),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SpaName(spaId: b.spaId),
-                    const SizedBox(height: 4),
-                    Text(
-                      b.serviceName,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Qty: ${b.quantity}',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₹${b.totalPrice.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Slot: $dateText at $timeText',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${b.createdAt.hour.toString().padLeft(2, '0')}:${b.createdAt.minute.toString().padLeft(2, '0')}',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        );
+        final tx = grouped[index];
+        return _CustomerTransactionCard(bookings: tx);
       },
     );
   }
@@ -159,4 +98,138 @@ class _SpaName extends StatelessWidget {
       },
     );
   }
+}
+
+class _CustomerTransactionCard extends StatelessWidget {
+  final List<Booking> bookings;
+  const _CustomerTransactionCard({required this.bookings});
+
+  @override
+  Widget build(BuildContext context) {
+    final first = bookings.first;
+    final total = bookings.fold<double>(0.0, (sum, b) => sum + b.totalPrice);
+    final dateText =
+        '${first.scheduledAt.day.toString().padLeft(2, '0')}/${first.scheduledAt.month.toString().padLeft(2, '0')}/${first.scheduledAt.year}';
+    final timeText =
+        '${first.scheduledAt.hour.toString().padLeft(2, '0')}:${first.scheduledAt.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary,
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        title: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SpaName(spaId: first.spaId),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Slot: $dateText at $timeText',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '₹${total.toStringAsFixed(0)}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        children: [
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          ...bookings.map((b) {
+            final parsed = _parseServiceName(b.serviceName);
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          parsed.service,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Subcategory: ${parsed.subcategory} • Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '₹${b.totalPrice.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
+  _ParsedService _parseServiceName(String name) {
+    final parts = name.split(' • ');
+    final service = parts.isNotEmpty ? parts.first : name;
+    final rest = parts.length > 1 ? parts[1] : '';
+    final subParts = rest.split(' — ');
+    final sub = subParts.isNotEmpty ? subParts.first : '';
+    final label = subParts.length > 1 ? subParts[1] : '';
+    return _ParsedService(
+      service: service,
+      subcategory: sub,
+      durationLabel: label,
+    );
+  }
+}
+
+class _ParsedService {
+  final String service;
+  final String subcategory;
+  final String durationLabel;
+  _ParsedService({
+    required this.service,
+    required this.subcategory,
+    required this.durationLabel,
+  });
 }

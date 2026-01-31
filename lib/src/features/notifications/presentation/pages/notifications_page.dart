@@ -5,6 +5,7 @@ import '../../../../core/di/di.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../spa_browse/presentation/pages/spa_detail_page.dart';
+import '../../../bookings/presentation/pages/spa_bookings_page.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -135,7 +136,15 @@ class _NotificationTile extends StatelessWidget {
         subtitle: Text(body, style: TextStyle(fontSize: 13.sp)),
         trailing: Icon(Icons.chevron_right),
         onTap: () {
-          if (spaId.isNotEmpty) {
+          if (spaId.isEmpty) return;
+          if (type == 'booking') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SpaBookingsPage(spaId: spaId),
+              ),
+            );
+          } else {
             Navigator.pushNamed(
               context,
               '/spa-detail',

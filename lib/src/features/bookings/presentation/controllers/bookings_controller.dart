@@ -66,7 +66,7 @@ class BookingsController extends ChangeNotifier {
       return 0;
     }
 
-    return _bookings.where((b) {
+    final matching = _bookings.where((b) {
       if (b.spaId != spaId) return false;
       // Compare dates (ignoring time)
       final bDate = b.scheduledAt;
@@ -86,7 +86,9 @@ class BookingsController extends ChangeNotifier {
       final bookingTimeStr = "$hour:$minute $ampm";
 
       return slotStart.startsWith(bookingTimeStr);
-    }).length;
+    });
+    final txIds = matching.map((b) => b.transactionId).toSet();
+    return txIds.length;
   }
 
   @override

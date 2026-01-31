@@ -556,10 +556,13 @@ class _ProceedToPayButton extends StatelessWidget {
 
                   final items = outerContext.read<CartBloc>().state.items;
                   final scheduledAt = _buildScheduledDateTime();
+                  final transactionId =
+                      'tx_${spaId}_${DateTime.now().millisecondsSinceEpoch}_$userId';
                   final bookings = items
                       .map(
                         (i) => Booking(
                           id: '${DateTime.now().millisecondsSinceEpoch}-${i.serviceId}',
+                          transactionId: transactionId,
                           spaId: spaId,
                           serviceId: i.serviceId,
                           serviceName: i.serviceName,
