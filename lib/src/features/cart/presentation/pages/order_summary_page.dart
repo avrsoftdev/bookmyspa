@@ -580,29 +580,6 @@ class _ProceedToPayButton extends StatelessWidget {
                       .toList();
 
                   await sl.get<BookingsController>().addAll(bookings);
-                  try {
-                    final spa = await sl
-                        .get<StreamSpaByIdUseCase>()(spaId)
-                        .first;
-                    final spaName = spa?.businessName ?? 'Selected Spa';
-                    final nServices = items.length;
-                    final dateStr = formatSelectedDate(selectedDate!);
-                    final slotStr = selectedSlot!;
-                    final nowIso = DateTime.now().toUtc().toIso8601String();
-                    await FirebaseFirestore.instance
-                        .collection('notifications')
-                        .doc(transactionId)
-                        .set({
-                          'userId': userId,
-                          'spaId': spaId,
-                          'transactionId': transactionId,
-                          'type': 'booking',
-                          'title': 'Booking Confirmed',
-                          'body':
-                              'Your booking for $nServices service(s) at $spaName on $dateStr at $slotStr is confirmed.',
-                          'ts': nowIso,
-                        });
-                  } catch (_) {}
 
                   if (outerContext.mounted) {
                     outerContext.read<CartBloc>().add(ClearCart());

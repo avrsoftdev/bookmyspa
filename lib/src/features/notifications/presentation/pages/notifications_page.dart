@@ -7,8 +7,81 @@ import '../../../../core/theme/tokens.dart';
 import '../../../spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../../bookings/presentation/pages/spa_bookings_page.dart';
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
+
+  @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<NotificationsPage> {
+  final Set<String> _selectedIds = {};
+  bool _selectionMode = false;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _currentDocs = const [];
+
+  void _enterSelectionMode() {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds.clear();
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelect(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (_selectedIds.length == _currentDocs.length &&
+          _currentDocs.isNotEmpty) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds
+          ..clear()
+          ..addAll(_currentDocs.map((d) => d.id));
+      }
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selectedIds.isEmpty) return;
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final col = FirebaseFirestore.instance.collection('notifications');
+      for (final id in _selectedIds) {
+        batch.delete(col.doc(id));
+      }
+      await batch.commit();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Deleted ${_selectedIds.length} notification(s)'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+      }
+    } finally {
+      _exitSelectionMode();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +92,31 @@ class NotificationsPage extends StatelessWidget {
         title: const Text('Notifications'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        actions: [
+          if (!_selectionMode)
+            IconButton(
+              tooltip: 'Select',
+              icon: const Icon(Icons.check_box_outlined),
+              onPressed: _enterSelectionMode,
+            )
+          else ...[
+            IconButton(
+              tooltip: 'Select All',
+              icon: const Icon(Icons.done_all),
+              onPressed: _toggleSelectAll,
+            ),
+            IconButton(
+              tooltip: 'Delete Selected',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
+            ),
+            IconButton(
+              tooltip: 'Cancel',
+              icon: const Icon(Icons.close),
+              onPressed: _exitSelectionMode,
+            ),
+          ],
+        ],
       ),
       body: uid == null
           ? const Center(child: Text('Please login to view notifications'))
@@ -36,7 +134,8 @@ class NotificationsPage extends StatelessWidget {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
                 final allDocs = snapshot.data?.docs ?? const [];
-                final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> uniqueByTx = {};
+                final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>>
+                uniqueByTx = {};
                 for (final d in allDocs) {
                   final data = d.data();
                   final tx = (data['transactionId'] as String?) ?? '';
@@ -44,6 +143,8 @@ class NotificationsPage extends StatelessWidget {
                   uniqueByTx.putIfAbsent(key, () => d);
                 }
                 final docs = uniqueByTx.values.toList();
+                _currentDocs = docs;
+                _selectedIds.removeWhere((id) => !docs.any((d) => d.id == id));
                 if (docs.isEmpty) {
                   return Center(
                     child: Column(
@@ -65,23 +166,62 @@ class NotificationsPage extends StatelessWidget {
                   itemCount: docs.length,
                   separatorBuilder: (_, __) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
-                    final data = docs[index].data();
+                    final doc = docs[index];
+                    final data = doc.data();
                     final title = (data['title'] as String?) ?? 'Notification';
                     final body = (data['body'] as String?) ?? '';
                     final type = (data['type'] as String?) ?? '';
                     final ts = (data['ts'] as String?) ?? '';
                     final spaId = (data['spaId'] as String?) ?? '';
+                    final selected = _selectedIds.contains(doc.id);
                     return _NotificationTile(
                       title: title,
                       body: body,
                       type: type,
                       timestamp: ts,
                       spaId: spaId,
+                      selectionMode: _selectionMode,
+                      selected: selected,
+                      onToggleSelect: () => _toggleSelect(doc.id),
                     );
                   },
                 );
               },
             ),
+      bottomNavigationBar: _selectionMode
+          ? SafeArea(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value:
+                          _selectedIds.length == _currentDocs.length &&
+                          _currentDocs.isNotEmpty,
+                      onChanged: (_) => _toggleSelectAll(),
+                    ),
+                    const Text('Select All'),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text('Delete (${_selectedIds.length})'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 }
@@ -92,6 +232,9 @@ class _NotificationTile extends StatelessWidget {
   final String type;
   final String timestamp;
   final String spaId;
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback onToggleSelect;
 
   const _NotificationTile({
     required this.title,
@@ -99,6 +242,9 @@ class _NotificationTile extends StatelessWidget {
     required this.type,
     required this.timestamp,
     required this.spaId,
+    required this.selectionMode,
+    required this.selected,
+    required this.onToggleSelect,
   });
 
   IconData _icon() {
@@ -136,22 +282,39 @@ class _NotificationTile extends StatelessWidget {
         border: Border.all(color: _color(context).withOpacity(0.3), width: 1.0),
       ),
       child: ListTile(
-        leading: Icon(_icon(), color: _color(context)),
+        leading: selectionMode
+            ? Checkbox(value: selected, onChanged: (_) => onToggleSelect())
+            : Icon(_icon(), color: _color(context)),
         title: Text(
           title,
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp),
         ),
         subtitle: Text(body, style: TextStyle(fontSize: 13.sp)),
-        trailing: Icon(Icons.chevron_right),
+        trailing: selectionMode ? null : const Icon(Icons.chevron_right),
         onTap: () {
+          if (selectionMode) {
+            onToggleSelect();
+            return;
+          }
           if (spaId.isEmpty) return;
           if (type == 'booking') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SpaBookingsPage(spaId: spaId),
-              ),
-            );
+            // Distinguish between Owner (New Booking) and Customer (Booking Confirmed)
+            if (title.toLowerCase().contains('new booking received')) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SpaBookingsPage(spaId: spaId),
+                ),
+              );
+            } else {
+              // Assume Customer notification -> Go to My Bookings tab
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/home',
+                (route) => false,
+                arguments: 1, // Index 1 is My Bookings
+              );
+            }
           } else {
             Navigator.pushNamed(
               context,

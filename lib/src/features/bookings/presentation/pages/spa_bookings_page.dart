@@ -186,7 +186,7 @@ class _TransactionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          parsed.service,
+                          parsed.subcategory,
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
@@ -195,7 +195,7 @@ class _TransactionCard extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Subcategory: ${parsed.subcategory} • Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
+                          'Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
