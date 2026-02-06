@@ -44,9 +44,14 @@ class LocationRepositoryImpl implements LocationRepository {
 
   @override
   Future<bool> requestLocationPermission() async {
-    final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return false;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
       return false;
     }
     return true;
