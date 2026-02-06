@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/di/di.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../../bookings/presentation/pages/spa_bookings_page.dart';
+import '../controllers/notifications_controller.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -17,7 +17,6 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   final Set<String> _selectedIds = {};
   bool _selectionMode = false;
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _currentDocs = const [];
 
   void _enterSelectionMode() {
     setState(() {
@@ -43,15 +42,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
   }
 
-  void _toggleSelectAll() {
+  void _toggleSelectAll(List<String> allIds) {
     setState(() {
-      if (_selectedIds.length == _currentDocs.length &&
-          _currentDocs.isNotEmpty) {
+      if (_selectedIds.length == allIds.length && allIds.isNotEmpty) {
         _selectedIds.clear();
       } else {
         _selectedIds
           ..clear()
-          ..addAll(_currentDocs.map((d) => d.id));
+          ..addAll(allIds);
       }
     });
   }
@@ -59,12 +57,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _deleteSelected() async {
     if (_selectedIds.isEmpty) return;
     try {
-      final batch = FirebaseFirestore.instance.batch();
-      final col = FirebaseFirestore.instance.collection('notifications');
-      for (final id in _selectedIds) {
-        batch.delete(col.doc(id));
-      }
-      await batch.commit();
+      await sl.get<NotificationsController>().deleteNotifications(
+        _selectedIds.toList(),
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -87,64 +82,70 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     final auth = sl.get<AuthController>();
     final uid = auth.currentUser?.id;
+    final controller = sl.get<NotificationsController>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
-          if (!_selectionMode)
-            IconButton(
-              tooltip: 'Select',
-              icon: const Icon(Icons.check_box_outlined),
-              onPressed: _enterSelectionMode,
-            )
-          else ...[
-            IconButton(
-              tooltip: 'Select All',
-              icon: const Icon(Icons.done_all),
-              onPressed: _toggleSelectAll,
-            ),
-            IconButton(
-              tooltip: 'Delete Selected',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
-            ),
-            IconButton(
-              tooltip: 'Cancel',
-              icon: const Icon(Icons.close),
-              onPressed: _exitSelectionMode,
-            ),
-          ],
+          ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) {
+              if (controller.notifications.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              if (!_selectionMode) {
+                return IconButton(
+                  tooltip: 'Select',
+                  icon: const Icon(Icons.check_box_outlined),
+                  onPressed: _enterSelectionMode,
+                );
+              }
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Select All',
+                    icon: const Icon(Icons.done_all),
+                    onPressed: () => _toggleSelectAll(
+                      controller.notifications
+                          .map((e) => e['id'] as String)
+                          .toList(),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Delete Selected',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
+                  ),
+                  IconButton(
+                    tooltip: 'Cancel',
+                    icon: const Icon(Icons.close),
+                    onPressed: _exitSelectionMode,
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
       body: uid == null
           ? const Center(child: Text('Please login to view notifications'))
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('userId', isEqualTo: uid)
-                  .orderBy('ts', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+          : ListenableBuilder(
+              listenable: controller,
+              builder: (context, child) {
+                if (controller.isLoading && controller.notifications.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                final allDocs = snapshot.data?.docs ?? const [];
-                final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>>
-                uniqueByTx = {};
-                for (final d in allDocs) {
-                  final data = d.data();
-                  final tx = (data['transactionId'] as String?) ?? '';
-                  final key = tx.isNotEmpty ? tx : d.id;
-                  uniqueByTx.putIfAbsent(key, () => d);
-                }
-                final docs = uniqueByTx.values.toList();
-                _currentDocs = docs;
-                _selectedIds.removeWhere((id) => !docs.any((d) => d.id == id));
+                final docs = controller.notifications;
+
+                // Sync selection with current list
+                _selectedIds.removeWhere(
+                  (id) => !docs.any((d) => d['id'] == id),
+                );
+
                 if (docs.isEmpty) {
                   return Center(
                     child: Column(
@@ -166,58 +167,75 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   itemCount: docs.length,
                   separatorBuilder: (_, __) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
-                    final doc = docs[index];
-                    final data = doc.data();
+                    final data = docs[index];
+                    final id = data['id'] as String;
                     final title = (data['title'] as String?) ?? 'Notification';
                     final body = (data['body'] as String?) ?? '';
                     final type = (data['type'] as String?) ?? '';
                     final ts = (data['ts'] as String?) ?? '';
                     final spaId = (data['spaId'] as String?) ?? '';
-                    final selected = _selectedIds.contains(doc.id);
+                    final isRead = (data['isRead'] as bool?) ?? false;
+                    final selected = _selectedIds.contains(id);
+
                     return _NotificationTile(
+                      id: id,
                       title: title,
                       body: body,
                       type: type,
                       timestamp: ts,
                       spaId: spaId,
+                      isRead: isRead,
                       selectionMode: _selectionMode,
                       selected: selected,
-                      onToggleSelect: () => _toggleSelect(doc.id),
+                      onToggleSelect: () => _toggleSelect(id),
                     );
                   },
                 );
               },
             ),
       bottomNavigationBar: _selectionMode
-          ? SafeArea(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value:
-                          _selectedIds.length == _currentDocs.length &&
-                          _currentDocs.isNotEmpty,
-                      onChanged: (_) => _toggleSelectAll(),
-                    ),
-                    const Text('Select All'),
-                    const Spacer(),
-                    ElevatedButton.icon(
-                      onPressed: _selectedIds.isEmpty ? null : _deleteSelected,
-                      icon: const Icon(Icons.delete_outline),
-                      label: Text('Delete (${_selectedIds.length})'),
-                    ),
-                  ],
+          ? ListenableBuilder(
+              listenable: controller,
+              builder: (context, _) => SafeArea(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value:
+                            controller.notifications.isNotEmpty &&
+                            _selectedIds.length ==
+                                controller.notifications.length,
+                        onChanged: (_) => _toggleSelectAll(
+                          controller.notifications
+                              .map((e) => e['id'] as String)
+                              .toList(),
+                        ),
+                      ),
+                      const Text('Select All'),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: _selectedIds.isEmpty
+                            ? null
+                            : _deleteSelected,
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text('Delete (${_selectedIds.length})'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
@@ -227,21 +245,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
 }
 
 class _NotificationTile extends StatelessWidget {
+  final String id;
   final String title;
   final String body;
   final String type;
   final String timestamp;
   final String spaId;
+  final bool isRead;
   final bool selectionMode;
   final bool selected;
   final VoidCallback onToggleSelect;
 
   const _NotificationTile({
+    required this.id,
     required this.title,
     required this.body,
     required this.type,
     required this.timestamp,
     required this.spaId,
+    required this.isRead,
     required this.selectionMode,
     required this.selected,
     required this.onToggleSelect,
@@ -275,19 +297,43 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = isRead
+        ? Theme.of(context).colorScheme.surface
+        : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1);
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: _color(context).withOpacity(0.3), width: 1.0),
       ),
       child: ListTile(
         leading: selectionMode
             ? Checkbox(value: selected, onChanged: (_) => onToggleSelect())
-            : Icon(_icon(), color: _color(context)),
+            : Stack(
+                children: [
+                  Icon(_icon(), color: _color(context)),
+                  if (!isRead)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
         title: Text(
           title,
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp),
+          style: TextStyle(
+            fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
+            fontSize: 14.sp,
+          ),
         ),
         subtitle: Text(body, style: TextStyle(fontSize: 13.sp)),
         trailing: selectionMode ? null : const Icon(Icons.chevron_right),
@@ -296,6 +342,12 @@ class _NotificationTile extends StatelessWidget {
             onToggleSelect();
             return;
           }
+
+          // Mark as read
+          if (!isRead) {
+            sl.get<NotificationsController>().markAsRead(id);
+          }
+
           if (spaId.isEmpty) return;
           if (type == 'booking') {
             // Distinguish between Owner (New Booking) and Customer (Booking Confirmed)

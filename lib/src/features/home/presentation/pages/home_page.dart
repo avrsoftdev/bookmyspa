@@ -25,6 +25,7 @@ import 'dart:math' as math;
 import '../../../../core/services/deep_link_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../../core/services/local_notifications_service.dart';
+import '../../../notifications/presentation/controllers/notifications_controller.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -137,10 +138,52 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           overriddenAddress: _overriddenAddress,
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_rounded, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).pushNamed('/notifications');
+          ListenableBuilder(
+            listenable: sl.get<NotificationsController>(),
+            builder: (context, child) {
+              final controller = sl.get<NotificationsController>();
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/notifications');
+                    },
+                  ),
+                  if (controller.unreadCount > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          controller.unreadCount > 99
+                              ? '99+'
+                              : controller.unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
             },
           ),
         ],
