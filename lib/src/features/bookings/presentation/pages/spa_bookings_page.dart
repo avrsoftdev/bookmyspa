@@ -5,6 +5,7 @@ import '../../../../core/di/di.dart';
 import '../../../../core/theme/tokens.dart';
 import '../controllers/bookings_controller.dart';
 import '../../domain/entities/booking.dart';
+import '../../../spa_browse/domain/usecases/stream_spa_by_id_usecase.dart';
 
 class SpaBookingsPage extends StatefulWidget {
   final String spaId;
@@ -54,7 +55,9 @@ class _SpaBookingsPageState extends State<SpaBookingsPage> {
                     'No bookings yet',
                     style: TextStyle(
                       fontSize: 16.sp,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -65,7 +68,9 @@ class _SpaBookingsPageState extends State<SpaBookingsPage> {
           // Group by transactionId
           final Map<String, List<Booking>> groups = {};
           for (final b in bookings) {
-            final key = (b.transactionId).toString().isNotEmpty ? b.transactionId : b.id;
+            final key = (b.transactionId).toString().isNotEmpty
+                ? b.transactionId
+                : b.id;
             groups.putIfAbsent(key, () => []).add(b);
           }
           final grouped = groups.values.toList()
@@ -75,17 +80,55 @@ class _SpaBookingsPageState extends State<SpaBookingsPage> {
               return bd.compareTo(ad);
             });
 
-          return ListView.separated(
-            padding: EdgeInsets.all(16.w),
-            itemCount: grouped.length,
-            separatorBuilder: (_, __) => SizedBox(height: 12.h),
-            itemBuilder: (context, index) {
-              final tx = grouped[index];
-              return _TransactionCard(bookings: tx);
-            },
+          return Column(
+            children: [
+              _SpaHeaderWidget(spaId: widget.spaId),
+              Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: grouped.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final tx = grouped[index];
+                    return _TransactionCard(bookings: tx);
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
+    );
+  }
+}
+
+class _SpaHeaderWidget extends StatelessWidget {
+  final String spaId;
+  const _SpaHeaderWidget({required this.spaId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: sl.get<StreamSpaByIdUseCase>().call(spaId),
+      builder: (context, snapshot) {
+        final name = snapshot.data?.businessName;
+        if (name == null || name.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+          color: Colors.purple,
+          child: Text(
+            name,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        );
+      },
     );
   }
 }
@@ -148,7 +191,9 @@ class _TransactionCard extends StatelessWidget {
                         '${dateFormat.format(first.scheduledAt)} • ${timeFormat.format(first.scheduledAt)}',
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -198,7 +243,9 @@ class _TransactionCard extends StatelessWidget {
                           'Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -230,7 +277,11 @@ class _TransactionCard extends StatelessWidget {
     final subParts = rest.split(' — ');
     final sub = subParts.isNotEmpty ? subParts.first : '';
     final label = subParts.length > 1 ? subParts[1] : '';
-    return _ParsedService(service: service, subcategory: sub, durationLabel: label);
+    return _ParsedService(
+      service: service,
+      subcategory: sub,
+      durationLabel: label,
+    );
   }
 }
 
@@ -238,5 +289,9 @@ class _ParsedService {
   final String service;
   final String subcategory;
   final String durationLabel;
-  _ParsedService({required this.service, required this.subcategory, required this.durationLabel});
+  _ParsedService({
+    required this.service,
+    required this.subcategory,
+    required this.durationLabel,
+  });
 }

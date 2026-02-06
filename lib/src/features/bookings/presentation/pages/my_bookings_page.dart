@@ -65,7 +65,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       ..sort((a, b) => b.first.scheduledAt.compareTo(a.first.scheduledAt));
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: grouped.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -82,18 +83,42 @@ class _SpaName extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (spaId.isEmpty) {
+      return Text(
+        'Unknown Spa',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.error,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
     final stream = sl.get<StreamSpaByIdUseCase>().call(spaId);
     return StreamBuilder(
       stream: stream,
       builder: (context, snapshot) {
         final name = snapshot.data?.businessName;
-        return Text(
-          name ?? 'Loading spa...',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+        return Row(
+          children: [
+            Icon(
+              Icons.store_rounded,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                name ?? 'Loading spa...',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         );
       },
     );
