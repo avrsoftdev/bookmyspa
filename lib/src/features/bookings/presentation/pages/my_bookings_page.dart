@@ -170,7 +170,7 @@ class _CustomerTransactionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          parsed.service,
+                          parsed.subcategory,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
@@ -179,7 +179,7 @@ class _CustomerTransactionCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Subcategory: ${parsed.subcategory} • Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
+                          ' Duration: ${parsed.durationLabel} • No. of service: ${b.quantity}',
                           style: TextStyle(
                             color: Theme.of(
                               context,
