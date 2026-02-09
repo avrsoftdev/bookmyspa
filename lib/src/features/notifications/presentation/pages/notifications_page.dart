@@ -57,14 +57,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _deleteSelected() async {
     if (_selectedIds.isEmpty) return;
     try {
-      await sl.get<NotificationsController>().deleteNotifications(
-        _selectedIds.toList(),
-      );
+      final deletedCount = _selectedIds.length;
+      final idsToDelete = _selectedIds.toList();
+      await sl.get<NotificationsController>().deleteNotifications(idsToDelete);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Deleted ${_selectedIds.length} notification(s)'),
-          ),
+          SnackBar(content: Text('Deleted $deletedCount notification(s)')),
         );
       }
     } catch (e) {
