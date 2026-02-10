@@ -823,18 +823,57 @@ class _BrandingFooter extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
       child: Center(
-        child: Text(
-          'Spaxify by AVR Softdev',
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            fontWeight: FontWeight.w600,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 56.h,
+              width: 56.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.surface,
+                border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withOpacity(0.25),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  Images.logo,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'Spaxify by AVR SoftDev',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withOpacity(0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+
 
 class _SuggestedCard extends StatelessWidget {
   final SpaEntity spa;
