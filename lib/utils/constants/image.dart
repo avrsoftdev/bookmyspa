@@ -16,4 +16,16 @@ class Images {
   static const menu = 'images/menu.png';
   static const therapy = 'images/therapies.png';
   static const wsap = 'images/wsapicon.png';
+  static const imgmassage = 'images/massageimg.png';
+  static const imgbride = 'images/bridalimg.jpg';
+  static const imggroom = 'images/grooming.jpg';
+  static const imgpedicure = 'images/pedicureimg.png';
+  static const imgskincare = 'images/skincareimg.jpg';
+  static const imgwax = 'images/waxingimg.jpg';
+  static const imgmanicure = 'images/manicurimge.png';
+  static const imgmakeup = 'images/makeupimg.jpg';
+  static const imghaircare = 'images/haircareimg.jpg';
+  static const imgbodytreatments = 'images/bodycareimg.jpg';
+  static const imgtherapy = 'images/therapyimg.jpg';
+  
 }

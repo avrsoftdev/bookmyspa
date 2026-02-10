@@ -1,3 +1,5 @@
+import 'package:bookmyspa/src/features/home/data/category_preferences.dart';
+import 'package:bookmyspa/src/features/home/presentation/widgets/popular_categories.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/floating_nav_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/location_app_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/spa_search_field.dart';
@@ -307,6 +309,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       const SizedBox(height: 8),
                       const _TopListedSpas(),
                       const SizedBox(height: 16),
+                      const PopularCategories(),
+                      const SizedBox(height: 16),
                       const _BrandingFooter(),
                     ],
                   ),
@@ -348,6 +352,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           onTap: label == 'See More..'
               ? null
               : () {
+                  CategoryPreferences().incrementCategory(label);
                   Navigator.of(context).pushNamed(
                     '/category-subcategories',
                     arguments: CategorySubcategoriesArgs(label),
