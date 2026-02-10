@@ -1,5 +1,5 @@
 import 'package:bookmyspa/src/features/home/data/category_preferences.dart';
-import 'package:bookmyspa/src/features/home/presentation/widgets/popular_categories.dart';
+import 'package:bookmyspa/src/features/home/presentation/widgets/suggested_for_you.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/floating_nav_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/location_app_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/spa_search_field.dart';

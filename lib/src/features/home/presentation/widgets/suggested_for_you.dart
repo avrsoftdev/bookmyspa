@@ -39,7 +39,7 @@ class _PopularCategoriesState extends State<PopularCategories> {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Text(
-            'Popular Categories',
+            'Suggested for you',
             style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
           ),
         ),
