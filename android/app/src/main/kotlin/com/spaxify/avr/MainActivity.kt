@@ -1,4 +1,4 @@
-package com.example.bookmyspa
+package com.spaxify.avr
 
 import io.flutter.embedding.android.FlutterActivity
 
