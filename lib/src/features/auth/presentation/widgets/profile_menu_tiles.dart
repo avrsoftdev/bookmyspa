@@ -1,6 +1,6 @@
 // lib/common/widgets/profile_menu_tile.dart
+import 'package:Spaxify/src/core/theme/tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:bookmyspa/src/core/theme/tokens.dart';
 
 class ProfileMenuTile extends StatelessWidget {
   final IconData icon;

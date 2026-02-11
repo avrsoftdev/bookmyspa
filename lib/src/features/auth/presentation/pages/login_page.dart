@@ -1,8 +1,8 @@
+import 'package:Spaxify/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/animated_logo.dart';
-import 'package:bookmyspa/utils/constants/image.dart';
 import '../../../../core/di/di.dart';
 
 class LoginPage extends StatefulWidget {

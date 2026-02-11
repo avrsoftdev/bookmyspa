@@ -1,3 +1,4 @@
+import 'package:Spaxify/utils/constants/image.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,7 +14,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../domain/usecases/like_review_usecase.dart';
 import '../../domain/usecases/dislike_review_usecase.dart';
 import '../../domain/usecases/update_review_usecase.dart';
-import 'package:bookmyspa/utils/constants/image.dart';
 import '../../../../core/services/share_service.dart';
 
 class SpaDetailArgs {

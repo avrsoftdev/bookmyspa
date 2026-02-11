@@ -1,5 +1,5 @@
+import 'package:Spaxify/utils/constants/image.dart';
 import 'package:flutter/material.dart';
-import 'package:bookmyspa/utils/constants/image.dart';
 
 class AnimatedLogo extends StatefulWidget {
   final double size;

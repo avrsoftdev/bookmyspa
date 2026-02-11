@@ -1,5 +1,5 @@
-import 'package:bookmyspa/src/core/widgets/admob_banner_widget.dart';
-import 'package:bookmyspa/src/core/services/admob_service.dart';
+import 'package:Spaxify/src/core/services/admob_service.dart';
+import 'package:Spaxify/src/core/widgets/admob_banner_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';

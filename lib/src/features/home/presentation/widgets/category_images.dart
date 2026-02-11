@@ -1,4 +1,4 @@
-import 'package:bookmyspa/utils/constants/image.dart';
+import 'package:Spaxify/utils/constants/image.dart';
 
 const Map<String, String> categoryImages = {
   'Massage': Images.imgmassage,

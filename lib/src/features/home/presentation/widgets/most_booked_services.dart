@@ -1,4 +1,4 @@
-import 'package:bookmyspa/src/features/home/data/subcategory_preferences.dart';
+import 'package:Spaxify/src/features/home/data/subcategory_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 

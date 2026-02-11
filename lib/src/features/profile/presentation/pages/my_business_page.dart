@@ -1,6 +1,6 @@
-import 'package:bookmyspa/src/features/spa_browse/domain/entities/spa_entity.dart';
-import 'package:bookmyspa/src/features/spa_browse/domain/usecases/stream_spas_by_owner_usecase.dart';
-import 'package:bookmyspa/src/features/spa_browse/presentation/pages/spa_services_page.dart';
+import 'package:Spaxify/src/features/spa_browse/domain/entities/spa_entity.dart';
+import 'package:Spaxify/src/features/spa_browse/domain/usecases/stream_spas_by_owner_usecase.dart';
+import 'package:Spaxify/src/features/spa_browse/presentation/pages/spa_services_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/di/di.dart';
