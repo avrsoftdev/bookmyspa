@@ -1,5 +1,6 @@
 import 'package:bookmyspa/src/features/home/data/category_preferences.dart';
 import 'package:bookmyspa/src/features/home/presentation/widgets/suggested_for_you.dart';
+import 'package:bookmyspa/src/features/home/presentation/widgets/most_booked_services.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/floating_nav_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/location_app_bar.dart';
 import 'package:bookmyspa/src/features/location/presentation/widgets/spa_search_field.dart';
@@ -310,6 +311,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       const _TopListedSpas(),
                       const SizedBox(height: 16),
                       const PopularCategories(),
+                      const SizedBox(height: 16),
+                      const MostBookedServices(),
                       const SizedBox(height: 16),
                       const _BrandingFooter(),
                     ],

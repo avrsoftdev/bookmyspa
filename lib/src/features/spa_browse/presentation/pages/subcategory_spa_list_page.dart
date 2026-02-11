@@ -7,6 +7,7 @@ import '../../../../core/di/di.dart';
 import '../../../../core/theme/tokens.dart';
 import 'category_spa_list_page.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
+import '../../../home/data/subcategory_preferences.dart';
 
 class SubcategorySpaListPage extends StatefulWidget {
   final String category;
@@ -27,6 +28,16 @@ class _SubcategorySpaListPageState extends State<SubcategorySpaListPage> {
   int? _minPrice;
   int? _maxPrice;
   String? _cityFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    _recordSubcategoryView();
+  }
+
+  Future<void> _recordSubcategoryView() async {
+    await SubcategoryPreferences().incrementSubcategory(widget.subcategory);
+  }
 
   @override
   Widget build(BuildContext context) {
