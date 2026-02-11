@@ -1,10 +1,37 @@
-# Firebase App Check (Debug) — Development Instructions
+# Firebase App Check — Setup and Development
 
-This project initializes Firebase App Check in `lib/src/bootstrap.dart`.
-In debug builds App Check is activated using the debug provider so you can
-register a debug token in the Firebase Console for local development.
+This project uses Firebase App Check in `lib/src/bootstrap.dart` to protect Firebase and custom backend resources. App Check is activated per platform as follows:
 
-Follow these steps to get a debug token and register it in the Firebase Console:
+- **Android**: Play Integrity (release) or Debug provider (debug builds).
+- **iOS/macOS**: App Attest (release) or Debug provider (debug builds).
+- **Web**: reCAPTCHA v3 (requires a site key in config; see Web setup below).
+
+## Enforcing App Check in Firebase Console
+
+To have Firebase reject requests without a valid App Check token:
+
+1. Open [Firebase Console](https://console.firebase.google.com) → your project → **App Check**.
+2. For each product (Firestore, Storage, etc.), open the product and turn **Enforcement** on.
+3. Until enforcement is enabled, Firebase accepts requests with or without App Check; enabling it protects your resources.
+
+## Web setup (reCAPTCHA v3)
+
+For the Flutter **web** app, App Check uses reCAPTCHA v3. You must provide the reCAPTCHA v3 site key:
+
+1. In Firebase Console → **App Check** → register your **Web** app with the **reCAPTCHA v3** provider (or use an existing reCAPTCHA v3 key linked to the app).
+2. Copy the **reCAPTCHA v3 site key** (from App Check registration or reCAPTCHA admin).
+3. Add it to `assets/config/api_keys.json`:
+   ```json
+   {
+     "google_maps_api_key": "...",
+     "recaptcha_v3_site_key": "YOUR_RECAPTCHA_V3_SITE_KEY"
+   }
+   ```
+4. Rebuild/run the web app. Without this key, App Check is skipped on web and a console message reminds you to add it.
+
+## Debug token (Android / iOS) — Development
+
+In debug builds (non-web), the app uses the **debug** provider. Register a debug token so Firebase accepts requests from your dev device/emulator.
 
 1. Add the dependency and run pub get
 
@@ -60,7 +87,15 @@ Notes and troubleshooting
 
 - If you do not register a debug token and App Check enforcement is enabled for your Firebase project/storage bucket, uploads may be rejected with 404/Not Found or session-terminated errors.
 
-If you want, I can also:
-- Add emulator wiring helpers to the project and a convenience flag to connect to emulators.
-- Add a small runtime UI which prints the current App Check debug token to the app screen while in debug mode.
+## Cloud Functions and custom backends
+
+The **sendTestPush** HTTP Cloud Function requires a valid App Check token. The client must send the token in the `X-Firebase-AppCheck` header. In Flutter you can get a token with `FirebaseAppCheck.instance.getToken(forceRefresh)` and attach it to your HTTP request. Firebase client SDKs (Firestore, Storage, etc.) attach the token automatically; only custom HTTP calls need to add the header manually.
+
+## Summary
+
+| Platform   | Debug build        | Release build   |
+|-----------|--------------------|------------------|
+| Android   | Debug provider     | Play Integrity   |
+| iOS/macOS | Debug provider     | App Attest       |
+| Web       | reCAPTCHA v3 (key in api_keys.json) | reCAPTCHA v3   |
 

@@ -1,6 +1,8 @@
 const { onDocumentUpdated, onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const { getAppCheck } = require("firebase-admin/app-check");
+
 admin.initializeApp();
 
 exports.onSpaApproved = onDocumentUpdated("spas/{spaId}", async (event) => {
@@ -323,10 +325,29 @@ exports.onBookingCreated = onDocumentCreated("bookings/{bookingId}", async (even
   }
 });
 
+// Helper: verify App Check token from X-Firebase-AppCheck header; returns false and sets res on failure.
+async function requireAppCheck(req, res) {
+  const appCheckToken = req.header("X-Firebase-AppCheck");
+  if (!appCheckToken) {
+    res.status(401).json({ ok: false, error: "Missing App Check token (X-Firebase-AppCheck)" });
+    return false;
+  }
+  try {
+    await getAppCheck().verifyToken(appCheckToken);
+    return true;
+  } catch (err) {
+    res.status(401).json({ ok: false, error: "Invalid App Check token" });
+    return false;
+  }
+}
+
 // Diagnostic: send a test push to a user's saved FCM tokens.
-// Call: GET/POST with ?uid=<userId> or body { uid }
+// Call: GET/POST with ?uid=<userId> or body { uid }. Requires valid App Check token in X-Firebase-AppCheck.
 exports.sendTestPush = onRequest(async (req, res) => {
   try {
+    const passed = await requireAppCheck(req, res);
+    if (!passed) return;
+
     const uid = (req.query.uid || (req.body && req.body.uid) || "").toString();
     if (!uid) {
       res.status(400).json({ ok: false, error: "uid required" });

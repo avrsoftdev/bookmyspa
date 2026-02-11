@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -26,22 +29,43 @@ Future<void> bootstrap() async {
   // Initialize Firebase App Check and await activation so that any
   // subsequent Firebase requests (Storage, Firestore, etc.) have a
   // chance to obtain a valid App Check token first.
-  // - In debug builds use the debug provider so you can register the
-  //   debug token in the Firebase Console for local development and testing.
-  // - In release builds activate platform providers (Play Integrity / App Attest).
+  // - Web: use reCAPTCHA v3 (site key in assets/config/api_keys.json).
+  // - Debug (Android/iOS): use debug provider; register token in Firebase Console.
+  // - Release: Play Integrity (Android), App Attest (iOS).
   try {
-    if (kDebugMode) {
+    String? recaptchaSiteKey;
+    if (kIsWeb) {
+      try {
+        final raw = await rootBundle.loadString('assets/config/api_keys.json');
+        final map = jsonDecode(raw) as Map<String, dynamic>?;
+        recaptchaSiteKey = map?['recaptcha_v3_site_key'] as String?;
+      } catch (_) {}
+      if ((recaptchaSiteKey ?? '').isEmpty) {
+        debugPrint('AppCheck: Web reCAPTCHA v3 site key missing in api_keys.json; add recaptcha_v3_site_key from Firebase Console → App Check.');
+      }
+    }
+
+    if (kIsWeb && (recaptchaSiteKey ?? '').isNotEmpty) {
+      debugPrint('AppCheck: activating Web reCAPTCHA v3 provider');
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.playIntegrity,
+        appleProvider: AppleProvider.appAttest,
+        providerWeb: ReCaptchaV3Provider(recaptchaSiteKey!),
+      );
+    } else if (kDebugMode && !kIsWeb) {
       debugPrint('AppCheck: activating Debug provider');
       await FirebaseAppCheck.instance.activate(
         androidProvider: AndroidProvider.debug,
         appleProvider: AppleProvider.debug,
       );
-    } else {
+    } else if (!kIsWeb) {
       debugPrint('AppCheck: activating platform provider');
       await FirebaseAppCheck.instance.activate(
         androidProvider: AndroidProvider.playIntegrity,
         appleProvider: AppleProvider.appAttest,
       );
+    } else {
+      debugPrint('AppCheck: skipping activation (web without reCAPTCHA key)');
     }
     debugPrint('AppCheck: activation completed');
   } catch (e, st) {
