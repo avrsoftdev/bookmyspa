@@ -12,6 +12,8 @@ import '../../../../../utils/constants/image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/theme_cubit.dart';
 import '../../../help_center/presentation/pages/help_center_page.dart';
+import 'terms_and_conditions_page.dart';
+import 'privacy_policy_page.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -241,7 +243,34 @@ class ProfileScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildThemeToggle(context),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.description_outlined,
+                    title: 'Terms and Conditions',
+                    subtitle: 'Read our terms of service',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TermsAndConditionsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Privacy Policy',
+                    subtitle: 'Learn about your privacy',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyPage(),
+                        ),
+                      );
+                    },
+                  ),
                   _buildMenuItem(
                     context,
                     icon: Icons.logout_rounded,
@@ -316,56 +345,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             );
           },
-        );
-      },
-    );
-  }
-
-  Widget _buildThemeToggle(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeMode>(
-      builder: (context, mode) {
-        final isDark = mode == ThemeMode.dark;
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.dark_mode_rounded, color: AppColors.primary, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Dark Mode',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Toggle app appearance',
-                      style: TextStyle(fontSize: 13.5),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: isDark,
-                onChanged: (val) {
-                  context.read<ThemeCubit>().setDark(val);
-                },
-              ),
-            ],
-          ),
         );
       },
     );

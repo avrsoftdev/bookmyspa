@@ -6,6 +6,8 @@ import 'package:Spaxify/src/features/location/presentation/widgets/location_app_
 import 'package:Spaxify/src/features/location/presentation/widgets/spa_search_field.dart';
 import 'package:Spaxify/src/features/spa_browse/presentation/pages/category_subcategories_page.dart';
 import 'package:Spaxify/utils/constants/image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -141,6 +143,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           overriddenAddress: _overriddenAddress,
         ),
         actions: [
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, mode) {
+              final isDark = mode == ThemeMode.dark;
+              return IconButton(
+                icon: Icon(
+                  isDark ? Icons.wb_sunny_rounded : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  context.read<ThemeCubit>().setDark(!isDark);
+                },
+              );
+            },
+          ),
           ListenableBuilder(
             listenable: sl.get<NotificationsController>(),
             builder: (context, child) {
@@ -836,10 +852,9 @@ class _BrandingFooter extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: Theme.of(context).colorScheme.surface,
                 border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withOpacity(0.25),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.25),
                   width: 1.5,
                 ),
                 boxShadow: [
@@ -851,10 +866,7 @@ class _BrandingFooter extends StatelessWidget {
                 ],
               ),
               child: ClipOval(
-                child: Image.asset(
-                  Images.logo,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.asset(Images.logo, fit: BoxFit.cover),
               ),
             ),
             SizedBox(height: 10.h),
@@ -862,10 +874,7 @@ class _BrandingFooter extends StatelessWidget {
               'Spaxify by AVR SoftDev',
               style: TextStyle(
                 fontSize: 12.sp,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -875,8 +884,6 @@ class _BrandingFooter extends StatelessWidget {
     );
   }
 }
-
-
 
 class _SuggestedCard extends StatelessWidget {
   final SpaEntity spa;

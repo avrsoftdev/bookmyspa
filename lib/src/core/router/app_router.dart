@@ -11,6 +11,8 @@ import '../../features/spa_browse/presentation/pages/spa_services_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_detail_page.dart';
 import '../../features/cart/presentation/pages/order_summary_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profile/presentation/pages/terms_and_conditions_page.dart';
+import '../../features/profile/presentation/pages/privacy_policy_page.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -86,6 +88,12 @@ class AppRouter {
         );
       case '/notifications':
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
+      case '/terms-and-conditions':
+        return MaterialPageRoute(
+          builder: (_) => const TermsAndConditionsPage(),
+        );
+      case '/privacy-policy':
+        return MaterialPageRoute(builder: (_) => const PrivacyPolicyPage());
       default:
         return MaterialPageRoute(builder: (_) => const Scaffold());
     }
