@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/di/di.dart';
@@ -218,6 +223,12 @@ class _EditSpaPageState extends State<EditSpaPage> {
   String? _ownerUid;
   Map<String, dynamic> _originalData = const {};
 
+  // Photo management
+  final List<String> _uploadedImageUrls = [];
+  bool _isUploading = false;
+  double _uploadProgress = 0.0;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -292,6 +303,12 @@ class _EditSpaPageState extends State<EditSpaPage> {
       _businessType = data['businessType']?.toString();
       _weeklyOffController.text = data['weeklyOff']?.toString() ?? '';
       _numStaffController.text = data['numStaff']?.toString() ?? '';
+
+      final photos =
+          (data['photos'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      _uploadedImageUrls.clear();
+      _uploadedImageUrls.addAll(photos);
+
       final opening = data['openingTime']?.toString();
       final closing = data['closingTime']?.toString();
       _openingTime = opening != null && opening.contains(':')
@@ -366,6 +383,70 @@ class _EditSpaPageState extends State<EditSpaPage> {
     return TimeOfDay(hour: h, minute: m);
   }
 
+  Future<void> _pickAndUploadPhoto() async {
+    setState(() {
+      _isUploading = true;
+      _uploadProgress = 0.0;
+    });
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      final XFile? xfile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (xfile == null) {
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      final String id = const Uuid().v4();
+      final ref = FirebaseStorage.instance.ref().child(
+        'spa_photos/$uid/$id.jpg',
+      );
+
+      UploadTask task;
+      if (kIsWeb) {
+        final bytes = await xfile.readAsBytes();
+        task = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      } else {
+        final file = File(xfile.path);
+        task = ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+      }
+
+      task.snapshotEvents.listen((snapshot) {
+        if (snapshot.totalBytes > 0) {
+          setState(() {
+            _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+          });
+        }
+      });
+
+      await task;
+      final url = await ref.getDownloadURL();
+
+      setState(() {
+        _uploadedImageUrls.add(url);
+        _isUploading = false;
+      });
+    } catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      }
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      _uploadedImageUrls.removeAt(index);
+    });
+  }
+
   bool get _isOwner {
     final auth = sl.get<AuthController>();
     final uid = auth.currentUser?.id ?? FirebaseAuth.instance.currentUser?.uid;
@@ -426,6 +507,7 @@ class _EditSpaPageState extends State<EditSpaPage> {
         'facilities': _selectedFacilities.toList(),
         'services': services,
         'serviceDetails': details,
+        'photos': _uploadedImageUrls,
         'updatedAt': FieldValue.serverTimestamp(),
       };
       updates.removeWhere((k, v) => v == null);
@@ -502,6 +584,8 @@ class _EditSpaPageState extends State<EditSpaPage> {
                 child: Column(
                   children: [
                     _sectionTitle('Basic Info'),
+                    _buildPhotoSection(),
+                    SizedBox(height: 12.h),
                     _textField(
                       _nameController,
                       'Business Name',
@@ -901,17 +985,135 @@ class _EditSpaPageState extends State<EditSpaPage> {
     );
   }
 
-  Widget _sectionTitle(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.onSurface,
+  Widget _sectionTitle(String title) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      margin: EdgeInsets.only(bottom: 12.h),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.primary.withOpacity(0.2)),
         ),
       ),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Spa Photos',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            if (_isUploading)
+              SizedBox(
+                width: 100.w,
+                child: LinearProgressIndicator(
+                  value: _uploadProgress,
+                  backgroundColor: Colors.grey[200],
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
+                  ),
+                ),
+              )
+            else
+              TextButton.icon(
+                onPressed: _pickAndUploadPhoto,
+                icon: const Icon(Icons.add_a_photo, size: 18),
+                label: const Text('Add Photo'),
+              ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        if (_uploadedImageUrls.isEmpty)
+          Container(
+            height: 100.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Center(
+              child: Text(
+                'No photos added yet',
+                style: TextStyle(color: Colors.grey[600], fontSize: 12.sp),
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 120.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _uploadedImageUrls.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: EdgeInsets.only(right: 12.w),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: Image.network(
+                          _uploadedImageUrls[index],
+                          height: 120.h,
+                          width: 120.w,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 120.h,
+                              width: 120.w,
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        top: 4.h,
+                        right: 4.w,
+                        child: GestureDetector(
+                          onTap: () => _removePhoto(index),
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 
