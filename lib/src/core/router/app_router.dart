@@ -6,6 +6,7 @@ import '../../features/app_check_debug/presentation/app_check_debug_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_page.dart';
 import '../../features/spa_browse/presentation/pages/category_spa_list_page.dart';
 import '../../features/spa_browse/presentation/pages/category_subcategories_page.dart';
+import '../../features/spa_browse/presentation/pages/all_categories_page.dart';
 import '../../features/spa_browse/presentation/pages/subcategory_spa_list_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_services_page.dart';
 import '../../features/spa_browse/presentation/pages/spa_detail_page.dart';
@@ -36,6 +37,8 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => CategorySubcategoriesPage(category: category),
         );
+      case '/all-categories':
+        return MaterialPageRoute(builder: (_) => const AllCategoriesPage());
       case '/category-spas':
         final args = settings.arguments as CategorySpasArgs?;
         final category = args?.category ?? '';

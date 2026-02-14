@@ -369,7 +369,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         final label = item['label']!;
         return InkWell(
           onTap: label == 'See More..'
-              ? null
+              ? () {
+                  Navigator.of(context).pushNamed('/all-categories');
+                }
               : () {
                   CategoryPreferences().incrementCategory(label);
                   Navigator.of(context).pushNamed(
