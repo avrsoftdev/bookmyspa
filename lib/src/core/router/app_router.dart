@@ -3,6 +3,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/app_check_debug/presentation/app_check_debug_page.dart';
+import '../../features/admin/presentation/pages/admin_login_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_page.dart';
 import '../../features/spa_browse/presentation/pages/category_spa_list_page.dart';
 import '../../features/spa_browse/presentation/pages/category_subcategories_page.dart';
@@ -29,6 +30,8 @@ class AppRouter {
         );
       case '/debug-app-check':
         return MaterialPageRoute(builder: (_) => const AppCheckDebugPage());
+      case '/admin-login':
+        return MaterialPageRoute(builder: (_) => const AdminLoginPage());
       case '/admin-web':
         return MaterialPageRoute(builder: (_) => const AdminWebPage());
       case '/category-subcategories':

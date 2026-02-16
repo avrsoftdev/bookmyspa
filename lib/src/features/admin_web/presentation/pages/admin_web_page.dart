@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/tokens.dart';
+import '../../../../core/di/di.dart';
+import '../../../admin/presentation/controllers/admin_auth_controller.dart';
 
 class AdminWebPage extends StatefulWidget {
   const AdminWebPage({super.key});
@@ -14,6 +16,8 @@ class _AdminWebPageState extends State<AdminWebPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _selectedSpaId;
   DocumentSnapshot<Map<String, dynamic>>? _selectedSpaData;
+  late AdminAuthController _adminAuthController;
+  bool _initialized = false;
 
   // Dark Purple Theme Colors
   static const Color primaryPurple = Color(0xFF6A1B9A);
@@ -29,7 +33,44 @@ class _AdminWebPageState extends State<AdminWebPage> {
   final double sectionSpacing = 20.0;
 
   @override
+  void initState() {
+    super.initState();
+    _adminAuthController = sl.get<AdminAuthController>();
+    _checkAdminAuth();
+  }
+
+  Future<void> _checkAdminAuth() async {
+    await _adminAuthController.checkAdminAuthStatus();
+    if (mounted) {
+      if (!_adminAuthController.isAdminLoggedIn) {
+        // Not authenticated, redirect to admin login
+        Navigator.of(context).pushReplacementNamed('/admin-login');
+      } else {
+        setState(() {
+          _initialized = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      return Scaffold(
+        backgroundColor: backgroundBlack,
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(accentPurple),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: backgroundBlack,
 
@@ -49,12 +90,35 @@ class _AdminWebPageState extends State<AdminWebPage> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: CircleAvatar(
-              backgroundColor: accentPurple.withOpacity(0.3),
-              child: const Icon(Icons.admin_panel_settings, color: accentPurple),
+            padding: const EdgeInsets.only(right: 8),
+            child: Tooltip(
+              message: 'Admin: ${_adminAuthController.currentAdminUser?.email}',
+              child: CircleAvatar(
+                backgroundColor: accentPurple.withOpacity(0.3),
+                child: const Icon(Icons.admin_panel_settings, color: accentPurple),
+              ),
             ),
-          )
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: IconButton(
+              icon: const Icon(Icons.logout, color: textPrimary),
+              tooltip: 'Logout',
+              onPressed: () async {
+                const snackbar = SnackBar(
+                  content: Text('Logging out...'),
+                  duration: Duration(seconds: 2),
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(snackbar);
+                }
+                await _adminAuthController.signOut();
+                if (mounted) {
+                  Navigator.of(context).pushReplacementNamed('/admin-login');
+                }
+              },
+            ),
+          ),
         ],
       ),
 

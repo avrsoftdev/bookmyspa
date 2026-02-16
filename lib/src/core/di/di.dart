@@ -9,6 +9,8 @@ import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/auth/domain/usecases/check_auth_status.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/admin/domain/usecases/admin_login_usecase.dart';
+import '../../features/admin/presentation/controllers/admin_auth_controller.dart';
 import '../../features/notifications/presentation/controllers/notifications_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../features/spa_browse/domain/repositories/spa_repository.dart';
@@ -76,6 +78,12 @@ Future<void> initDependencies() async {
       logoutUseCase: sl.get(),
       checkAuthStatusUseCase: sl.get(),
     ),
+  );
+
+  // Admin Auth
+  sl.register<AdminLoginUseCase>(AdminLoginUseCase(sl.get()));
+  sl.register<AdminAuthController>(
+    AdminAuthController(adminLoginUseCase: sl.get()),
   );
 
   // Location
