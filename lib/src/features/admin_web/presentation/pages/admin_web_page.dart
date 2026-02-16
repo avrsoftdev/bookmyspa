@@ -5,6 +5,8 @@ import '../../../../core/theme/tokens.dart';
 import '../../../../core/di/di.dart';
 import '../../../admin/presentation/controllers/admin_auth_controller.dart';
 
+enum _SpaFilter { pending, approved, rejected }
+
 class AdminWebPage extends StatefulWidget {
   const AdminWebPage({super.key});
 
@@ -18,6 +20,8 @@ class _AdminWebPageState extends State<AdminWebPage> {
   DocumentSnapshot<Map<String, dynamic>>? _selectedSpaData;
   late AdminAuthController _adminAuthController;
   bool _initialized = false;
+  // current listing filter
+  _SpaFilter _filter = _SpaFilter.pending;
 
   // Dark Purple Theme Colors
   static const Color primaryPurple = Color(0xFF6A1B9A);
@@ -153,35 +157,59 @@ class _AdminWebPageState extends State<AdminWebPage> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             decoration: const BoxDecoration(
               color: primaryPurple,
               borderRadius: BorderRadius.only(bottomRight: Radius.circular(24)),
             ),
             child: Row(
-              children: const [
-                Icon(Icons.pending_actions, color: Colors.white, size: 26),
-                SizedBox(width: 12),
-                Text(
-                  "Pending Reviews",
-                  style: TextStyle(fontSize: 19, color: Colors.white, fontWeight: FontWeight.bold),
-                )
+              children: [
+                const Icon(Icons.dashboard, color: Colors.white, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _filter == _SpaFilter.pending
+                        ? "Pending Reviews"
+                        : _filter == _SpaFilter.approved
+                            ? "Approved Businesses"
+                            : "Rejected Businesses",
+                    style: const TextStyle(fontSize: 17, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                // filter tabs
+                ToggleButtons(
+                  isSelected: [
+                    _filter == _SpaFilter.pending,
+                    _filter == _SpaFilter.approved,
+                    _filter == _SpaFilter.rejected,
+                  ],
+                  onPressed: (i) => setState(() {
+                    _selectedSpaId = null;
+                    _selectedSpaData = null;
+                    _filter = _SpaFilter.values[i];
+                  }),
+                  color: Colors.white70,
+                  selectedColor: Colors.white,
+                  fillColor: Colors.white12,
+                  borderRadius: BorderRadius.circular(8),
+                  children: const [
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Icon(Icons.pending_actions, size: 18)),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Icon(Icons.check_circle, size: 18)),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Icon(Icons.block, size: 18)),
+                  ],
+                ),
               ],
             ),
           ),
 
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _firestore
-                  .collection('spas')
-                  .where('status', isEqualTo: 'pending_review')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
+              stream: _getSpaStream(),
               builder: (context, snap) {
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator(color: accentPurple));
                 }
-                if (snap.data!.docs.isEmpty) return _noPending();
+                if (snap.data!.docs.isEmpty) return _noItems();
 
                 return ListView.builder(
                   padding: const EdgeInsets.only(top: 12),
@@ -225,8 +253,7 @@ class _AdminWebPageState extends State<AdminWebPage> {
                                 children: [
                                   Text(name, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: textPrimary)),
                                   const SizedBox(height: 5),
-                                  Text("${d['city'] ?? 'Unknown'} • ${d['ownerName'] ?? 'No Owner'}",
-                                      style: TextStyle(fontSize: 13, color: textSecondary)),
+                                  Text(_subtitleFor(d), style: TextStyle(fontSize: 13, color: textSecondary)),
                                 ],
                               ),
                             ),
@@ -240,6 +267,42 @@ class _AdminWebPageState extends State<AdminWebPage> {
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _getSpaStream() {
+    switch (_filter) {
+      case _SpaFilter.approved:
+        return _firestore.collection('spas').where('status', isEqualTo: 'approved').orderBy('publishedAt', descending: true).snapshots();
+      case _SpaFilter.rejected:
+        return _firestore.collection('spas').where('status', isEqualTo: 'rejected').orderBy('createdAt', descending: true).snapshots();
+      case _SpaFilter.pending:
+      default:
+        return _firestore.collection('spas').where('status', isEqualTo: 'pending_review').orderBy('createdAt', descending: true).snapshots();
+    }
+  }
+
+  String _subtitleFor(Map<String, dynamic> d) {
+    final city = d['city'] ?? 'Unknown';
+    final owner = d['ownerName'] ?? 'No Owner';
+    if (_filter == _SpaFilter.rejected) {
+      final reason = d['rejectionReason'] ?? 'No reason provided';
+      return "$city • $owner • Rejected: $reason";
+    }
+    return "$city • $owner";
+  }
+
+  Widget _noItems() {
+    final text = _filter == _SpaFilter.pending ? "No pending reviews" : _filter == _SpaFilter.approved ? "No approved businesses" : "No rejected businesses";
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.inbox_outlined, size: 80, color: textSecondary.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(text, style: TextStyle(fontSize: 18, color: textSecondary)),
         ],
       ),
     );
@@ -622,35 +685,48 @@ class _AdminWebPageState extends State<AdminWebPage> {
         ),
       );
 
-  Widget _actionButtons() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton.icon(
-            onPressed: () => _approveSpa(_selectedSpaId!),
-            icon: const Icon(Icons.check, size: 20),
-            label: const Text("APPROVE", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 8,
-            ),
-          ),
-          const SizedBox(width: 20),
-          OutlinedButton.icon(
-            onPressed: _showRejectDialog,
-            icon: const Icon(Icons.close, size: 20),
-            label: const Text("REJECT", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.redAccent,
-              side: const BorderSide(color: Colors.redAccent, width: 2.5),
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
+  Widget _actionButtons() {
+    if (_filter != _SpaFilter.pending) {
+      return Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          _filter == _SpaFilter.approved ? 'Viewing approved businesses' : 'Viewing rejected businesses',
+          style: TextStyle(color: textSecondary),
+        ),
       );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () => _approveSpa(_selectedSpaId!),
+          icon: const Icon(Icons.check, size: 20),
+          label: const Text("APPROVE", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade700,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 8,
+          ),
+        ),
+        const SizedBox(width: 20),
+        OutlinedButton.icon(
+          onPressed: _showRejectDialog,
+          icon: const Icon(Icons.close, size: 20),
+          label: const Text("REJECT", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.redAccent,
+            side: const BorderSide(color: Colors.redAccent, width: 2.5),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
+  }
 
   Future<void> _approveSpa(String docId) async {
     await _firestore.collection('spas').doc(docId).update({
