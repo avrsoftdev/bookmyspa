@@ -2,7 +2,7 @@ name: Spaxify
 description: "A SPA and Saloon Booking App"
 publish_to: "none"
 
-version: 1.0.0+1
+version: 2.0.1+4
 
 environment:
   sdk: ^3.10.0-290.4.beta
@@ -43,6 +43,7 @@ dependencies:
   share_plus: ^7.0.2
   app_links: ^3.5.0
   flutter_local_notifications: ^17.1.2
+  app_device_integrity: ^1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -26,12 +26,16 @@ class AppTheme {
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
       ),
+      scaffoldBackgroundColor: AppColors.darkBackground,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      textTheme: base.textTheme,
+      textTheme: base.textTheme.apply(
+        bodyColor: AppColors.darkTextPrimary,
+        displayColor: AppColors.darkTextPrimary,
+      ),
     );
   }
 }

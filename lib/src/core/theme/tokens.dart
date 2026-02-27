@@ -8,6 +8,14 @@ class AppColors {
   static const Color textPrimary = Color(0xFF1B1B1F);
   static const Color textSecondary = Color(0xFF5F5F64);
   static const Color error = Color(0xFFB00020);
+
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF1A1A1A);
+  static const Color darkSurface = Color(0xFF2A2A2A);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFB0B0B0);
+  static const Color darkCardBackground = Colors.black;
+  static const Color darkCardOutline = Color(0xFF404040);
 }
 
 class AppSpacing {

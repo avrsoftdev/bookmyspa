@@ -13,6 +13,7 @@ import 'core/services/admob_service.dart';
 import 'core/services/fcm_service.dart';
 import 'core/services/local_notifications_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -74,6 +75,7 @@ Future<void> bootstrap() async {
     // enabling the API (see README) will resolve it. We don't crash the app
     // here to avoid blocking developers, but uploads may be rejected until
     // App Check is properly configured.
+    //iii
     debugPrint('AppCheck: activation failed: $e');
     debugPrint(st.toString());
   }
@@ -87,6 +89,17 @@ Future<void> bootstrap() async {
   } catch (_) {}
   try {
     await Permission.notification.request();
+  } catch (_) {}
+  try {
+    if (!kIsWeb) {
+      final notifStatus = await Permission.notification.status;
+      if (notifStatus.isGranted) {
+        final locPerm = await Geolocator.checkPermission();
+        if (locPerm == LocationPermission.denied) {
+          await Geolocator.requestPermission();
+        }
+      }
+    }
   } catch (_) {}
   try {
     FirebaseMessaging.onMessage.listen((message) async {

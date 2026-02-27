@@ -2,7 +2,10 @@ import 'package:Spaxify/src/features/home/data/category_preferences.dart';
 import 'package:Spaxify/src/features/home/presentation/widgets/category_images.dart';
 import 'package:Spaxify/src/features/spa_browse/presentation/pages/category_subcategories_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../core/theme/tokens.dart';
+import '../../../../core/theme/theme_cubit.dart';
 
 class PopularCategories extends StatefulWidget {
   const PopularCategories({super.key});
@@ -64,7 +67,8 @@ class _PopularCategoriesState extends State<PopularCategories> {
                   margin: EdgeInsets.symmetric(horizontal: 8.w),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.r),
-                    color: Colors.grey[200],
+                    color: _getCardBackground(context),
+                    border: _getCardBorder(context),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -82,6 +86,7 @@ class _PopularCategoriesState extends State<PopularCategories> {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
+                          color: _getTextColor(context),
                         ),
                       ),
                     ],
@@ -93,5 +98,19 @@ class _PopularCategoriesState extends State<PopularCategories> {
         ),
       ],
     );
+  }
+
+  Color _getCardBackground(BuildContext context) {
+    final isDarkMode = context.watch<ThemeCubit>().state == ThemeMode.dark;
+    return isDarkMode ? Colors.black : Colors.white;
+  }
+
+  Border _getCardBorder(BuildContext context) {
+    return Border.all(color: AppColors.primary, width: 1.5);
+  }
+
+  Color _getTextColor(BuildContext context) {
+    final isDarkMode = context.watch<ThemeCubit>().state == ThemeMode.dark;
+    return isDarkMode ? AppColors.darkTextPrimary : Colors.black87;
   }
 }

@@ -1,6 +1,9 @@
 import 'package:Spaxify/src/features/home/data/subcategory_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../core/theme/tokens.dart';
+import '../../../../core/theme/theme_cubit.dart';
 
 class MostBookedServices extends StatefulWidget {
   const MostBookedServices({super.key});
@@ -64,7 +67,8 @@ class _MostBookedServicesState extends State<MostBookedServices> {
                   margin: EdgeInsets.symmetric(horizontal: 8.w),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.r),
-                    color: Colors.grey[200],
+                    color: _getCardBackground(context),
+                    border: _getCardBorder(context),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -95,6 +99,7 @@ class _MostBookedServicesState extends State<MostBookedServices> {
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
+                            color: _getTextColor(context),
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 2,
@@ -121,5 +126,19 @@ class _MostBookedServicesState extends State<MostBookedServices> {
       Color(0xFFA29BFE), // Purple
     ];
     return colors[index % colors.length];
+  }
+
+  Color _getCardBackground(BuildContext context) {
+    final isDarkMode = context.watch<ThemeCubit>().state == ThemeMode.dark;
+    return isDarkMode ? Colors.black : Colors.white;
+  }
+
+  Border _getCardBorder(BuildContext context) {
+    return Border.all(color: AppColors.primary, width: 1.5);
+  }
+
+  Color _getTextColor(BuildContext context) {
+    final isDarkMode = context.watch<ThemeCubit>().state == ThemeMode.dark;
+    return isDarkMode ? AppColors.darkTextPrimary : Colors.black87;
   }
 }

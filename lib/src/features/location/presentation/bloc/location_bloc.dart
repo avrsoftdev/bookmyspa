@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/location_entity.dart';
 import '../../domain/usecases/get_current_location_usecase.dart';
 
@@ -34,6 +37,7 @@ class LocationBloc extends ChangeNotifier {
   LocationState _state = const LocationState();
   LocationState get state => _state;
   bool _inProgress = false;
+  StreamSubscription<Position>? _positionSub;
 
   LocationBloc(this._getCurrentLocationUseCase);
 
@@ -58,6 +62,23 @@ class LocationBloc extends ChangeNotifier {
     
     notifyListeners();
     _inProgress = false;
+  }
+
+  void startAutoUpdate() {
+    if (_positionSub != null) return;
+    final settings = const LocationSettings(
+      accuracy: LocationAccuracy.best,
+      distanceFilter: 50,
+    );
+    _positionSub = Geolocator.getPositionStream(locationSettings: settings)
+        .listen((_) {
+      getCurrentLocation();
+    }, onError: (_) {});
+  }
+
+  void stopAutoUpdate() {
+    _positionSub?.cancel();
+    _positionSub = null;
   }
 
   void resetState() {

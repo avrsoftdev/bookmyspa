@@ -84,12 +84,17 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             Center(
-              child: Text(
-                'Last Updated: February 2025',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
+              child: Builder(
+                builder: (context) {
+                  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                  return Text(
+                    'Last Updated: February 2025',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode ? AppColors.darkTextSecondary : Colors.grey[500],
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 20),
@@ -100,57 +105,73 @@ class PrivacyPolicyPage extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: Colors.black87,
-      ),
+    return Builder(
+      builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        return Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: isDarkMode ? AppColors.darkTextPrimary : Colors.black87,
+          ),
+        );
+      },
     );
   }
 
   Widget _buildSectionContent(String content) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Text(
-        content,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: Colors.black54,
-          height: 1.6,
-        ),
-      ),
+    return Builder(
+      builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(
+            content,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: isDarkMode ? AppColors.darkTextSecondary : Colors.black54,
+              height: 1.6,
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildBulletPoint(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, left: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '• ',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: Colors.black54,
-                height: 1.6,
+    return Builder(
+      builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final textColor = isDarkMode ? AppColors.darkTextSecondary : Colors.black54;
+        return Padding(
+          padding: const EdgeInsets.only(top: 8, left: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '• ',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textColor,
+                ),
               ),
-            ),
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: textColor,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

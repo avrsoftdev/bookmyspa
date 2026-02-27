@@ -79,6 +79,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _locationBloc = sl.get<LocationBloc>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _locationBloc.getCurrentLocation();
+      _locationBloc.startAutoUpdate();
       _handleInitialDeepLink();
       _subscribeDeepLinks();
       _subscribeFcmOpenEvents();
@@ -122,6 +123,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _msgOpenSub?.cancel();
     _localNotifTapSub?.cancel();
     _ownedSpasSub?.cancel();
+    _locationBloc.stopAutoUpdate();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -302,39 +304,60 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ],
                 ),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    bottom: 120,
-                  ),
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildCategoryGrid(),
-                      const SizedBox(height: 20),
-                      AdMobBannerWidget(
-                        adUnitId: kDebugMode
-                            ? 'ca-app-pub-3940256099942544/6300978111'
-                            : 'ca-app-pub-7682628416837305/4512781378',
-                      ),
-                      const SizedBox(height: 16),
-                      _SuggestedNearbySpas(locationBloc: _locationBloc),
-                      const SizedBox(height: 8),
-                      const _TopListedSpas(),
-                      const SizedBox(height: 16),
-                      const PopularCategories(),
-                      const SizedBox(height: 16),
-                      const MostBookedServices(),
-                      const SizedBox(height: 16),
-                      const _BrandingFooter(),
-                    ],
-                  ),
-                ),
-              ),
+         Expanded(
+  child: SingleChildScrollView(
+    padding: const EdgeInsets.only(
+      left: 20,
+      right: 20,
+      bottom: 120,
+    ),
+    physics: const BouncingScrollPhysics(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        const SizedBox(height: 16),
+
+        // Category Grid
+        _buildCategoryGrid(),
+
+        const SizedBox(height: 12),
+
+        // 🔥 Ad Banner (No Padding Around It)
+        AdMobBannerWidget(
+          adUnitId: kDebugMode
+              ? 'ca-app-pub-3940256099942544/6300978111'
+              : 'ca-app-pub-7682628416837305/4512781378',
+        ),
+
+        const SizedBox(height: 20),
+
+        // Suggested Near You
+        _SuggestedNearbySpas(locationBloc: _locationBloc),
+
+        const SizedBox(height: 8),
+
+        // Top Listed
+        const _TopListedSpas(),
+
+        const SizedBox(height: 16),
+
+        // Popular Categories
+        const PopularCategories(),
+
+        const SizedBox(height: 16),
+
+        // Most Booked Services
+        const MostBookedServices(),
+
+        const SizedBox(height: 16),
+
+        // Footer Branding
+        const _BrandingFooter(),
+      ],
+    ),
+  ),
+),
             ],
           ),
           const MyBookingsPage(),
@@ -362,7 +385,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         crossAxisCount: 4, // 4 icons per row like Justdial
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 0.8, // tweak if you want icons/text taller/shorter
+        childAspectRatio: 1.1, // tweak if you want icons/text taller/shorter
       ),
       itemBuilder: (context, index) {
         final item = _categories[index];
