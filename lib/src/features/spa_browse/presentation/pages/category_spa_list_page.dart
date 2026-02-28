@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
 import '../../../spa_browse/domain/usecases/stream_spas_by_category_usecase.dart';
@@ -9,6 +10,7 @@ import 'spa_services_page.dart';
 import 'spa_detail_page.dart';
 import '../controllers/favorites_controller.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
+import '../../../../core/widgets/admob_banner_widget.dart';
 
 class CategorySpasArgs {
   final String category;
@@ -30,6 +32,10 @@ class _CategorySpaListPageState extends State<CategorySpaListPage> {
   int? _minPrice;
   int? _maxPrice;
   String? _cityFilter;
+
+  String get _bannerAdUnitId => kDebugMode
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      : 'ca-app-pub-7682628416837305/4512781378';
 
   @override
   Widget build(BuildContext context) {
@@ -312,6 +318,10 @@ class _CategorySpaListPageState extends State<CategorySpaListPage> {
                     ),
                   ],
                 ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+                child: AdMobBannerWidget(adUnitId: _bannerAdUnitId),
               ),
               Expanded(
                 child: ListView.separated(

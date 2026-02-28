@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profile_screen.dart';
@@ -14,9 +15,13 @@ import '../../../../core/theme/theme_cubit.dart';
 import '../../../help_center/presentation/pages/help_center_page.dart';
 import 'terms_and_conditions_page.dart';
 import 'privacy_policy_page.dart';
+import '../../../../core/widgets/admob_banner_widget.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+  String get _bannerAdUnitId => kDebugMode
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      : 'ca-app-pub-7682628416837305/4512781378';
 
   Future<void> _handleLogout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
@@ -277,6 +282,12 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Logout',
                     subtitle: 'Sign out of your account',
                     onTap: () => _handleLogout(context),
+                  ),
+
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: AdMobBannerWidget(adUnitId: _bannerAdUnitId),
                   ),
 
                   // === FOOTER: Logo + Branding ===

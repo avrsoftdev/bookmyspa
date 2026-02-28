@@ -1,5 +1,6 @@
 import 'package:Spaxify/utils/constants/image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../spa_browse/domain/entities/spa_entity.dart';
@@ -15,6 +16,7 @@ import '../../domain/usecases/like_review_usecase.dart';
 import '../../domain/usecases/dislike_review_usecase.dart';
 import '../../domain/usecases/update_review_usecase.dart';
 import '../../../../core/services/share_service.dart';
+import '../../../../core/widgets/admob_banner_widget.dart';
 
 class SpaDetailArgs {
   final String spaId;
@@ -31,6 +33,9 @@ class SpaDetailPage extends StatefulWidget {
 
 class _SpaDetailPageState extends State<SpaDetailPage> {
   SpaEntity? _latestSpa;
+  String get _bannerAdUnitId => kDebugMode
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      : 'ca-app-pub-7682628416837305/4512781378';
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +126,8 @@ class _SpaDetailPageState extends State<SpaDetailPage> {
                   _SectionTitle("Services & Pricing"),
                   SizedBox(height: 12.h),
                   _PricingBySubcategoryList(details: spa.serviceDetails),
+                  SizedBox(height: 26.h),
+                  AdMobBannerWidget(adUnitId: _bannerAdUnitId),
                   SizedBox(height: 26.h),
                   _SectionTitle("Ratings & Reviews"),
                   SizedBox(height: 12.h),

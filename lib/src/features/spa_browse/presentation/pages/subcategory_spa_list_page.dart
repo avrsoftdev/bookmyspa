@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:math' as math;
 import '../../../spa_browse/domain/entities/spa_entity.dart';
@@ -8,6 +9,7 @@ import '../../../../core/theme/tokens.dart';
 import 'category_spa_list_page.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
 import '../../../home/data/subcategory_preferences.dart';
+import '../../../../core/widgets/admob_banner_widget.dart';
 
 class SubcategorySpaListPage extends StatefulWidget {
   final String category;
@@ -28,6 +30,10 @@ class _SubcategorySpaListPageState extends State<SubcategorySpaListPage> {
   int? _minPrice;
   int? _maxPrice;
   String? _cityFilter;
+
+  String get _bannerAdUnitId => kDebugMode
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      : 'ca-app-pub-7682628416837305/4512781378';
 
   @override
   void initState() {
@@ -245,6 +251,10 @@ class _SubcategorySpaListPageState extends State<SubcategorySpaListPage> {
                     ).colorScheme.onPrimary.withOpacity(0.9),
                   ),
                 ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                child: AdMobBannerWidget(adUnitId: _bannerAdUnitId),
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
