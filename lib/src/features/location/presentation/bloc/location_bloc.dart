@@ -22,29 +22,38 @@ class LocationState {
     LocationStatus? status,
     LocationEntity? location,
     String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return LocationState(
       status: status ?? this.status,
       location: location ?? this.location,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : (errorMessage ?? this.errorMessage),
     );
   }
 }
 
 class LocationBloc extends ChangeNotifier {
   final GetCurrentLocationUseCase _getCurrentLocationUseCase;
-  
+
   LocationState _state = const LocationState();
   LocationState get state => _state;
   bool _inProgress = false;
+  bool _isManualOverride = false;
   StreamSubscription<Position>? _positionSub;
+  bool get isManualOverride => _isManualOverride;
 
   LocationBloc(this._getCurrentLocationUseCase);
 
-  Future<void> getCurrentLocation() async {
+  Future<void> getCurrentLocation({bool force = false}) async {
+    if (_isManualOverride && !force) return;
     if (_inProgress) return;
     _inProgress = true;
-    _state = _state.copyWith(status: LocationStatus.loading);
+    _state = _state.copyWith(
+      status: LocationStatus.loading,
+      clearErrorMessage: true,
+    );
     notifyListeners();
 
     try {
@@ -52,6 +61,7 @@ class LocationBloc extends ChangeNotifier {
       _state = _state.copyWith(
         status: LocationStatus.success,
         location: location,
+        clearErrorMessage: true,
       );
     } catch (e) {
       _state = _state.copyWith(
@@ -59,9 +69,28 @@ class LocationBloc extends ChangeNotifier {
         errorMessage: e.toString(),
       );
     }
-    
+
     notifyListeners();
     _inProgress = false;
+  }
+
+  void setManualLocation(LocationEntity location) {
+    _isManualOverride = true;
+    _state = _state.copyWith(
+      status: LocationStatus.success,
+      location: location,
+      clearErrorMessage: true,
+    );
+    notifyListeners();
+  }
+
+  void clearManualOverride({bool refreshFromDevice = true}) {
+    _isManualOverride = false;
+    if (refreshFromDevice) {
+      getCurrentLocation(force: true);
+    } else {
+      notifyListeners();
+    }
   }
 
   void startAutoUpdate() {
@@ -72,8 +101,8 @@ class LocationBloc extends ChangeNotifier {
     );
     _positionSub = Geolocator.getPositionStream(locationSettings: settings)
         .listen((_) {
-      getCurrentLocation();
-    }, onError: (_) {});
+          getCurrentLocation();
+        }, onError: (_) {});
   }
 
   void stopAutoUpdate() {
@@ -82,6 +111,7 @@ class LocationBloc extends ChangeNotifier {
   }
 
   void resetState() {
+    _isManualOverride = false;
     _state = const LocationState();
     notifyListeners();
   }

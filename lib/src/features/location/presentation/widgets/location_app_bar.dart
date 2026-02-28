@@ -5,11 +5,13 @@ import '../../../location/presentation/bloc/location_bloc.dart';
 class LocationAppBarTitle extends StatelessWidget {
   final LocationBloc locationBloc;
   final String? overriddenAddress;
+  final VoidCallback? onEditLocationTap;
 
   const LocationAppBarTitle({
     super.key,
     required this.locationBloc,
     this.overriddenAddress,
+    this.onEditLocationTap,
   });
 
   @override
@@ -28,11 +30,30 @@ class LocationAppBarTitle extends StatelessWidget {
                 overriddenAddress ??
                 locationBloc.state.location?.address ??
                 'Select Location';
-            return Text(
-              address,
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            return Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    address,
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: onEditLocationTap,
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.edit_location_alt_rounded,
+                      size: 16,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),

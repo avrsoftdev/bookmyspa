@@ -35,6 +35,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/theme_cubit.dart';
 import '../services/admob_service.dart';
 import '../services/google_places_service.dart';
+import '../services/home_location_places_service.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
 import '../services/share_service.dart';
@@ -152,8 +153,10 @@ Future<void> initDependencies() async {
             as String? ??
         '';
     sl.register<GooglePlacesService>(GooglePlacesService(key));
+    sl.register<HomeLocationPlacesService>(HomeLocationPlacesService(key));
   } catch (_) {
     sl.register<GooglePlacesService>(GooglePlacesService(''));
+    sl.register<HomeLocationPlacesService>(HomeLocationPlacesService(''));
   }
   sl.register<ShareService>(ShareService());
   sl.register<DeepLinkService>(DeepLinkService());

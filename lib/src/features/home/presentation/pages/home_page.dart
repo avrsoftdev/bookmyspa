@@ -16,6 +16,7 @@ import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../bookings/presentation/pages/my_bookings_page.dart';
 import '../../../spa_browse/presentation/pages/favorites_page.dart';
 import '../../../location/presentation/bloc/location_bloc.dart';
+import '../../../location/domain/entities/location_entity.dart';
 import '../../../../core/di/di.dart';
 // TODO: change this import to the actual path of your Images class
 import '../../../../core/widgets/admob_banner_widget.dart';
@@ -43,7 +44,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int _currentIndex = 0;
   late LocationBloc _locationBloc;
-  String? _overriddenAddress;
   final TextEditingController _searchController = TextEditingController();
   StreamSubscription<String>? _linkSub;
   final FocusNode _searchFocus = FocusNode();
@@ -142,7 +142,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         title: LocationAppBarTitle(
           locationBloc: _locationBloc,
-          overriddenAddress: _overriddenAddress,
+          onEditLocationTap: _openLocationPicker,
         ),
         actions: [
           BlocBuilder<ThemeCubit, ThemeMode>(
@@ -304,60 +304,59 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ],
                 ),
               ),
-         Expanded(
-  child: SingleChildScrollView(
-    padding: const EdgeInsets.only(
-      left: 20,
-      right: 20,
-      bottom: 120,
-    ),
-    physics: const BouncingScrollPhysics(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: 120,
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
 
-        const SizedBox(height: 16),
+                      // Category Grid
+                      _buildCategoryGrid(),
 
-        // Category Grid
-        _buildCategoryGrid(),
+                      const SizedBox(height: 12),
 
-        const SizedBox(height: 12),
+                      // 🔥 Ad Banner (No Padding Around It)
+                      AdMobBannerWidget(
+                        adUnitId: kDebugMode
+                            ? 'ca-app-pub-3940256099942544/6300978111'
+                            : 'ca-app-pub-7682628416837305/4512781378',
+                      ),
 
-        // 🔥 Ad Banner (No Padding Around It)
-        AdMobBannerWidget(
-          adUnitId: kDebugMode
-              ? 'ca-app-pub-3940256099942544/6300978111'
-              : 'ca-app-pub-7682628416837305/4512781378',
-        ),
+                      const SizedBox(height: 20),
 
-        const SizedBox(height: 20),
+                      // Suggested Near You
+                      _SuggestedNearbySpas(locationBloc: _locationBloc),
 
-        // Suggested Near You
-        _SuggestedNearbySpas(locationBloc: _locationBloc),
+                      const SizedBox(height: 8),
 
-        const SizedBox(height: 8),
+                      // Top Listed
+                      const _TopListedSpas(),
 
-        // Top Listed
-        const _TopListedSpas(),
+                      const SizedBox(height: 16),
 
-        const SizedBox(height: 16),
+                      // Popular Categories
+                      const PopularCategories(),
 
-        // Popular Categories
-        const PopularCategories(),
+                      const SizedBox(height: 16),
 
-        const SizedBox(height: 16),
+                      // Most Booked Services
+                      const MostBookedServices(),
 
-        // Most Booked Services
-        const MostBookedServices(),
+                      const SizedBox(height: 16),
 
-        const SizedBox(height: 16),
-
-        // Footer Branding
-        const _BrandingFooter(),
-      ],
-    ),
-  ),
-),
+                      // Footer Branding
+                      const _BrandingFooter(),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           const MyBookingsPage(),
@@ -487,6 +486,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ).pushNamed('/spa-detail', arguments: SpaDetailArgs(spaId));
       }
     });
+  }
+
+  Future<void> _openLocationPicker() async {
+    final selected = await Navigator.of(context).pushNamed('/edit-location');
+    if (!mounted || selected == null) return;
+    if (selected is LocationEntity) {
+      _locationBloc.setManualLocation(selected);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Location updated')));
+    }
   }
 }
 

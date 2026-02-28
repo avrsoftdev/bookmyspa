@@ -15,6 +15,7 @@ import '../../features/cart/presentation/pages/order_summary_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/terms_and_conditions_page.dart';
 import '../../features/profile/presentation/pages/privacy_policy_page.dart';
+import '../../features/location/presentation/pages/home_location_picker_page.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -100,6 +101,10 @@ class AppRouter {
         );
       case '/privacy-policy':
         return MaterialPageRoute(builder: (_) => const PrivacyPolicyPage());
+      case '/edit-location':
+        return MaterialPageRoute(
+          builder: (_) => const HomeLocationPickerPage(),
+        );
       default:
         return MaterialPageRoute(builder: (_) => const Scaffold());
     }

@@ -15,6 +15,9 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7682628416837305~8511736135" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA1IcON0oFP0A7oAw8_0f70SuoxgOzA8UU" />
         <!-- Default channel ID for FCM notifications on Android 8+ -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
