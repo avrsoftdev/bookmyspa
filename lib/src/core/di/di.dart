@@ -146,12 +146,17 @@ Future<void> initDependencies() async {
 
   // Google Places
   try {
-    final raw = await rootBundle.loadString('assets/config/api_keys.json');
-    final key =
-        (JsonDecoder().convert(raw)
-                as Map<String, dynamic>)['google_maps_api_key']
-            as String? ??
-        '';
+    final defineKey = const String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+    String key = defineKey.trim();
+    if (key.isEmpty) {
+      final raw = await rootBundle.loadString('assets/config/api_keys.json');
+      key =
+          (JsonDecoder().convert(raw)
+                  as Map<String, dynamic>)['google_maps_api_key']
+              as String? ??
+          '';
+      key = key.trim();
+    }
     sl.register<GooglePlacesService>(GooglePlacesService(key));
     sl.register<HomeLocationPlacesService>(HomeLocationPlacesService(key));
   } catch (_) {
